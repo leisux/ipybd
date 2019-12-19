@@ -1,4 +1,4 @@
-# iherbarium
+# iHerbarium
 
 ### 程序功能和用途
 
