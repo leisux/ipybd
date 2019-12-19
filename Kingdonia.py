@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Based on python 3
 
-from os import system as os_system
 from os import walk as os_walk
 from os.path import splitext as os_path_splitext
 from os.path import join as os_path_join
@@ -13,8 +12,6 @@ from re import compile as re_compile
 from re import split as re_split
 from shutil import move as shutil_move
 from collections import Counter
-from tkinter import Tk
-from tkinter.filedialog import askdirectory, askopenfilename
 from datetime import date
 from datetime import timedelta
 from time import strptime as time_strptime
@@ -28,80 +25,21 @@ from PIL.Image import ANTIALIAS
 from json import load as json_load
 from json import loads as json_loads
 from json import dumps as json_dumps
-import _locale
-
-_locale._getdefaultlocale = (lambda *args: ['en_US', 'utf8'])
 
 class BlockError(Exception):
     pass
-os_system("") #解决windows cmd 终端无法现实彩色字体的问题，神经质的一个方式竟然可行！
-
-def run():
-    print("\n\033[1;32m当前版本：0.9.1  © 中国科学院昆吗植物研究所标本馆（KUN）版权所有\
-        \n\033[1;33m引用格式：徐洲锋,中国生物标本数据自清理与自规整程序包,http://www.kingdonia.org/（0.9.1）\033[0m\
-        \n\033[1;32m使用中有任何无法自行解决的问题或疑惑，您都可以邮件联系 xu_zhoufeng@126.com 进行咨询。\033[0m\
-        \n\033[1;32m若需将该程序完整的或部分的功能嵌入其他程序，请务必通过上述邮件地址联系作者获得邮件授权。\033[0m\n")
-        
-    start = "y"
-    while start == "y":
-        opr = input(
-            "\n请输入对应的数字，回车后选定所要进行的操作：\n\n【1】图片条码识别并命名\t\t【2】图片提取\
-            \n\n【3】Excel 标本数据纠错\t\t【4】Excel 标本数据表转 Kingdonia 格式\n\n")
-        if opr == "1":
-            print("\n请选择图片所在的文件夹，可以包括多层子文件夹，程序会自动忽略非图片文件\n")
-            dir = askdir()
-            if dir == "":
-                continue
-            rename(dir)
-        elif opr == "2":
-            print("\n请选择需要匹配的 excel 文件\n\n")
-            excel = askfile()
-            if excel == "":
-                continue
-            print(excel)
-            print("\n请选择进行匹配的图片文件夹路径：\n\n")
-            dir = askdir()
-            while dir == "":
-                dir = askdir()
-            print(dir)
-            print("\n请选择被提取图片的存储路径：\n\n")
-            dst = askdir()
-            print(dst)
-            extract_file(excel, dir, dst)
-        elif opr == "3":
-            print("\n请选择需要核查的 excel 文件\n\n")
-            excel = askfile()
-            if excel == "":
-                continue
-            print(excel)
-            dwc_to_kingdonia(excel, "DWC")
-        elif opr == "4":
-            print("\n请选择需要核查的 excel 文件\n\n")
-            excel = askfile()
-            if excel == "":
-                continue
-            print(excel)
-            dwc_to_kingdonia(excel, "Kingdonia")
-        else:
-            input("\n您的输入内容不匹配...\n\n")
-        start = input("\n请问是否继续操作（y/n）\n\n")
-
-
-def askdir():
-    root = Tk()
-    root.withdraw()
-    return askdirectory()
-
-
-def askfile():
-    root = Tk()
-    root.withdraw()
-    return askopenfilename()
 
 
 def extract_file(excel, dir, dst):
-    table = read_excel(excel, converters={"条形码": str})
-    barcode = list(table["条形码"])
+    while True:
+        title = input("请输入提取图片所依据的字段名：\n")
+        try:
+            table = read_excel(excel, converters={title: str})
+            barcode = list(table[title])
+            break
+        except KeyError:
+            print("\n输入的列名不在当前 Excel 表格之中，请重新输入")
+            continue
     rdf = os_walk(dir)
     file_dict = {}
     for root, dirs, files in rdf:
@@ -198,8 +136,8 @@ def rename(dir):
             print(r)
     if cnt_error != 0:
         print("\n以下照片无法识别，请手动命名：\n")
-        for e in bar_error:
-            print(e)
+        for err in bar_error:
+            print(err)
 
 
 def dwc_to_kingdonia(excel, style):
@@ -378,7 +316,10 @@ def fields_to_dwc(excel):
             \n     段名，各个列名之间的符号则为合并后，值之间的分隔符，本例按照学名规范，使用的是空格作为分隔符。\
             \n\n【4】忽略该列：直接输入0，程序会保留原列不变。\n\n")
         to_json_clm = []
+        hand_to_std = dict.fromkeys(hand_to_std)
         for clm in hand_to_std:
+            if hand_to_std[clm] == "skip":
+                continue
             while True:
                 i = input(clm + ": ")
                 if i.isdecimal():
@@ -418,20 +359,23 @@ def fields_to_dwc(excel):
                         table, raw_to_std, i = value
                         for field in i:
                             if field in hand_to_std:
-                                hand_to_std.remove(field)
+                                hand_to_std[field] = "skip"
                         break
 
     with open(os_path_dirname(sys_argv[0]) + "/./Columns.json", "w", encoding="utf-8") as js:
         js.write(json_dumps(remap_columns, ensure_ascii=False))
     table.rename(columns=raw_to_std, inplace=True)
-    for title in to_json_clm:
-        table[title] = Series([json_dumps(value, ensure_ascii=False) if value!={} else None for value in table[title]])
+    try:
+        for title in to_json_clm:
+            table[title] = Series([json_dumps(value, ensure_ascii=False) if value!={} else None for value in table[title]])
+    except UnboundLocalError:
+        print("/n表头均可自动进行名称变换！/n")
     return table
 
 
 def merge_or_split_columns(table, txt, raw_to_std, basic_columns, filter=True):
     dwc = read_excel(os_path_dirname(sys_argv[0]) + "/./term_versions.xlsx")
-    elements = re_compile("([\u4e00-\u9fa5a-zA-Z]+)([^\u4e00-\u9fa5a-zA-z]*)").findall(txt)
+    elements = re_compile("([\u4e00-\u9fa5a-zA-Z_]+)([^\u4e00-\u9fa5a-zA-z]*)").findall(txt)
     titles = [e[0] for e in elements]
     separators = [e[1] for e in elements[0:-1]]
     if separators[-1] == "=":
@@ -573,6 +517,7 @@ def convert_latinname(table, title):
         except:
             continue
         subspec_split = subspecies_pattern.findall(species_split[3])
+        
         if subspec_split == []:
             dic_ident[w] = " ".join([species_split[0], species_split[2]]) if species_split[1]=="" else " ".join([species_split[0], species_split[1], species_split[2]])
         else:
@@ -795,10 +740,10 @@ def convert_date(table, title, tab_len_scale):
     raw_date = list(table[title])
     #print(raw_date)
     dmy_pattern = re_compile("[A-Za-z]+|[0-9]+")
-    er_date_dict = {"Jan":1, "Feb":2, "Mar":3, "Apr":4, "Apri":4, "May":5, "Jun":6, "Jul":7, "Aug":8, "Sep":9, "Sept":9, "Oct":10, "Nov":11, "Dec":12, "I":1, "II":2, "III":3, "IV":4, "V":5, "VI":6, "VII":7, "VIII":8, "IX":9, "X":10, "XI":11, "XII":12}
+    er_date_dict = {"JAN":1, "FEB":2, "MAR":3, "APR":4, "APRI":4, "MAY":5, "JUN":6, "JUL":7, "AUG":8, "SEP":9, "SEPT":9, "OCT":10, "NOV":11, "DEC":12,"Jan":1, "Feb":2, "Mar":3, "Apr":4, "Apri":4, "May":5, "Jun":6, "Jul":7, "Aug":8, "Sep":9, "Sept":9, "Oct":10, "Nov":11, "Dec":12, "I":1, "II":2, "III":3, "IV":4, "V":5, "VI":6, "VII":7, "VIII":8, "IX":9, "X":10, "XI":11, "XII":12}
     for j in tab_len_scale:
         try:
-            time_strptime(raw_date[j], "%Y-%m-%d %H:%M:%S")
+            timestamp = time_strptime(raw_date[j], "%Y-%m-%d %H:%M:%S")
         except (TypeError,ValueError):
             #对日期字符串的数值进行拆分提取
             try:
@@ -917,19 +862,12 @@ def convert_date(table, title, tab_len_scale):
                         HMS = " 00:00:02"
                     try:                                                         #判断该日期是否真实存在
                         date(year,month,day)
-                        if month < 10 and day < 10:
-                            raw_date[j] = str(year) + "0" + str(month) + "0" + str(day)
-                        elif month < 10 and day > 9:
-                            raw_date[j] = str(year) + "0" + str(month) + str(day)
-                        elif month > 9 and day < 10:
-                            raw_date[j] = str(year) + str(month) + "0" + str(day)
-                        elif month > 9 and day > 9:
-                            raw_date[j] = str(year) + str(month) + str(day)
                         raw_date[j] = str(year) + "-" + str(month) + "-" + str(day) + HMS
                     except ValueError:
                         raw_date[j] = "!" + raw_date[j]
                         continue
-        timestamp = time_strptime(raw_date[j], "%Y-%m-%d %H:%M:%S")
+            timestamp = time_strptime(raw_date[j], "%Y-%m-%d %H:%M:%S")
+
         if date(timestamp[0], timestamp[1], timestamp[2]) > date.today():
             raw_date[j] = "!" + raw_date[j]
         else:
@@ -937,24 +875,6 @@ def convert_date(table, title, tab_len_scale):
     table[title] = Series(raw_date)
     return table
 
-
-def check_date(lst, erro_count, erro_rpt):
-    for dates in lst:
-        try:
-            c = dates.split(";")[0]
-            i = dates.split(";")[1]
-            if date(int(i[:4]), int(i[4:6]), int(i[6:])) <= datetime.date.today() and date(int(i[:4]), int(i[4:6]), int(i[6:])) - date(int(c[:4]), int(c[4:6]), int(c[6:])) >= timedelta(0):
-                continue
-            else:
-                erro_count += 1
-                erro_rpt.writelines(str(erro_count) + ". " + str(c) + " " + str(i) + ":采集日期或鉴定日期错误\n")
-        except ValueError:
-            erro_count += 1
-            erro_rpt.writelines(str(erro_count) + ". " + str(c) + " " + str(i) + ":采集日期或鉴定日期可能存在错误\n")
-        except (AttributeError, TypeError):
-            erro_count += 1
-            erro_rpt.writelines(str(erro_count) + ". " + str(c) + " " + str(i) + ":采集日期或鉴定日期存在错误\n")
-    return erro_count
 
 
 def convert_option(table, attr):
@@ -1035,4 +955,3 @@ def check_herbariumcode(table, title):
     return table
 
 
-run()
