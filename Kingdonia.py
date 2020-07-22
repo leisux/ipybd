@@ -1,30 +1,27 @@
 # -*- coding: utf-8 -*-
 # Based on python 3
 
-from os import walk as os_walk
-from os.path import splitext as os_path_splitext
-from os.path import join as os_path_join
-from os.path import dirname as os_path_dirname
-from os import popen as os_popen
-from os import rename as os_rename
-from sys import argv as sys_argv
-from re import compile as re_compile
-from re import split as re_split
-from shutil import move as shutil_move
 from collections import Counter
-from datetime import date
-from datetime import timedelta
-from time import strptime as time_strptime
-from pandas import read_excel
-from pandas import Series
-from pandas import isnull
-from pandas import concat
-from numpy import NaN
-from PIL.Image import open as Image_open
-from PIL.Image import ANTIALIAS
+from datetime import date, timedelta
+from json import dumps as json_dumps
 from json import load as json_load
 from json import loads as json_loads
-from json import dumps as json_dumps
+from os import popen as os_popen
+from os import rename as os_rename
+from os import walk as os_walk
+from os.path import dirname as os_path_dirname
+from os.path import join as os_path_join
+from os.path import splitext as os_path_splitext
+from re import compile as re_compile
+from re import split as re_split
+from shutil import copy as shutil_copy
+from time import strptime as time_strptime
+from numpy import NaN
+from pandas import Series, concat, isnull, read_excel
+from PIL.Image import ANTIALIAS
+from PIL.Image import open as Image_open
+from tqdm import tqdm
+
 
 class BlockError(Exception):
     pass
@@ -32,38 +29,47 @@ class BlockError(Exception):
 
 def extract_file(excel, dir, dst):
     while True:
-        title = input("请输入提取图片所依据的字段名：\n")
+        title = input("\n请输入提取图片所依据的列名：\n\n")
         try:
             table = read_excel(excel, converters={title: str})
             barcode = list(table[title])
             break
         except KeyError:
-            print("\n输入的列名不在当前 Excel 表格之中，请重新输入")
+            print("\n输入的列名不在当前 Excel 表格之中，请重新输入\n")
             continue
     rdf = os_walk(dir)
     file_dict = {}
-    for root, dirs, files in rdf:
+    for root, _, files in rdf:
         for file in files:
             name_ext = os_path_splitext(file)
-            if name_ext[1].lower() in (".jpg", ".jpeg", ".tiff", ".tif", ".png"):
+            if name_ext[1].lower() in (".jpg", ".jpeg", ".tiff", ".tif", ".png", ".pdf"):
                 img_path = os_path_join(root, file)
                 file_dict[name_ext[0]] = img_path
             else:
                 continue
     no_img_barcode = []
-    for b in barcode:
+    print("\n")
+    for b in tqdm(barcode, desc="文件提取", ascii=True):
         try:
-            shutil_move(file_dict[b], dst)
+            shutil_copy(file_dict[b], dst)
         except KeyError:
             no_img_barcode.append(b)
             continue
+        #except OSError:
+        #   print(b + "数据重复！\n")
+        #   continue
 
-    print("以下条形码未找到照片：\n\n")
+    print("\n以下条形码未找到照片：\n")
     for n in no_img_barcode:
         print(n, end=", ")
 
 
 def rename(dir):
+    """
+    dir:图片文件的目录地址，并不强制为图片文件的根目录
+    return：返回 None，函数只会识别图片中的条形码，并以该条形码重命名图片文件名
+    care：该程序会将同一目录下相应图片文件的 Nikon nef 文件一并重命名，但尚不支持其他raw格式文件，条码识别引擎来自于 zbar
+    """
     bar_error = []
     repeat_error = []
     cnt_ident = 0
@@ -75,9 +81,9 @@ def rename(dir):
         nonlocal cnt_ident
         nonlocal cnt_error
         nonlocal cnt_repeat
-        tmp_img = os_path_dirname(sys_argv[0]) + "/./zbar/tmp.jpg"
-        zbarimg = os_path_dirname(sys_argv[0]) + "/./zbar/bin/zbarimg.exe"
-        bar_pattern = re_compile(":([A-Z0-9]+)\n")
+        tmp_img = os_path_dirname(__file__) + "/./zbar/tmp.jpg"
+        zbarimg = os_path_dirname(__file__) + "/./zbar/bin/zbarimg.exe"
+        bar_pattern = re_compile(r":([A-Z0-9]+)\n")
         try:
             if " " in raw_img_path:
                 raise BlockError
@@ -90,13 +96,18 @@ def rename(dir):
                     with open(tmp_img, "w") as pic:
                         rm.save(pic)
                     barcode_name = bar_pattern.findall(
-                        os_popen("%s %s %s" % (zbarimg, "-q", tmp_img)).read())[0] + ".jpg"
+                        os_popen("%s %s %s" % (zbarimg, "-q", tmp_img)).read())[0]
                 else:
                     barcode_name = bar_pattern.findall(
-                        os_popen("%s %s %s" % (zbarimg, "-q", raw_img_path)).read())[0] + ".jpg"
+                        os_popen("%s %s %s" % (zbarimg, "-q", raw_img_path)).read())[0]
                 img.close()
                 new_img_path = os_path_join(path, barcode_name)
-                os_rename(raw_img_path, new_img_path)
+                os_rename(raw_img_path, new_img_path + file_format)
+                try:
+                    raw_img_path = os_path_join(path, os_path_splitext(file)[0]+".nef")
+                    os_rename(raw_img_path, new_img_path+".nef")
+                except:
+                    pass
                 cnt_ident += 1
         except IndexError:
             bar_error.append(raw_img_path)
@@ -111,11 +122,11 @@ def rename(dir):
             cnt_ident += 1
         return cnt_ident, cnt_error, cnt_repeat
 
-    print("\n正在批处理图片，请耐心等待...")
     for path, dirs, files in pdf:
         #print(path, dirs, files)
-        for file in files:
-            if os_path_splitext(file)[1].lower() in (".jpg", ".jpeg", ".tiff", ".tif", ".png"):
+        for file in tqdm(files, desc="图片条形码识别", ascii=True):
+            file_format = os_path_splitext(file)[1].lower()
+            if file_format in (".jpg", ".jpeg", ".tiff", ".tif", ".png"):
                 raw_img_path = os_path_join(path, file)
                 try:
                     ident(raw_img_path)
@@ -154,7 +165,6 @@ def dwc_to_kingdonia(excel, style):
                         "菌盖", "菌柄", "菌肉", "气味", "当地名称", "野外鉴定", "organismRemarks", "occurrenceRemarks", "scientificName", 
                         "typeStatus", "identifiedBy", "dateIdentified", "associatedMedia", 
                         "molecularMaterialSample", "seedMaterialSample", "livingMaterialSample"]
-    print("\n开始按照 DWC 标准转换表头...\n")
     table = fields_to_dwc(excel)
     try:
         dwc_columns = list(table.columns)
@@ -168,36 +178,29 @@ def dwc_to_kingdonia(excel, style):
         return print("数据重组失败，请检查原Excel列名是否有重复语义的表头\n")
     tab_length = len(table)
     tab_len_scale = range(tab_length)
-    print("开始经纬度的检查与转换...\n")
     table = convert_coordinate(table, tab_length, tab_len_scale)
-    print("\033[32m程序会将任意书写格式的经纬度转化为十进制经纬度，并对错误的经纬度使用英文“!”标示。\033[0m\n")
-    print("开始数值检查...\n")
+    print("\n程序会将任意书写格式的经纬度转化为十进制经纬度，并对错误的经纬度使用英文“!”标示。\n")
     table = convert_number(table, "individualCount", form="int", max_num=30)
     table = convert_number(table, "minimumElevationInMeters", title2="maximumElevationInMeters", min_num=-1000, max_num=7000)
-    print("\033[32m目前程序尚无法准确切分和标识“-100-1000m”这样的区间数据，但可以准确切分“100-1000m”，请核查时予以注意\n\033[0m")
-    print("开始采集人的检查与转换...\n")
-    print("\033[32m程序会自动规范英文采集人的写法，并且会统一以英文“,”分割各个采集人，对于采集人书写中\
-        \n有明显错误字符的书写，会以英文“!”进行标示。\033[0m\n")
+    print("\n目前程序尚无法准确切分和标识“-100-1000m”这样的区间数据，但可以准确切分“100-1000m”，请核查时予以注意\n")
     table = convert_colloctor(table)
-    print("开始日期的检查与转换...\n")
+    print("\n程序会自动规范英文采集人的写法，并且会统一以英文“,”分割各个采集人，对于采集人书写中\
+        \n有明显错误字符的书写，会以英文“!”进行标示。\n")
     table = convert_date(table, "eventTime", tab_len_scale)
     table = convert_date(table, "dateIdentified", tab_len_scale)
-    print("\033[32m程序会对日期的任意书写格式以及日期的真实性进行转换和校验\
+    print("\n程序会对日期的任意书写格式以及日期的真实性进行转换和校验\
         \n将精确到日的日期，如”201212“转化为“2012-12-12 00:00:00”\
         \n将精确到月的日期，如“201212”转换为“2012-12-01 00:00:01”\
         \n将精确到年的日期，如“2012”转换为“2012-01-01 00:00:02”\
-        \n以便于将日期直接应用于统计与计算。\033[0m\n")
-    print("开始行政区划的检查与转换...\n")
+        \n以便于将日期直接应用于统计与计算。\n")
     table = convert_div(table)
-    print("\033[32m程序只会自动检查和转换中国县级及其以上行政区的各类中文写法，但目前尚无法处理英文行政区划\
+    print("\n程序只会自动检查和转换中国县级及其以上行政区的各类中文写法，但目前尚无法处理英文行政区划\
         \n程序对中国中文行政区划的自动处理已经具备极高的可用性，但并不能保证百分之百正确，对于有疑议的处理通常\
         \n会以英文“！”标注。但对于“碧江”、“路南县”（云南省）这种孤立的现已撤销的行政区划，在其他省市区还有同\
         \n名或者其他地区名称被包括其中的行政区名称（中国,贵州省,铜仁市,碧江区，中国,湖南省,益阳市,南县）,程序\
-        \n一定会出错且无法给出提示，这种情况虽然极少，但在人工核查时还需予以注意！\033[0m\n")
-    print("开始重新组织拉丁学名...\n")
+        \n一定会出错且无法给出提示，这种情况虽然极少，但在人工核查时还需予以注意！\n")
     table = convert_latinname(table, "scientificName")
-    print("\033[32m目前程序只会对拉丁名进行去命名人处理，并不会核查拼写错误，后续会提出基于TPL的名称比对结果。\033[0m\n")
-    print("开始单选字段的检查与转换...\n")
+    print("\n目前程序只会对拉丁名进行去命名人处理，并不会核查拼写错误，后续会给出基于TPL的名称比对结果。\n")
     table = convert_option(table, "habit")
     table = convert_option(table, "频度")
     table = convert_option(table, "typeStatus")
@@ -205,27 +208,25 @@ def dwc_to_kingdonia(excel, style):
     table = convert_option(table, "disposition")
     table = convert_option(table, "molecularMaterialSample")
     table = convert_option(table, "classification")
-    print("开始资源编号的检查...\n")
     table = check_catalognumber(table, "catalogNumber")
     table = check_catalognumber(table, "otherCatalogNumbers")
-    print("\033[32m程序会对重复的/长度大于13位/编码中有非数字和字母的编号进行“!”标识\033[0m\n")
-    print("开始检查馆代码...\n")
+    print("\n程序会对重复的/长度大于13位/编码中有非数字和字母的编号进行“!”标识\n")
     table = check_herbariumcode(table, "institutionCode")
-    print("\033[32m程序会对长度大于6位/非纯字母的字符进行标示，且会自动将小写字母转换为大写\033[0m\n")
+    print("\n程序会对长度大于6位/非纯字母的字符进行标示，且会自动将小写字母转换为大写\n")
     if style == "DWC":
         table = table.reindex(columns=dwc_columns)
         print("正在输出处理结果，数据量太大时，可能需要稍作等待...\n")
         table.to_excel(os_path_join(os_path_dirname(excel), "check.xlsx"), index=False)
-        print("成功执行数据检查与转换，请前往原文件所在路径，查看输出的\033[33m check.xlsx \033[0m数据表\
+        print("成功执行数据检查与转换，请前往原文件所在路径，查看输出的 check.xlsx 数据表\
         \n无法自动转换的错误数据已使用 '!' 进行标识，请打开转换后的 Excel 进行人工核查！！！\
-        \n\033[33m对于各项数据的处理方式，请查看上述绿色字体说明。\033[0m \n\n")
+        \n对于各项数据的处理方式，请查看上述说明。 \n\n")
     elif style == "Kingdonia":
         print("按照 Kingdonia 数字标本系统的标准取舍数据列...\n")
         table = table.reindex(columns=kingdonia_columns)
         print("开始使用默认值填充必填项...\n")
         table.fillna({"typeStatus":"not type", "seedMaterialSample":"0", "livingMaterialSample":"0", "identifiedBy":"缺失",  "habitat":"无", 
         "dateIdentified":"0000-01-01 00:00:00", "individualCount":"0", "molecularMaterialSample":"无", "decimalLatitude":0, "decimalLongitude":0}, inplace=True)
-        with open(os_path_dirname(sys_argv[0]) + "/./Columns.json", "r", encoding="utf-8") as f:
+        with open(os_path_dirname(__file__) + "/./Columns.json", "r", encoding="utf-8") as f:
             merger_columns = json_load(f)["ComplexColumns"]
         for k, v in merger_columns.items():
             if k == "identifications":
@@ -252,9 +253,9 @@ def dwc_to_kingdonia(excel, style):
             table.drop(v, axis=1, inplace=True)
         print("正在输出处理结果，数据量太大时，可能需要稍作等待...\n")
         table.to_excel(os_path_join(os_path_dirname(excel), "kingdonia.xlsx"), index=False)
-        print("成功执行数据检查与转换，请前往原文件所在路径，查看输出的\033[33m Kingdonia.xlsx \033[0m数据表\
+        print("成功执行数据检查与转换，请前往原文件所在路径，查看输出的 Kingdonia.xlsx 数据表\
         \n无法自动转换的错误数据已使用 '!' 进行标识，请打开转换后的 Excel 进行人工核查！！！\
-        \n\033[33m对于各项数据的处理方式，请查看上述绿色字体说明。\033[0m \n\n")
+        \n对于各项数据的处理方式，请查看上述绿色字体说明。 \n\n")
     else:
         raise ValueError
     
@@ -272,14 +273,14 @@ def fields_to_dwc(excel):
         columns_converters[c] = str
     table = read_excel(excel, converters=columns_converters)
     #print(table.columns)
-    dwc = read_excel(os_path_dirname(sys_argv[0]) + "/./term_versions.xlsx")
+    dwc = read_excel(os_path_dirname(__file__) + "/./term_versions.xlsx")
     raw_to_std = dict.fromkeys(table.columns)
     hand_to_std = []
-    with open(os_path_dirname(sys_argv[0]) + "/./Columns.json", "r", encoding="utf-8") as f:
+    with open(os_path_dirname(__file__) + "/./Columns.json", "r", encoding="utf-8") as f:
         remap_columns = json_load(f)
     basic_columns = sorted(list(remap_columns["SimpleColumns"].keys()))
     #检查表头列名是否已有对应转换关系
-    for w in raw_to_std:
+    for w in tqdm(raw_to_std, desc="自动分析和对应 DWC 列名", ascii=True):
         if w in remap_columns["SimpleColumns"]:
             raw_to_std[w] = w
         elif w in dwc[dwc.status=="recommended"]["label"].values:
@@ -297,20 +298,23 @@ def fields_to_dwc(excel):
         if raw_to_std[w] == None:
             hand_to_std.append(w)
     # 处理未能找到对应关系的表头列名
+    print(raw_to_std)
     if hand_to_std != []:
+        print("\n\n若干 Excel 列表名未能自动匹配 DWC 字段名，你可以按照下方提示手动指定/分割/合并列表：\n\n")
         for n, v in enumerate(basic_columns):
             strings = str(n+1) + ". " + v
             if (n+1)%3 > 0:
                 print(strings.ljust(25), end="\t")
             else:
                 print(strings.ljust(25), end="\n")
-        print("\n\n若干 Excel 列表名未能自动匹配标准字段名，你可以对这些列执行以下操作：\n\n")
-        print("【1】指定该列的标准列名：例如要指定 Excel 中“区县”列的标准名，可以参考上述标准名称输入序号“7”或者“county”；\
+
+        print("\n\n【1】指定该列的标准列名：例如要指定 Excel 中“区县”列的标准名，可以参考上述标准名称输入序号“7”或者“county”；\
             \n     如果上述序号没有对应的 Darwin Core 列名，您可以直接输入符合 DWC 要求的字符，比如“eventDate”\
-            \n     有关 DWC 囊括的字段及其意义请自行访问 \033[32m http://rs.tdwg.org/dwc/terms/\033[0m 查看。\
+            \n     有关 DWC 囊括的字段及其意义请自行访问 http://rs.tdwg.org/dwc/terms/ 查看。\
             \n\n【2】拆分该列为多列： 例如要拆分 Excel 中的“省市”列为“stateProvince”、“city”两列，需输入表达式\
             \n     “stateProvince,city”，其中的“,”为原表中省、市之间的实际分隔符，如果数据表中实际是以“;”分割，\
-            \n     请将上述“,”替换为“;”，拆分而成的新列名比如上述“stateProvince, city”也必须符合 DWC 标准。\
+            \n     请将上述“,”替换为“;”，拆分而成的新列名比如上述“stateProvince, city”也必须符合 DWC 标准，\
+            \n     如果给定的表达式不符合任何一条数据的实际情况，则无法正确切分。\
             \n\n【3】将该列与其他列合并：例如需要将 Excel 中的“种加词”列与“属”、“种下等级” 合并为新列“scientificName”，\
             \n     则需输入表达式“属 种加词 种下等级=scientificName”，其中 scientificName 为符合 Darwin Core 规范的字\
             \n     段名，各个列名之间的符号则为合并后，值之间的分隔符，本例按照学名规范，使用的是空格作为分隔符。\
@@ -352,6 +356,8 @@ def fields_to_dwc(excel):
                     else:
                         print("你选择的列名与表头中其他列名指向冲突，您可以使用表达式拆分或合并该列/忽视该列/重新指向。")
                 elif len(i)>0 and i[-1].isalpha():
+                    if "=" not in i:
+                        i = "".join([clm, "=", i])
                     value = merge_or_split_columns(table, i, raw_to_std, basic_columns, filter=True)
                     if type(value) == str:
                         print(value)
@@ -362,22 +368,41 @@ def fields_to_dwc(excel):
                                 hand_to_std[field] = "skip"
                         break
 
-    with open(os_path_dirname(sys_argv[0]) + "/./Columns.json", "w", encoding="utf-8") as js:
+    with open(os_path_dirname(__file__) + "/./Columns.json", "w", encoding="utf-8") as js:
         js.write(json_dumps(remap_columns, ensure_ascii=False))
     table.rename(columns=raw_to_std, inplace=True)
     try:
         for title in to_json_clm:
             table[title] = Series([json_dumps(value, ensure_ascii=False) if value!={} else None for value in table[title]])
     except UnboundLocalError:
-        print("/n表头均可自动进行名称变换！/n")
+        print("\n头均可自动进行名称变换！\n")
     return table
 
 
 def merge_or_split_columns(table, txt, raw_to_std, basic_columns, filter=True):
-    dwc = read_excel(os_path_dirname(sys_argv[0]) + "/./term_versions.xlsx")
-    elements = re_compile("([\u4e00-\u9fa5a-zA-Z_]+)([^\u4e00-\u9fa5a-zA-z]*)").findall(txt)
+    dwc = read_excel(os_path_dirname(__file__) + "/./term_versions.xlsx")
+    elements = re_compile(r"([\u4e00-\u9fa5a-zA-Z%（）()²/]+)([^\u4e00-\u9fa5a-zA-z%（）()²/]*)").findall(txt)
+    while True: #兼容列名中的反斜杠和下划线
+        try:
+            if elements[0][1] == "=" or elements[-2][1] == "=":
+                break
+            else:
+                elements = re_compile(r"([\u4e00-\u9fa5a-zA-Z_\\]+)([^\u4e00-\u9fa5a-zA-z]*)").findall(txt)
+                break
+        except IndexError:
+            return "表达式错误，请重新输入：\n"
     titles = [e[0] for e in elements]
     separators = [e[1] for e in elements[0:-1]]
+    if elements[0][1] == "=":  #兼容列名中的空格
+        if titles[0] == re_compile(r"([\u4e00-\u9fa5a-zA-Z_\\\s]+)=").findall(txt)[0]:
+            pass
+        else:
+            titles[0] = re_compile(r"([\u4e00-\u9fa5a-zA-Z_\\\s]+)=").findall(txt)[0]
+    elif elements[-2][1] == "=":
+        if titles[-1] == re_compile(r"=([\u4e00-\u9fa5a-zA-Z_\\\s]+)").findall(txt)[0]:
+            pass
+        else:
+            titles[-1] = re_compile(r"=([\u4e00-\u9fa5a-zA-Z_\\\s]+)").findall(txt)[0]
     if separators[-1] == "=":
         if len(set(titles[0:-1])) < len(titles)-1:
             return "表达式重复，请重新录入合并表达式：\n"
@@ -393,7 +418,6 @@ def merge_or_split_columns(table, txt, raw_to_std, basic_columns, filter=True):
             for n,t in enumerate(titles):
                 if t == merge_column:
                     titles[n] = "xuzhoufeng"
-                    break
             del raw_to_std[merge_column]
             raw_to_std["xuzhoufeng"] = None
         table.rename(columns=dict([(titles[0], merge_column)]), inplace=True)
@@ -424,7 +448,7 @@ def merge_or_split_columns(table, txt, raw_to_std, basic_columns, filter=True):
         separators.sort(key=len, reverse=True)
         p = "|".join(separators)
         try:
-            table = concat([table, table[split_column].str.split(p, n=len(titles)-2, expand=True)], axis=1)
+            table = concat([table, table[split_column].str.split(p, n=len(titles)-2, expand=True)], axis=1) #字段最终拆分出的列数将依据数据列按拆分符实际可拆分出的列，而非表达式给出的列
             del table[split_column]
             table.rename(columns=dict([(n, v) for n,v in enumerate(titles[1:])]), inplace=True)
         except:
@@ -463,7 +487,7 @@ def convert_number(table, title, title2=None, form="float", min_num=0, max_num=8
         lst_title = [pattern.findall(value) if not isnull(value) else [] for value in table[title]]
         value_title = []
         if title2 == None:
-            for i, v in enumerate(lst_title):
+            for i, v in enumerate(tqdm(lst_title, desc=title, ascii=True)):
                 if len(v) == 1 and min_num<= float(v[0]) <= max_num:
                     value_title.append(float(v[0]))
                 else:
@@ -474,7 +498,7 @@ def convert_number(table, title, title2=None, form="float", min_num=0, max_num=8
             table[title] = Series(value_title)
         else:
             lst_title2 = [pattern.findall(value) if not isnull(value) else [] for value in table[title2]]
-            for p, q in  zip(lst_title, lst_title2):
+            for p, q in zip(tqdm(lst_title, desc=title, ascii=True), tqdm(lst_title2, desc=title2, ascii=True)):
                 merge_value = p+q
                 if len(merge_value) == 2 and min_num<= float(merge_value[0]) <= max_num and min_num<= float(merge_value[1]) <= max_num:
                     if float(merge_value[0])<= float(merge_value[1]):
@@ -509,9 +533,9 @@ def convert_latinname(table, title):
     """
     lst_ident = list(table[title])
     dic_ident = dict.fromkeys(lst_ident)
-    species_pattern = re_compile("\\b([A-Z][a-zàäçéèêëöôùûüîï-]+)\s?([×X])?\s?([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s?(.*)")
-    subspecies_pattern = re_compile("(.*?)\s?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)\s?([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)\s?([(（A-Z].*)")
-    for w in dic_ident:
+    species_pattern = re_compile(r"\b([A-Z][a-zàäçéèêëöôùûüîï-]+)\s?([×X])?\s?([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s?(.*)")
+    subspecies_pattern = re_compile(r"(.*?)\s?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)\s?([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)\s?([(（A-Z].*)")
+    for w in tqdm(dic_ident, desc=title, ascii=True):
         try:
             species_split = species_pattern.findall(w)[0]
         except:
@@ -542,9 +566,9 @@ def convert_div(table):
     lst_region = list(table["div"])
     dic_region = dict.fromkeys(lst_region)
     new_region = []
-    dfm_stdregion = read_excel(os_path_dirname(sys_argv[0]) + "/./xzqh.xlsx")["MergerName"]
+    dfm_stdregion = read_excel(os_path_dirname(__file__) + "/./xzqh.xlsx")["MergerName"]
     #country_split = re_compile(r"([\s\S]*?)::([\s\S]*)")
-    for raw_region in dic_region:
+    for raw_region in tqdm(dic_region, desc="行政区划", ascii=True):
         score = (0, 0)  #分别记录匹配的字数和匹配项的长度
         region = raw_region.rstrip(":")
         for stdregion in dfm_stdregion:
@@ -580,7 +604,7 @@ def convert_div(table):
             elif each_score > score[0]:
                 score = each_score, len(stdregion)
                 dic_region[raw_region] = stdregion
-        if score == (0, 0):  #如果没有匹配到，是中国的行政区，则夹住！标识
+        if score == (0, 0):  #如果没有匹配到，是中国的行政区，！标识
             if "中国" in raw_region:
                 dic_region[raw_region] = "!" + raw_region
             else:
@@ -604,12 +628,12 @@ def convert_coordinate(table, tab_length, tab_len_scale):
     raw_coordinate_list = list(table["经纬度"])
     new_coordinate_lng = [None]*tab_length
     new_coordinate_lat = [None]*tab_length
-    coordinate_pattern_1 = re_compile("[NESWnesw][^A-Za-z,，；;]*[0-9][^A-Za-z,，；;]+")                               #NSWE 前置经纬度
-    coordinate_pattern_2 = re_compile("[0-9][^A-Za-z,，；;]+[NESWnesw]")                               #NSWE 后置经纬度
+    coordinate_pattern_1 = re_compile(r"[NESWnesw][^A-Za-z,，；;]*[0-9][^A-Za-z,，；;]+")                               #NSWE 前置经纬度
+    coordinate_pattern_2 = re_compile(r"[0-9][^A-Za-z,，；;]+[NESWnesw]")                               #NSWE 后置经纬度
     coordinate_pattern_3 = re_compile(r"[+-]?\d+[\.\d]*")
     coordinate_pattern_num = re_compile(r"[\d\.]+")
-    coordinate_pattern_NSEW = re_compile("[NESWnesw]")
-    for i in tab_len_scale:
+    coordinate_pattern_NSEW = re_compile(r"[NESWnesw]")
+    for i in tqdm(tab_len_scale, desc="经纬度", ascii=True):
         try:
             tem_coordinate_element = coordinate_pattern_1.findall(raw_coordinate_list[i])      #提取坐标，并将其列表化，正常情况下将有两个元素组成列表
             if len(tem_coordinate_element) != 2:                                               #通过小数点个数和列表长度初步判断是否是合格的坐标
@@ -709,22 +733,22 @@ def convert_coordinate(table, tab_length, tab_len_scale):
     return table
 
 
-def convert_colloctor(table):
+def convert_colloctor(table, title="recordedBy"):
     """
     table: 要处理的dwc标准的 dataframe 数据表
     return: 返回table, 并将dwc采集人统一转换为以英文逗号分隔的人名字符串，可中英文人名混排“徐洲锋,A. Henry,徐衡”，并以 “!“ 标识可能错误写法的字符串
     care: 无法处理“徐洲锋 洪丽林 徐衡” 这样单以空格切分单中文人命字符串
     """
-    raw_col = list(table["recordedBy"])
+    raw_col = list(table[title])
     dic_col = {}.fromkeys(raw_col)
-    for rec in dic_col:
+    for rec in tqdm(dic_col, desc=title, ascii=True):
         try:
-            rec_lst = [name.strip().title() for name in re_split("[,，;；、\&。][\s]*", rec)]
+            rec_lst = [name.strip().title() for name in re_split(r"[,，;；、\&。][\s]*", rec)]
             rmv_elm = []
             for i, w in enumerate(rec_lst[:]):
                 if len(w) < 3 and w[-1] in [".", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "K", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]:
-                    rec_lst[i] = rec_lst[i-1] + " " + w[0] + "."  ## 解决类似 A.Henry  这样的人名
-                    rmv_elm.append(rec_lst[i-1])
+                    rec_lst[i+1] = w[0] + ". "+ rec_lst[i+1]  ## 解决类似 A.Henry  这样的人名
+                    rmv_elm.append(rec_lst[i+1])
             dic_col[rec] = ",".join([s for s in rec_lst if s not in rmv_elm])
         except:
             if isnull(rec):
@@ -739,9 +763,13 @@ def convert_colloctor(table):
 def convert_date(table, title, tab_len_scale):
     raw_date = list(table[title])
     #print(raw_date)
-    dmy_pattern = re_compile("[A-Za-z]+|[0-9]+")
-    er_date_dict = {"JAN":1, "FEB":2, "MAR":3, "APR":4, "APRI":4, "MAY":5, "JUN":6, "JUL":7, "AUG":8, "SEP":9, "SEPT":9, "OCT":10, "NOV":11, "DEC":12,"Jan":1, "Feb":2, "Mar":3, "Apr":4, "Apri":4, "May":5, "Jun":6, "Jul":7, "Aug":8, "Sep":9, "Sept":9, "Oct":10, "Nov":11, "Dec":12, "I":1, "II":2, "III":3, "IV":4, "V":5, "VI":6, "VII":7, "VIII":8, "IX":9, "X":10, "XI":11, "XII":12}
-    for j in tab_len_scale:
+    dmy_pattern = re_compile(r"[A-Za-z]+|[0-9]+")
+    er_date_dict = {"JAN":1, "FEB":2, "MAR":3, "APR":4, "APRI":4, "MAY":5, "JUN":6, "JUL":7, "AUG":8, "SEP":9, "SEPT":9, 
+                    "OCT":10, "NOV":11, "DEC":12,"Jan":1, "Feb":2, "Mar":3, "Apr":4, "Apri":4, "May":5, "Jun":6, "Jul":7, 
+                    "Aug":8, "Sep":9, "Sept":9, "Oct":10, "Nov":11, "Dec":12, "January":1, "February":2, "March":3, "April":4, 
+                    "June":6, "July":7, "August":8, "September":9, "October":10, "November":11, "December":12, "I":1, "II":2, 
+                    "III":3, "IV":4, "V":5, "VI":6, "VII":7, "VIII":8, "IX":9, "X":10, "XI":11, "XII":12}
+    for j in tqdm(tab_len_scale, desc=title, ascii=True):
         try:
             timestamp = time_strptime(raw_date[j], "%Y-%m-%d %H:%M:%S")
         except (TypeError,ValueError):
@@ -880,10 +908,10 @@ def convert_date(table, title, tab_len_scale):
 def convert_option(table, attr):
     goals = list(table[attr])
     dic_values = dict.fromkeys(goals)
-    with open(os_path_dirname(sys_argv[0]) + "/./options.json", "r", encoding="utf-8") as o:
+    with open(os_path_dirname(__file__) + "/./options.json", "r", encoding="utf-8") as o:
         std_values = json_load(o)
     ls_std_values = sorted(list(std_values[attr].keys()))
-    for key in dic_values:
+    for key in tqdm(dic_values, desc=attr, ascii=True):
         if key in ls_std_values:
             dic_values[key] = key
         else:
@@ -895,7 +923,7 @@ def convert_option(table, attr):
                 if isnull(key):
                     continue
                 else:
-                    print(str(key) + "=>不是标准的属性值，请将其对应至以下可选值中的某一个:\n")
+                    print("".join(["\n\n", str(key), "=>不是标准的属性值，请将其对应至以下可选值中的某一个:\n"]))
                     for n, m in enumerate(ls_std_values):
                         strings = str(n+1) + ". " + m
                         if (n+1)%3 > 0:
@@ -903,7 +931,7 @@ def convert_option(table, attr):
                         else:
                             print(strings.ljust(25), end="\n\n")
                     while True:
-                        n = input("\n\n请输入对应的阿拉伯数字，无法对应请输入数字\033[1;35;43m 0 \033[0m:\n\n")
+                        n = input("\n\n请输入对应的阿拉伯数字，无法对应请输入数字 0 :\n\n")
                         if n == '0':
                             dic_values[key] = "!" + key
                             break
@@ -915,7 +943,7 @@ def convert_option(table, attr):
                             except:
                                 print("\n输入的字符有误...\n")
     
-    with open(os_path_dirname(sys_argv[0]) + "/./options.json", "w") as f:
+    with open(os_path_dirname(__file__) + "/./options.json", "w") as f:
         f.write(json_dumps(std_values, ensure_ascii=False))
     table[attr] = Series([dic_values[w] for w in goals])
     return table
@@ -924,7 +952,7 @@ def convert_option(table, attr):
 def check_catalognumber(table, title):
     barcodes = list(table[title])
     barcodes_rpt = Counter(barcodes)
-    for sequence, barcode in enumerate(barcodes):
+    for sequence, barcode in enumerate(tqdm(barcodes, desc=title, ascii=True)):
         if isnull(barcode):
             continue
         elif barcode.isalnum() and len(barcode) < 14:
@@ -940,7 +968,7 @@ def check_catalognumber(table, title):
 
 def check_herbariumcode(table, title):
     codes = list(table[title])
-    for num, code in enumerate(codes):
+    for num, code in enumerate(tqdm(codes, desc=title, ascii=True)):
         try:
             if code.isalpha() and len(code) < 6:
                 if code.isupper():
@@ -953,5 +981,3 @@ def check_herbariumcode(table, title):
             continue
     table[title] = Series(codes)
     return table
-
-

@@ -1,16 +1,10 @@
-# -*- coding: utf-8 -*-
-# Based on python 3
-
-from os import system as os_system
+from ipybd.std_table_terms import PlantSpecimenTerms
+from ipybd.std_table_objects import PlantSpecimen
+from os.path import dirname as path_dirname
+from os.path import join as path_join
 from tkinter import Tk
 from tkinter.filedialog import askdirectory, askopenfilename
-import _locale
-import CVH
 import Kingdonia
-
-_locale._getdefaultlocale = (lambda *args: ['en_US', 'utf8'])
-
-os_system("") #解决windows 10 cmd 命名行无法显示彩色文本的问题，神经质的一个方式竟然可行！
 
 
 def main():
@@ -21,9 +15,26 @@ def main():
     start = "y"
     while start == "y":
         opr = input(
-            "\n请输入对应的数字，回车后选定所要进行的操作：\n\n【1】图片条码识别并命名\t\t【2】图片提取\t\t【3】Excel 数据标准化\
-            \n\n【4】Excel 标本数据转 Kingdonia 输入格式\t\t【5】Kingdonia 输出格式转 CVH 格式\n\n")
-        if opr == "1":
+            "\n请输入对应的数字，回车后选定所要进行的操作：\n\n\
+            【1】全表执行自动标准化\t\t【2】标记重复数据【】\
+            【2】学名拼写检查\t\t【3】获取学名的分类阶元\n\n\
+            【4】获取学名的接受名\t\t【5】获取学名的异名【6】获取学名的文献出处\n\n\
+            【7】获取学名的分布地点【8】获取学名的标本影像\t\t\n\n\
+            \n\
+            【9】经纬度清洗\t\t【10】中国行政区划清洗\t\t【11】日期清洗\
+            \n\
+            【9】识别图片条码并以此命名图片\t\t【10】根据特定的文件名列表批量提取图片\n\n\
+            \n\
+            【10】表格转 Kingdonia 输入格式\t\t【11】表格转 CVH 数据格式\n\n")
+        if opr == "3":
+            print("\n请选择需要核查的 excel 文件\n\n")
+            excel = askfile()
+            if excel == "":
+                continue
+            print(excel)
+            table = PlantSpecimen(excel, PlantSpecimenTerms)
+            table.to_excel(path_join(path_dirname(excel), "NewTable.xlsx"), index=False)
+        elif opr == "1":
             print("\n请选择图片所在的文件夹，可以包括多层子文件夹，程序会自动忽略非图片文件\n")
             dir = askdir()
             if dir == "":
@@ -44,13 +55,6 @@ def main():
             dst = askdir()
             print(dst)
             Kingdonia.extract_file(excel, dir, dst)
-        elif opr == "3":
-            print("\n请选择需要核查的 excel 文件\n\n")
-            excel = askfile()
-            if excel == "":
-                continue
-            print(excel)
-            Kingdonia.dwc_to_kingdonia(excel, "DWC")
         elif opr == "4":
             print("\n请选择需要核查的 excel 文件\n\n")
             excel = askfile()
@@ -82,5 +86,7 @@ def askfile():
     return askopenfilename()
 
 
+
 if __name__ == "__main__":
-    main()
+    s = PlantSpecimen(r"/Users/xuzhoufeng/Downloads/lbg-不合格.xlsx", PlantSpecimenTerms)
+    s.df.to_excel(r"../testfile/ttt.xlsx")

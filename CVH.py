@@ -4,7 +4,8 @@ Created on Wed Oct 21 14:31:29 2015
 
 @author: Xu Zhoufeng
 """
-
+from tqdm import tqdm
+from tqdm import trange
 from json import loads as json_loads
 from re import compile as re_compile
 from pandas import read_excel
@@ -19,25 +20,27 @@ from os.path import dirname as os_path_dirname
 
 
 def kingdonia_fieds2cvh(excel):
-    table = read_excel(excel)
-    table = bkt_dynamicProperties2cvh(table)
+    table = read_excel(excel, sheet_name="展开数据")
+    #table = bkt_dynamicProperties2cvh(table)
     table = btk_datetime2cvh(table, "eventTime")
     table = btk_datetime2cvh(table, "dateIdentified")
     table = btk_collectors2cvh(table)
-    kda2cvh = {"catalogNumber":"条形码", "institutionCode":"馆代码", "otherCatalogNumbers":"流水号", "lifeStage":"标本状态", "disposition":"库存", "typeStatus":"模式类型", 
-    "recordedBy":"采集人", "recordNumber":"采集号", "eventTime":"采集日期", "country":"国家", "stateProvince":"省市", "county":"区县", 
-    "locality":"小地点", "habitat":"生境", "maximumElevationInMeters":"海拔", "decimalLongitude":"经度", "decimalLatitude":"纬度", 
-    "vernacularName":"中文名", "family":"科名", "属名":"属名", "种加词":"种加词", "命名人":"命名人", "种下等级":"种下等级", "种下命名人":"种下命名人", 
+    table = btk_scientificName2cvh(table, "scientificName")
+    kda2cvh = {"catalogNumber":"条形码", "institutionCode":"馆代码", "otherCatalogNumbers":"流水号", "lifeStage":"标本状态", 
+    "disposition":"库存", "typeStatus":"模式类型", "recordedBy":"采集人", "recordNumber":"采集号", "eventTime":"采集日期", 
+    "country":"国家", "stateProvince":"省市", "county":"区县", "locality":"小地点", "habitat":"生境", "minimumElevationInMeters":"海拔", 
+    "decimalLongitude":"经度", "decimalLatitude":"纬度", "vernacularName":"中文名", "family":"科名", "vernacularFamilyName":"科中文名", 
+    "genus":"属名", "vernacularGenusName":"属中文名", "种加词":"种加词", "命名人":"命名人", "种下等级":"种下等级", "种下命名人":"种下命名人", 
     "identifiedBy":"鉴定人", "dateIdentified":"鉴定日期", "occurrenceRemarks":"备注", "habit":"习性", "individualCount":"份数"}
     table.rename(columns=kda2cvh, inplace=True)
-    table.drop(["minimumElevationInMeters", "preservedLocation", "preservedTime", "dynamicProperties", "associatedMedia", "MaterialSample", "relationshipEstablishedTime", 
-    "classification", "city", "organismRemarks", "种子", "频度", "植物习性"], axis=1, inplace=True)
+    table.drop(["maximumElevationInMeters", "preservedLocation", "preservedTime", "associatedMedia", "molecularMaterialSample", 
+    "identificationID", "relationshipEstablishedTime", "classification", "city", "organismRemarks", "种子", "频度", "植物习性"], axis=1, inplace=True)
     table.to_excel(os_path_join(os_path_dirname(excel), "cvh.xlsx"), index=False)
 
 
 def bkt_dynamicProperties2cvh(table):
     dynamicProperties = list(table["dynamicProperties"])
-    for num, properties in enumerate(dynamicProperties):
+    for num, properties in enumerate(tqdm(dynamicProperties, desc="JSON 转列表", ascii=True)):
         try:
             properties = json_loads(properties)
             if isinstance(properties, dict):
@@ -53,7 +56,7 @@ def bkt_dynamicProperties2cvh(table):
 
 def btk_datetime2cvh(table, title):
     datetimes = list(table[title])
-    for num, dt in enumerate(datetimes):
+    for num, dt in enumerate(tqdm(datetimes, desc=title, ascii=True)):
         if isinstance(dt, datetime):
             dt = str(dt)
         try:
@@ -74,7 +77,7 @@ def btk_datetime2cvh(table, title):
 def btk_collectors2cvh(table):
     recordedby = list(table["recordedBy"])
     btk_userid_pattern = re_compile(r"\|[0-9]+")
-    for num, coll in enumerate(recordedby):
+    for num, coll in enumerate(tqdm(recordedby, desc="去除采集人ID", ascii=True)):
         if coll.startswith("!"):
             continue
         else:
@@ -89,7 +92,7 @@ def btk_collectors2cvh(table):
     return table
 
 
-def btk_scientificName2cvh(table):
+def btk_scientificName2cvh(table, title):
     '''
     函数功能：处理各类手动输入的学名，返回去命名人/分列的学名
     table：需要处理的pandas.dataframe数据表
@@ -107,19 +110,17 @@ def btk_scientificName2cvh(table):
              Psilotrichum ferrugineum (Roxb.) Moq. var. ximengense Y. Y. Qian
              Houpoëa officinalis (Rehd. et E. H. Wils.) N. H. Xia et C. Y. Wu
     '''
-    goals = list(table["scientificName"])
+    goals = list(table[title])
     length = len(table)
-    len_scale = range(length)
-    species_pattern = re_compile('\\b([A-Z][a-zàäçéèêëöôùûüîï-]+)\s?([×X])?\s?([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s?(.*)')
-    subspecies_pattern = re_compile('(.*?)\s?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)\s?([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)\s?([(（A-Z].*)')
+    species_pattern = re_compile(r'\b([A-Z][a-zàäçéèêëöôùûüîï-]+)\s?([×X])?\s?([a-zäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s?(.*)')
+    subspecies_pattern = re_compile(r'(.*?)\s?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)\s?([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)\s?([(（A-Z].*)')
     gen_list = [None]*length
     spec_list = [None]*length
     spec_named_person = [None]*length
     subspec_list = [None]*length
     subspec_named_person = [None]*length
     #useless_word = ['ex','et','al','sp','nov','s','l']
-    for i in len_scale:
-        print(goals[i])
+    for i in trange(length, desc="拉丁名分列", ascii=True):
         try:
             species_split = species_pattern.findall(goals[i])[0]
         except:
@@ -136,8 +137,8 @@ def btk_scientificName2cvh(table):
             spec_named_person[i] = subspec_split[0][0]
             subspec_list[i] = subspec_split[0][1] + " " + subspec_split[0][2]
             subspec_named_person[i] = subspec_split[0][3]
-    del table["scientificName"]
-    table['属名'] = Series(gen_list)
+    del table[title]
+    #table['属名'] = Series(gen_list)
     table['种名'] = Series(spec_list)
     table['命名人'] = Series(spec_named_person)
     table['种下等级'] = Series(subspec_list)
