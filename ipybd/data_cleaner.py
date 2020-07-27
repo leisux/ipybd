@@ -21,48 +21,147 @@ class BioName:
             self.names = [names]
         else:
             self.names = names
-        self.action = {
-                       'stdName':self.get_name,
-                       'colTaxonTree':self.get_col_taxonTree,
-                       'colName':self.get_col_name,
-                       'ipniName':self.get_ipni_name,
-                       'powoName':self.get_powo_name,
-                       'powoAccepted':self.get_powo_accepted,
-                       'colSynonyms':self.get_col_synonyms,
-                       'ipniReference':self.get_ipni_reference,
-                       'powoImages':self.get_powo_images
-                       }
         self.querys = self.build_querys(self.names)
+        self.cache = {'ipni':{}, 'col':{}, 'powo':{}}
         self.sema = asyncio.Semaphore(500)
 
     def get(self, action):
-        self.pbar = tqdm(total=len(self.querys), desc=action, ascii=True)
+        results = self.__build_cache(action)
+        if results:
+            results = self._assemble_result(results)
+        else:
+            results = []
+        return results
+
+    def __build_cache(self, action, querys=None):
+        cache_mapping = {
+                         'stdName':{**self.cache['col'], **self.cache['ipni']},
+                         'colTaxonTree':self.cache['col'],
+                         'colName':self.cache['col'],
+                         'colSynonyms':self.cache['col'],
+                         'ipniName':self.cache['ipni'],
+                         'ipniReference':self.cache['ipni'],
+                         'powoName':self.cache['powo'],
+                         'powoAccepted':self.cache['powo'],
+                         'powoImages':self.cache['powo']
+                }
+        results = {}
+        cache = cache_mapping[action]
+        if cache:
+            if querys:
+                names = querys
+            else:
+                names = self.querys
+            action_func = { # 注意 stdName 的col函数至于元组最后，以避免
+                            # ipni/powo 的结果被其优先解析
+                            'stdName':(self.ipni_name, self.col_name),
+                            'colTaxonTree':self.col_taxontree,
+                            'colName':self.col_name,
+                            'colSynonyms':self.col_synonyms,
+                            'ipniName':self.ipni_name,
+                            'ipniReference':self.ipni_reference,
+                            'powoName':self.powo_name,
+                            'powoAccepted':self.powo_accepted,
+                            'powoImages':self.powo_images
+                           }
+            # 如果存在缓存，则优先利用缓存数据生成结果
+            search_terms = {}
+            for org_name, query in names.items():
+                try:
+                    results[org_name] = self.cache_get(cache[org_name], action_func[action])
+                except KeyError:
+                    # 缓存中不存在 org_name 检索结果时触发
+                    if query:  
+                        # 如果检索词是合法的，加入检索项
+                        search_terms.update({org_name:query})
+        else:
+            if not querys:
+                # 如果没有缓存，只重新执行一次 web 搜索
+                # 搜索前先复制一份 querys ，以避免下方递归陷入无限循环
+                search_terms = self.querys
+        # 未防止 search_terms 不存在，这里的条件判断应放置在后面
+        if not querys and search_terms:
+            # 若检索项是 None, 说明 web 请求是由用户主动发起，可以执行一次递归
+            # 若检索项并非 self.querys，说明 get 请求是由程序本身自动发起，完成后将不再
+            # 继续执行递归
+            self.web_get_cache(action, search_terms)
+            # 这里的递归最多只执行一次
+            sub_results = self.__build_cache(action, search_terms)
+            results.update(sub_results)
+        return results
+
+    def cache_get(self, name, func):
+        try:
+            return func(name)
+        # func 是 tuple 时触发
+        except TypeError:
+            for f in func:
+                try:
+                    # 遇到首个有正常返回值后，停止循环
+                    return self.cache_get(name, f)
+                    break
+                # 若多个 API 返回结果的 keys 通用，这里可能不会触发 KeyError目
+                # 前已知 col 和 ipni/powo 部分keys 通用，且 col 不存在属查询，
+                # family 检索和 species 返回的数据结构也不一致，因此其内部需要
+                # 处理相关 KeyError 错误，与这里的处理回有冲突，因此该函数 func 
+                # 中 col 的处理函数应该至于最后，以避免 ipni/powo 的数据被 col 
+                # 处理函数处理。
+                # 目前这种实现确实不完美，后续需要进一步改进
+                except KeyError:
+                    continue
+
+    def web_get_cache(self, action, search_terms):
+        get_action = {
+                       'stdName':self.get_name,
+                       'colTaxonTree':self.get_col_name,
+                       'colName':self.get_col_name,
+                       'colSynonyms':self.get_col_name,
+                       'ipniName':self.get_ipni_name,
+                       'ipniReference':self.get_ipni_name,
+                       'powoName':self.get_powo_name,
+                       'powoAccepted':self.get_powo_name,
+                       'powoImages':self.get_powo_name
+                       }
+        self.pbar = tqdm(total=len(search_terms), desc=action, ascii=True)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         tasks = [asyncio.ensure_future(
-            self.get_track(self.action[action], self.querys[rawname]))
-            for rawname in self.querys if self.querys[rawname] != None]
+            self.web_get_track(get_action[action], self.querys[rawname]))
+            for rawname in search_terms if self.querys[rawname] != None]
         session = loop.run_until_complete(self.creat_session())
-        result = loop.run_until_complete(asyncio.gather(*tasks))
+        results = loop.run_until_complete(asyncio.gather(*tasks))
         loop.run_until_complete(session.close())
         loop.close()
-        res_len = len(result[0]) - 1
-        results = {}
-        for res in result:
-            results[res[0]] = res[1:]
-        # 无法格式化的原值用英文感叹号标注
+        self.pbar.close()
+        for res in results:
+            try:
+                self.cache[res[-1]][res[0]] = res[1]
+            except TypeError:
+                pass
+
+    def _assemble_result(self, results:dict):
+        result_len = len(list(results.values())[0]) - 1
         for name in self.querys:
+            # 无法格式化的原值用英文!标注
             if self.querys[name] == None:
                 try:
                     results[name] = ["".join(["!", name])]
                 except TypeError:
-                    results[name] = ["".join(["!", str(name)])]
-                results[name].extend([None]*(res_len-1))
-                results[name] = tuple(results[name])
-        self.pbar.close()
+                    if name:
+                        # 如果 name 不是 None, 说明检索词有错误
+                        results[name] = ["".join(["!", str(name)])]
+                    else:
+                        results[name] = [None]
+                results[name].extend([None]*result_len)
+            # 检索无结果的原植，用英文?标注
+            elif name not in results:
+                results[name] = ["".join(["?", name])]
+                results[name].extend([None]*result_len)
+
+            results[name] = tuple(results[name])
         return [results[w] for w in self.names]
 
-    async def get_track(self, func, param):
+    async def web_get_track(self, func, param):
         result = await func(param)
         self.pbar.update(1)
         return result
@@ -70,114 +169,103 @@ class BioName:
     async def creat_session(self):
         return aiohttp.ClientSession()
 
-    async def get_powo_images(self, query):
-        name = await self.check_powo_name(query)
-        if not name:
-            return query[-1], None
-        else:
-            try:
-                images = [image['fullsize'] for image in name['images']]
-            except KeyError:
-                return query[-1], None
-        return query[-1], images
+    def powo_images(self, name):
+        try:
+            images = [image['fullsize'] for image in name['images']]
+        except KeyError:
+            images = None
+        return images
 
-    async def get_col_synonyms(self, query):
-        name = await self.check_col_name(query)
-        if not name:
-            return  query[-1], None
-        else:
-            try:
-                return query[-1], [synonym['synonym'] for synonym in name['accepted_name_info']['Synonyms']]
-            except KeyError:
-                return query[-1], None
+    def powo_accepted(self, name):
+        try:
+            name = name['synonymOf']
+        except KeyError:
+            pass
+        return name['name'], name['author']
 
-    async def get_powo_accepted(self, query):
-        name = await self.check_powo_name(query)
-        if not name:
-            return query[-1], None, None
-        else:
-            try:
-                name = name['synonymOf']
-            except KeyError:
-                pass
-        return query[-1], name['name'], name['author']
+    def powo_name(self, name):
+        scientific_name = name["name"]
+        author = name["author"]
+        family = name['family']
+        #print(query[-1], genus, family, author)
+        return scientific_name, author, family
 
-    async def get_col_taxonTree(self, query):
-        name = await self.check_col_name(query)
-        if not name:
-            return query[-1], None, None, None, None, None
-        else:
-            try:
-                genus = name['accepted_name_info']['taxonTree']['genus']
-                family = name['accepted_name_info']['taxonTree']['family']
-                order = name['accepted_name_info']['taxonTree']['order']
-                _class = name['accepted_name_info']['taxonTree']['class']
-                phylum = name['accepted_name_info']['taxonTree']['phylum']
-                kingdom = name['accepted_name_info']['taxonTree']['kingdom']
-            except KeyError:
-                try:
-                    genus = name['genus']
-                    family = name['family']
-                    order = name['order']
-                    _class = name['class']
-                    phylum = name['phylum']
-                    kingdom = name['kingdom']
-                except:
-                    genus = None
-                    family = name['family']
-                    order = name['order']
-                    _class = name['class']
-                    phylum = name['phylum']
-                    kingdom = name['kingdom']
-            return query[-1], genus, family, order, _class, phylum, kingdom
+    def col_synonyms(self, name):
+        try:
+            synonyms = [synonym['synonym'] for synonym in name['accepted_name_info']['Synonyms']]
+            return synonyms
+        except KeyError:
+            pass
 
-    async def get_ipni_reference(self, query):
-        name = await self.check_ipni_name(query)
-        if not name:
-            return query[-1], None, None, None, None
-        else:
-            publishing_author = name['publishingAuthor']
-            publication_year = name['publicationYear']
-            publication = name['publication']
-            reference = name['reference']
-        return query[-1], publishing_author, publication_year, publication, reference
+    def col_taxontree(self, name):
+        try:
+            genus = name['accepted_name_info']['taxonTree']['genus']
+            family = name['accepted_name_info']['taxonTree']['family']
+            order = name['accepted_name_info']['taxonTree']['order']
+            _class = name['accepted_name_info']['taxonTree']['class']
+            phylum = name['accepted_name_info']['taxonTree']['phylum']
+            kingdom = name['accepted_name_info']['taxonTree']['kingdom']
+        except KeyError:
+            try:
+                genus = name['genus']
+                family = name['family']
+                order = name['order']
+                _class = name['class']
+                phylum = name['phylum']
+                kingdom = name['kingdom']
+            except:
+                genus = None
+                family = name['family']
+                order = name['order']
+                _class = name['class']
+                phylum = name['phylum']
+                kingdom = name['kingdom']
+        return genus, family, order, _class, phylum, kingdom
+
+    def col_name(self, name):
+        try:  # 种及种下检索结果
+            family = name['accepted_name_info']['taxonTree']['family']
+            author = name['accepted_name_info']['author']
+            scientific_name = name['scientific_name']
+        except KeyError:
+            try:  # 属的检索结果
+                scientific_name = name['genus']
+                author = None
+                family = name['family']
+            except KeyError:  #科的检索结果
+                family = name['family']
+                author = None
+                scientific_name = family
+                genus = None
+        #print(query[-1], genus, family, author)
+        return scientific_name, author, family
+
+    def ipni_name(self, name):
+        scientific_name = name["name"]
+        author = name["authors"]
+        family = name['family']
+        #print(query[-1], genus, family, author)
+        return scientific_name, author, family
+        
+    def ipni_reference(self, name):
+        publishing_author = name['publishingAuthor']
+        publication_year = name['publicationYear']
+        publication = name['publication']
+        reference = name['reference']
+        return publishing_author, publication_year, publication, reference
 
     async def get_name(self,query):
         name = await self.get_col_name(query)
-        if not name[1]:
-            name = await self.get_ipni_name(query)
-            if not name[1]:
-                # 如果检索无有效结果，用英文感叹号标注
-                name[1] = "".join(["!", query[-1]]).strip()
-        return name
+        if name:
+            return name
+        else:
+             return await self.get_ipni_name(query)
 
     async def get_col_name(self, query):
-        """ 从 KEW API 返回的最佳匹配中，获得学名及其科属分类阶元信息
-
-            query: (simple_name, rank, author, raw_name)
-            api: COL V2 的数据接口地址
-            return：raw_name, scientificName, family, genus
-        """
         name = await self.check_col_name(query)
-        if not name:
-            return  query[-1], None, None, None
-        else:
-            try:  # 种及种下检索结果
-                scientific_name = name['scientific_name']
-                author = name['accepted_name_info']['author']
-                family = name['accepted_name_info']['taxonTree']['family']
-            except KeyError:
-                try:  # 属的检索结果
-                    scientific_name = name['genus']
-                    author = None
-                    family = name['family']
-                except KeyError:  #科的检索结果
-                    family = name['family']
-                    author = None
-                    scientific_name = family
-                    genus = None
-            #print(query[-1], genus, family, author)
-            return query[-1], scientific_name, author, family
+        if name:
+            return query[-1], name, 'col'
+
 
     async def check_col_name(self, query):
         """ 对 COL 返回对结果逐一进行检查
@@ -226,65 +314,10 @@ class BioName:
                     # 但不一定是真符合
             return name
     
-    async def col_search(self, query, filters):
-        params = self.build_col_params(query, filters)
-        url = self.build_url(SP2000_API, filters.value['col'], params)
-        resp = await self.async_request(url)
-        try:
-            if resp['code'] == 200:
-                try:
-                    # 先尝试返回种及种下物种的信息
-                    return resp['data']['species']
-                except KeyError:
-                    # 出错后，确定可以返回科的信息
-                    return resp['data'] ['familes']
-            elif resp['code'] == 400:
-                print("\n参数不合法：{0}\n".format(url))
-                return None
-            elif resp['code'] == 401:
-                print("\n密钥错误：{0}\n".format(url))
-                return None
-            else:
-                return None
-        except KeyError:
-            print("\nInternal Server Error: {0}\n".format(url))
-            return None
-        except TypeError:
-            print("\n返回类型错误:{0}\n".format(url))
-
     async def get_ipni_name(self, query):
-        """ 从 KEW API 返回的最佳匹配中，获得学名及其科属分类阶元信息
-
-            query: (simple_name, rank, author, raw_name)
-            api: KEW 的数据接口地址
-            return：raw_name, scientificName, family, genus
-        """
         name = await self.check_ipni_name(query)
-        if not name:
-            return  query[-1], None, None, None
-        else:
-            scientific_name = name["name"]
-            author = name["authors"]
-            family = name['family']
-            #print(query[-1], genus, family, author)
-            return query[-1], scientific_name, author, family
-
-    async def get_powo_name(self, query):
-        """ 从 KEW API 返回的最佳匹配中，获得学名及其科属分类阶元信息
-
-            query: (simple_name, rank, author, raw_name)
-            api: KEW 的数据接口地址
-            return：raw_name, scientificName, family, genus
-        """
-        name = await self.check_powo_name(query)
-        if not name:
-            return  query[-1], None, None, None
-        else:
-            scientific_name = name["name"]
-            author = name["author"]
-            family = name['family']
-            #print(query[-1], genus, family, author)
-            return query[-1], scientific_name, author, family
+        if name:
+            return query[-1], name, 'ipni'
 
     async def check_ipni_name(self, query):
         """ 对 KEW 返回结果逐一进行检查
@@ -326,6 +359,17 @@ class BioName:
                     #   author = ...这里可以继续对最优值进行判断和筛选，毕竟一组值总有最优，
                     # 但不一定是真符合
             return name
+
+    async def get_powo_name(self, query):
+        """ 从 KEW API 返回的最佳匹配中，获得学名及其科属分类阶元信息
+
+            query: (simple_name, rank, author, raw_name)
+            api: KEW 的数据接口地址
+            return：raw_name, scientificName, family, genus
+        """
+        name = await self.check_powo_name(query)
+        if name:
+            return query[-1], name, 'powo'
 
     async def check_powo_name(self, query):
         """ 对 KEW 返回结果逐一进行检查
@@ -369,12 +413,39 @@ class BioName:
                     # 但不一定是真符合
             return name
 
+    async def col_search(self, query, filters):
+        params = self.build_col_params(query, filters)
+        url = self.build_url(SP2000_API, filters.value['col'], params)
+        resp = await self.async_request(url)
+        try:
+            if resp['code'] == 200:
+                try:
+                    # 先尝试返回种及种下物种的信息
+                    return resp['data']['species']
+                except KeyError:
+                    # 出错后，确定可以返回科的信息
+                    return resp['data'] ['familes']
+            elif resp['code'] == 400:
+                print("\n参数不合法：{0}\n".format(url))
+                return None
+            elif resp['code'] == 401:
+                print("\n密钥错误：{0}\n".format(url))
+                return None
+            else:
+                return None
+        except KeyError:
+            print("\nInternal Server Error: {0}\n".format(url))
+            return None
+        except TypeError:
+            print("\n返回类型错误:{0}\n".format(url))
+            return None
+
     async def kew_search(self, query, filters, api):
         params = self.build_kew_params(query, filters)
         resp = await self.async_request(self.build_url(api, 'search', params))
-        if 'results' in resp:
+        try:
             return resp['results']
-        else:
+        except (TypeError, KeyError):
             return None
 
     async def async_request(self, url):
@@ -389,7 +460,7 @@ class BioName:
                         break
         except:  #如果异步请求出错，改为正常的 Get 请求以尽可能确保有返回结果
             response = await self.normal_request(url)
-        if response == None:
+        if not response:
             print(url, "联网超时，请检查网络连接！")
         return response  # 返回 None 表示网络有问题
 
