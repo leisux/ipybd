@@ -24,40 +24,40 @@ pip install ipybd
 ```
 from ipybd import OccurrenceRecord as ocr
 ```
-### 物种名称处理
+#### 物种名称处理
 ```
 from ipybd import BioName
 ```
-### 数据表的各种拆分和合并
+#### 数据表的各种拆分和合并
 ```
 from ipybd import FormatTable as ft
 ```
-### 中文行政区划清洗和转换
+#### 中文行政区划清洗和转换
 ```
 from ipybd import AdminDiv
 ```
-### 日期和时间清洗和转换
+#### 日期和时间清洗和转换
 ```
 from ipybd import DateTime
 ```
-### 经纬度清洗和转换
+#### 经纬度清洗和转换
 ```
 from ipybd import GeoCoordinate
 ```
-### 数值及数值区间的清洗和转换
+#### 数值及数值区间的清洗和转换
 ```
 from ipybd import NumericalInterval
 ```
-### 重复值标注
+#### 重复值标注
 ```
 from ipybd import UniqueID
 ```
-### 数据转换模板的定制
+#### 数据转换模板的定制
 ```
 from ipybd import RestructureTable as rt
 ```
 
-### 特别声明
+#### 特别声明
 
 1. ipybd 遵从 GNU General Public License v3.0 许可    
 2. 本软件由 NSII 项目资助，中国科学院昆明植物研究所标本馆（KUN）开发
