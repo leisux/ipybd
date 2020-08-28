@@ -11,10 +11,9 @@ from ipybd.data_cleaner import (
     UniqueID,
     FillNa
 )
-from ipybd.std_table_objects import PlantSpecimen, KingdoniaPlant
-
+from ipybd.std_table_objects import (
+    OccurrenceRecord,
+    KingdoniaPlant
+)
 
 from ipybd.api_terms import Filters
-
-if __name__ == "__main__":
-    pass

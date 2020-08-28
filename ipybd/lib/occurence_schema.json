@@ -1,0 +1,377 @@
+{
+  "type": "object",
+  "title": "Occurence Record Object Of NOI",
+  "description": "Must Be One Record One Species, The Record Can Be From PreservedSpecimen, Literature, LivingSpecimen, FossilSpecimen, MaterialSample, HumanObservation, MachineObservation And So On",
+  "properties": {
+    "Occurence": {
+      "type": "object",
+      "properties": {
+        "occurrenceID": {
+          "type": "string",
+          "pattern": "[A-Z]+:.+",
+          "minLength": 5,
+          "maxLength": 25,
+          "description": "like KUN:L1245789"
+        },
+        "catalogNumber": {
+          "type": "string",
+          "pattern":"[A-Za-z0-9]+",
+          "minLength": 4,
+          "maxLength": 20,
+          "description": "L1245789"
+        },
+        "otherCatalogNumbers": {
+          "type": "string"
+        },
+        "recordedBy": {
+          "type": "string"
+        },
+        "recordNumber": {
+          "type": "string"
+        },
+        "individualCount": {
+          "type": "integer"
+        },
+        "sex": {
+          "type": "string",
+          "enum": [
+            "female",
+            "male"
+          ]
+        },
+        "lifeStage": {
+          "type": "string"
+        },
+        "behavior": {
+          "type": "string"
+        },
+        "establishmentMeans": {
+          "type": "string",
+          "enum": [
+            "native",
+            "introduced",
+            "naturalised",
+            "invasive",
+            "managed"
+          ]
+        },
+        "preparations": {
+          "type": "string"
+        },
+        "disposition": {
+          "type": "string",
+          "enum": [
+            "in collection",
+            "missing",
+            "voucher elsewhere",
+            "duplicates elsewhere"
+          ]
+        },
+        "associatedMedia": {
+          "type": "object",
+          "properties": {
+            "image": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uri",
+                "pattern": "^https?://.+"
+              }
+            },
+            "video": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uri",
+                "pattern": "^https?://.+"
+              }
+            },
+            "audio": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uri",
+                "pattern": "^https?://.+"
+              }
+            }
+          }
+        },
+        "associatedReferences": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https?://.+"
+          }
+        },
+        "associatedSequences": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https?://.+"
+          }
+        },
+        "occurrenceRemarks": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "recordedBy"
+      ]
+    },
+    "Event": {
+      "type": "object",
+      "properties": {
+        "eventDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "habitat": {
+          "type": "string"
+        },
+        "fieldNumber": {
+          "type": "string"
+        },
+        "samplingProtocol": {
+          "type": "string"
+        },
+        "fieldNotes": {
+          "type": "string"
+        },
+        "fundedBy": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventDate"
+      ]
+    },
+    "Location": {
+      "type": "object",
+      "properties": {
+        "country": {
+          "type": "string"
+        },
+        "countryCode": {
+          "type": "string",
+          "description": "Recommended best practice is to use an ISO 3166-1-alpha-2 country code. like CN",
+          "minLength": 2,
+          "maxLength": 3
+        },
+        "province": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "county": {
+          "type": "string"
+        },
+        "locality": {
+          "type": "string"
+        },
+        "minimumElevationInMeters": {
+          "type": "number",
+          "minimum": -800,
+          "maximum": 8845
+        },
+        "maximumElevationInMeters": {
+          "type": "number",
+          "minimum": -800,
+          "maximum": 8845
+        },
+        "minimumDepthInMeters": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 12000
+        },
+        "maximumDepthInMeters": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 12000
+        },
+        "minimumDistanceAboveSurfaceInMeters": {
+          "type": "number",
+          "minimum": -12000,
+          "maximum": 8845
+        },
+        "maximumDistanceAboveSurfaceInMeters": {
+          "type": "number",
+          "minimum": -12000,
+          "maximum": 8845
+        }
+      },
+      "required": [
+        "country"
+      ]
+    },
+    "Identification": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "scientificName": {
+              "type": "string",
+              "pattern": "[A-Z][a-z][a-z]+"
+            },
+            "identifiedBy": {
+              "type": "string"
+            },
+            "dateIdentified": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "typeStatus": {
+              "type": "string",
+              "enum": [
+                "Type",
+                "Type species",
+                "Type genus",
+                "Allolectotype",
+                "Alloneotype",
+                "Allotype",
+                "Cotype",
+                "Epitype",
+                "Ex-epitype",
+                "Ex-holotype",
+                "Ex-isotype",
+                "Ex-lectotype",
+                "Ex-neotype",
+                "Ex-paratype",
+                "Ex-syntype",
+                "Ex-type",
+                "Hapantotype",
+                "Holotype",
+                "Iconotype",
+                "Isolectotype",
+                "Isoneotype",
+                "Isosyntype",
+                "Isotype",
+                "Lectotype",
+                "Neotype",
+                "Paralectotype",
+                "Paraneotype",
+                "Paratype",
+                "Plastoholotype",
+                "Plastoisotype",
+                "Plastolectotype",
+                "Plastoneotype",
+                "Plastoparatype",
+                "Plastosyntype",
+                "Plastotype",
+                "Secondary type",
+                "Supplementary type",
+                "Syntype",
+                "Topotype",
+                "Original material",
+                "Not type"
+              ]
+            }
+          }
+        }
+      },
+      "propertyNames": {
+        "type": "string",
+        "pattern": "[A-Z]+",
+        "minLength": 1,
+        "maxLength": 5
+      }
+    },
+    "Record": {
+      "type": "object",
+      "properties": {
+        "field":{
+          "type":"string",
+          "enum":[
+            "Aves",
+            "Amphibia",
+            "Angiospermae",
+            "Bryophyta",
+            "Gymnospermae",
+            "Mammalia",
+            "Fish",
+            "Pteridophyta",
+            "Chlorophyta",
+            "Insecta",
+            "Reptilia",
+            "Lichen",
+            "Fungi"
+          ]
+        },
+        "basisOfRecord": {
+          "type": "string",
+          "enum": [
+            "PreservedSpecimen",
+            "Literature",
+            "LivingSpecimen",
+            "FossilSpecimen",
+            "MaterialSample",
+            "HumanObservation",
+            "MachineObservation",
+            "Unknow"
+          ]
+        },
+        "rights": {
+          "type": "string"
+        },
+        "rightsHolder": {
+          "type": "string"
+        },
+        "licence": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https?://.+"
+        },
+        "modified": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "references": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https?://.+"
+          }
+        },
+        "apiData": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https?://.+"
+          }
+        },
+        "thumbnails": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https?://.+"
+          }
+        },
+        "institutionCode": {
+          "type": "string"
+        },
+        "dynamicProperties": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "field",
+        "basisOfRecord",
+        "rights",
+        "rightsHolder",
+        "licence"
+      ]
+    }
+  },
+  "required": [
+    "Occurence",
+    "Event",
+    "Record"
+  ]
+}

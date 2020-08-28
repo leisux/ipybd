@@ -1,23 +1,27 @@
 from ipybd.core import RestructureTable
-from ipybd.std_table_terms import PlantSpecimenTerms, KingdoniaPlantTerms
+from ipybd.std_table_terms import *
+import json
 
 
-# 对于同一个领域，不同方向的表格，可以先定义一个父类
-# 该父类会被用于帮助其子类指向相应的列名别名库和可选值别名库
-class Biodiversity(RestructureTable):
-    pass
-
-class PlantSpecimen(Biodiversity):
+class OccurrenceRecord(RestructureTable):
+    columns_model = OccurrenceTerms
     def __init__(self, io):
-        self.std_columns = PlantSpecimenTerms
-        super(PlantSpecimen, self).__init__(io)
+        super(OccurrenceRecord, self).__init__(io)
+        # 对重塑结果中的各列进行重新排序
+        self._re_range_columns()
 
-class KingdoniaPlant(Biodiversity):
+
+class KingdoniaPlant(RestructureTable):
+    columns_model = KingdoniaPlantTerms
     def __init__(self, io):
-        self.std_columns = KingdoniaPlantTerms
         super(KingdoniaPlant, self).__init__(io, fcol = True)
+        # 对重塑结果中的各列进行重新排序
+        self._re_range_columns(cut=True)
+        self.meger_mult_idents()
 
-
-if __name__ == "__main__":
-    s = PlantSpecimen(r"/Users/xuzhoufeng/Downloads/test.xlsx")
-    s.df.to_excel(r"../testfile/ttt.xlsx")
+    # Kingdonia 系统可以同时导入多个鉴定，每个鉴定及其相关信息组成一个json array
+    # [['Murdannia undulata', '洪德元', '1974-01-01 00:00:01', 'type']]
+    def meger_mult_idents(self):
+        self.df['identifications'] = list(
+            map(lambda v:json.dumps([v]), self.df['identifications'])
+            )
