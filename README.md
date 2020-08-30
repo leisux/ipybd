@@ -143,35 +143,39 @@ collections.save_table(r"~/Documents/new_record.xlsx")
 ### 3.2 中文行政区划清洗和转换
 
 ```
-from ipybd import AdminDiv
+collections.format_admindiv
 ```
 #### 3.3 日期和时间清洗和转换
 
 ```
-from ipybd import DateTime
+collections.format_datetime
 ```
 #### 3.4 经纬度清洗和转换
 
 ```
-from ipybd import GeoCoordinate
+collections.format_latlon
 ```
 #### 3.5 数值及数值区间的清洗和转换
 
 ```
-from ipybd import NumericalInterval
+collections.format_number
 ```
 #### 3.6 重复值标注
 
 ```
-from ipybd import UniqueID
+collections.mark_repeat
 ```
 ### 3.7 数据列的分割
 
 ```
-from ipybd import FormatTable as ft
+collections.split_columns
 ```
 
 #### 3.8 数据列的合并
+
+```
+collections.merge_columns
+```
 
 
 
@@ -179,13 +183,13 @@ from ipybd import FormatTable as ft
 
 #### 4.1 OccurrenceRecord
 
-```python
-from ipybd import OccurrenceRecord as ocr
-```
-
 #### 4.2 KingdoniaPlant
 
+
+
 ### 五、基于 Pandas 的数据统计与分析生态
+
+
 
 ### 六、特别声明
 

@@ -1,0 +1,12 @@
+Metadata-Version: 1.2
+Name: ipybd
+Version: 0.9.9
+Summary: Powerful data cleaner for biodiversity
+Home-page: https://github.com/leisux/ipybd
+Author: Xu Zhoufeng
+Author-email: xu_zhoufeng@hotmail.com
+License: GPL-3.0 License
+Description: UNKNOWN
+Keywords: biodiversity,scientificName,herbarium,specimens,bdcleaner
+Platform: any
+Requires-Python: >=3.6.1
