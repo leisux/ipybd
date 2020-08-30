@@ -1,5 +1,0 @@
-pandas
-tqdm
-prompt_toolkit
-requests
-aiohttp
