@@ -65,16 +65,23 @@ poa.get('powoName', typ=dict)
 
 除了上述示例中的`powoName`参数，目前`BioName`的`get`方法总共支持以下九种方法：
 
-​	`'powoName'`: 获取 powo 平台相应学名的科属地位、学名简写和命名人信息；
-​	`'powoImages'`: 获取 powo 平台相应学名的物种图片地址，每个物种返回三张图片地址；
-​	`'powoAccepted'`: 获取 powo 平台相应学名的接受名；
-​	`'ipniName'`: 获取 ipni 平台相应学名的科属地位、学名简写和命名人信息；
-​	`'ipniReference'`: 获取 ipni 平台相应学名的发表文献信息；
-​	`'colName'`: 获取相应学名在中国生物物种名录中的科属地位、学名简写和命名人信息；
-​	`'colTaxonTree'`: 获取相应学名在中国生物物种名录中的完整的分类学阶元信息；
-​	`'colSynonyms'`: 获取相应学名在中国生物物种名录中的异名信息;
++ `'powoName'`: 获取 powo 平台相应学名的科属地位、学名简写和命名人信息；
 
-​	`'stdName'`: 优先获取中国生物物种名录的名称信息，如果无法获得，则获取`ipni`的信息。 
++ `'powoImages'`: 获取 powo 平台相应学名的物种图片地址，每个物种返回三张图片地址；
+
++ `'powoAccepted'`: 获取 powo 平台相应学名的接受名；
+
++ `'ipniName'`: 获取 ipni 平台相应学名的科属地位、学名简写和命名人信息；
+
++ `'ipniReference'`: 获取 ipni 平台相应学名的发表文献信息；
+
++ `'colName'`: 获取相应学名在中国生物物种名录中的科属地位、学名简写和命名人信息；
+
++ `'colTaxonTree'`: 获取相应学名在中国生物物种名录中的完整的分类学阶元信息；
+
++ `'colSynonyms'`: 获取相应学名在中国生物物种名录中的异名信息;
+
++ `'stdName'`: 优先获取中国生物物种名录的名称信息，如果无法获得，则获取`ipni`的信息。 
 
 使用时，只需将上例中的关键字替换为相应关键字即可。
 
@@ -117,14 +124,21 @@ collections.get_ipni_name("属名", "种名", "种下单元", "命名人")
 
 目前 FormatTable 支持以下几种名称处理方法：
 
-​	`get_powp_name`: 获取 powo 平台相应学名的科属地位、学名简写和命名人信息；
-​	`get_powo_images`: 获取 powo 平台相应学名的物种图片地址，每个物种返回三张图片地址；
-​	`get_powo_accepted`: 获取 powo 平台相应学名的接受名；
-​	`get_ipni_name`: 获取 ipni 平台相应学名的科属地位、学名简写和命名人信息；
-​	`get_ipni_reference`: 获取 ipni 平台相应学名的发表文献信息；
-​	`get_col_name`: 获取相应学名在中国生物物种名录中的科属地位、学名简写和命名人信息；
-​	`get_col_taxontree`: 获取相应学名在中国生物物种名录中的完整的分类学阶元信息；
-​	`get_col_Synonyms`: 获取相应学名在中国生物物种名录中的异名信息。
++ `get_powp_name`: 获取 powo 平台相应学名的科属地位、学名简写和命名人信息；
+
++ `get_powo_images`: 获取 powo 平台相应学名的物种图片地址，每个物种返回三张图片地址；
+
++ `get_powo_accepted`: 获取 powo 平台相应学名的接受名；
+
++ `get_ipni_name`: 获取 ipni 平台相应学名的科属地位、学名简写和命名人信息；
+
++ `get_ipni_reference`: 获取 ipni 平台相应学名的发表文献信息；
+
++ `get_col_name`: 获取相应学名在中国生物物种名录中的科属地位、学名简写和命名人信息；
+
++ `get_col_taxontree`: 获取相应学名在中国生物物种名录中的完整的分类学阶元信息；
+
++ `get_col_Synonyms`: 获取相应学名在中国生物物种名录中的异名信息。
 
 如果并不想程序直接返回检索结果，而是希望直接将结果写入`collections`数据表，请求时可以将`concat`参数设置为`True`:
 
