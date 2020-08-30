@@ -14,7 +14,7 @@ ipybd 是一款生物多样性数据清洗、统计与分析程序包。ipybd �
 ```python
 pip install ipybd
 ```
-或者将程序包 Clone 到本地后，进入主目录，然后运行：
+或者将程序包 Clone 到本地后，在终端内进入 ipybd 目录，然后运行：
 
 ```python
 pip install .
@@ -140,7 +140,7 @@ collections.get_ipni_name("属名", "种名", "种下单元", "命名人", conca
 collections.save_table(r"~/Documents/new_record.xlsx")
 ```
 
-### 3.2 中文行政区划清洗和转换
+#### 3.2 中文行政区划清洗和转换
 
 ```
 collections.format_admindiv
@@ -165,7 +165,7 @@ collections.format_number
 ```
 collections.mark_repeat
 ```
-### 3.7 数据列的分割
+#### 3.7 数据列的分割
 
 ```
 collections.split_columns
