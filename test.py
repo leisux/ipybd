@@ -1,24 +1,6 @@
-from ipybd import PlantSpecimenTerms
+from ipybd import FormatTable, BioName
 
-class A(type):
-    def __init__(cls, name, base, dic):
-        def init(self):
-            test(self)
-
-        def test(self):
-            for v in cls.s:
-                self.__dict__[v.name] = v.value
-
-        cls.__init__ = init
-
-class B(metaclass=A):
-    s = PlantSpecimenTerms
-
-
-if __name__ == "__main__":
-
-    b = B()
-    print(b.__dict__)
-
-
+poa = poa = BioName(["Poaceae", "Poa", "Poa annua", "Poa annua Schltdl. & Cham.", "Poa annua L.", None])
+# 检索 ipni.org 名称
+poa.get('ipniName')
 

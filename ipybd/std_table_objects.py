@@ -23,5 +23,8 @@ class KingdoniaPlant(RestructureTable):
     # [['Murdannia undulata', '洪德元', '1974-01-01 00:00:01', 'type']]
     def meger_mult_idents(self):
         self.df['identifications'] = list(
-            map(lambda v:json.dumps([v]), self.df['identifications'])
+            map(
+            lambda v:json.dumps([v],ensure_ascii=False), 
+            self.df['identifications']
             )
+        )

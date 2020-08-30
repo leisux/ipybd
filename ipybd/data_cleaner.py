@@ -31,7 +31,7 @@ class BioName:
         self.sema = asyncio.Semaphore(500)
 
     def get(self, action, typ=list, mark=False):
-        results = self.__build_cache(action)
+        results = self.__build_cache_and_get_results(action)
         if results:
             if typ is list:
                return self._results2list(results, mark)
@@ -44,6 +44,16 @@ class BioName:
                return {} 
 
     def _results2list(self, results:dict, mark):
+        """ 对 get 的结果进行组装
+        
+        results: 从 self.cache 中解析得到的结果字典, 每个元素都为元组
+        mark: 如果为 True，没有获得结果的检索词会被虽结果返回并以!标记
+              如果为 None，没有检索结果则返回由 None 组成的与其他结果等长的元组
+
+        return: 按照 self.names 中的元素顺序排列的检索结果 list，list 中的元素
+                由元组组成。
+        """
+
         result_len = len(list(results.values())[0])
         for name in self.querys:
             if mark:
@@ -61,11 +71,18 @@ class BioName:
             else:
                 if self.querys[name] is None or name not in results:
                     results[name] = [None] * result_len
-
             results[name] = tuple(results[name])
         return [results[w] for w in self.names]
 
-    def __build_cache(self, action, querys=None):
+    def __build_cache_and_get_results(self, action, querys=None):
+        """ 构建查询缓存、返回查询结果
+
+        action: 要进行的查询操作描述字符串
+        querys: 要进行 WEB 查询的检索词:解析出的检索要素组成的字典
+        
+        return 返回检索结果字典 results，字典由原始检索词:检索结果组成
+               检索过程中，会一并生成 self.names 在相应平台的检索返回内容缓存
+        """
         cache_mapping = {
                          'stdName':{**self.cache['col'], **self.cache['ipni']},
                          'colTaxonTree':self.cache['col'],
@@ -102,7 +119,7 @@ class BioName:
             search_terms = {}
             for org_name, query in names.items():
                 try:
-                    results[org_name] = self.get_cache_name(
+                    results[org_name] = self.get_cache_result(
                         cache[org_name], 
                         action_func[action]
                         )
@@ -126,11 +143,11 @@ class BioName:
             # 后将不再继续执行递归
             self.web_get(action, search_terms)
             # 这里的递归最多只执行一次
-            sub_results = self.__build_cache(action, search_terms)
+            sub_results = self.__build_cache_and_get_results(action, search_terms)
             results.update(sub_results)
         return results
 
-    def get_cache_name(self, name, func):
+    def get_cache_result(self, name, func):
         try:
             return func(name)
         # func 是 tuple 时触发
@@ -138,15 +155,14 @@ class BioName:
             for f in func:
                 try:
                     # 遇到首个有正常返回值后，停止循环
-                    return self.get_cache_name(name, f)
+                    return self.get_cache_result(name, f)
                     break
-                # 若多个 API 返回结果的 keys 通用，这里可能不会触发 KeyError目
+                # 若多个 API 返回结果的 keys 通用，这里可能不会触发 KeyError,目
                 # 前已知 col 和 ipni/powo 部分keys 通用，且 col 不存在属查询，
                 # family 检索和 species 返回的数据结构也不一致，因此其内部需要
-                # 处理相关 KeyError 错误，与这里的处理回有冲突，因此该函数 func 
+                # 处理相关 KeyError 错误，与这里的处理会有冲突，因此该函数 func 
                 # 中 col 的处理函数应该至于最后，以避免 ipni/powo 的数据被 col 
                 # 处理函数处理。
-                # 目前这种实现确实不完美，后续需要进一步改进
                 except KeyError:
                     continue
 
@@ -195,6 +211,12 @@ class BioName:
         return aiohttp.ClientSession()
 
     def powo_images(self, name):
+        """ 解析 self.cache['powo'] 中的图片
+
+            powo 接口获得的图片有缩略图和原图 url
+            每个名字的图片有且仅有三张
+            返回的 iamges 是由三个 url 构成的元组
+        """
         try:
             images = [image['fullsize'] for image in name['images']]
         except KeyError:
@@ -210,7 +232,7 @@ class BioName:
             # 如果没有名称处理，默认将本名称作为接受名返回
             # 有些名字可能属于 unsolved 状态，也会被作为接受名返回
             pass
-        return name['name'], name['author']
+        return " ".join([name['name'], name['author']]),
 
     def powo_name(self, name):
         scientific_name = name["name"]
@@ -227,7 +249,7 @@ class BioName:
                 ]
             return synonyms
         except KeyError:
-            pass
+            raise ValueError
 
     def col_taxontree(self, name):
         try:

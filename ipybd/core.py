@@ -471,53 +471,55 @@ class FormatTable:
 
     def get_name(func):
         def get_func(self, *args, **kwargs):
-            get_action, headers = func(self, *args, **kwargs)
+            get_action, headers, concat, new_headers = func(self, *args, **kwargs)
             if len(headers) > 1:
                 names = self.merge_columns(list(headers), " ")
             else:
-                names = self.df[headers]
+                names = self.df[headers[0]]
             try:
-                return self.bioname.get(get_action)
+                results = self.bioname.get(get_action)
             except AttributeError:
                 self.bioname = BioName(names)
-                return self.bioname.get(get_action)
+                results = self.bioname.get(get_action)
+            if concat and results:
+                new_columns = pd.DataFrame(results)
+                new_columns.columns = new_headers
+                self.df = pd.concat([self.df, new_columns], axis=1)
+            else:
+                return results
         return get_func
 
     @get_name
-    def get_ipni_name(self, *headers):
-        return 'ipniName', headers
+    def get_ipni_name(self, *headers, concat=False):
+        return 'ipniName', headers, concat, ('ipniName', 'ipniAuthors', 'ipniFamily')
 
     @get_name
-    def get_ipni_reference(self, *headers):
-        return 'ipniReference', headers
+    def get_ipni_reference(self, *headers, concat=False):
+        return 'ipniReference', headers, concat, ('publishingAuthor', 'publicationYear', 'publication', 'reference')
 
     @get_name
-    def get_powo_name(self, *headers):
-        return 'powoName', headers
+    def get_powo_name(self, *headers, concat=False):
+        return 'powoName', headers, concat, ('powoName', 'powoAuthors', 'powoFamily')
     
     @get_name
-    def get_powo_image(self, *headers):
-        return 'powoImages', headers
+    def get_powo_images(self, *headers, concat=False):
+        return 'powoImages', headers, concat, ('powoImage1', 'powoImage2', 'powoImage3')
     
     @get_name
-    def get_powo_accepted(self, *headers):
-        return 'powoAccepted', headers
+    def get_powo_accepted(self, *headers, concat=False):
+        return 'powoAccepted', headers, concat, ('powoAccepted',)
     
     @get_name
-    def get_col_taxontree(self, *headers):
-        return 'colTaxonTree', headers
+    def get_col_taxontree(self, *headers, concat=False):
+        return 'colTaxonTree', headers, concat, ('colGenus', 'colFamily', 'colOrder', 'colClass', 'colPhylum','colKingdom')
 
     @get_name
-    def get_col_name(self, *headers):
-        return 'colName', headers
+    def get_col_name(self, *headers, concat=False):
+        return 'colName', headers, concat, ('colName', 'colAuthors', 'colFamily')
 
     @get_name
-    def get_col_synonyms(self, *headers):
-        return 'colSynonyms', headers
-
-    @get_name
-    def format_latin_name(self, *headers):
-        return 'stdName', headers
+    def get_col_synonyms(self, *headers, concat=False):
+        return 'colSynonyms', headers, concat, ('colSynonyms',)
 
     def format_latlon(self, *headers, inplace=True):
         """ 格式化经纬度
