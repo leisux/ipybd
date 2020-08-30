@@ -92,7 +92,7 @@ collections = FormatTable(r"~/Documents/record2019-09-10.xlsx")
 FormatTable 类基于 BioName 实例封装了一些学名处理方法，以使得在应对各种单纯基于数据表的名称处理能够更加简单和灵活，比如对于上述 `collections` 数据表，若表中的学名并非一列，而是按照 `"属名"`、`"种名"`、`"种下单元"`、`"命名人"`四列分开存储，ForamtTable 实例仍然可以轻易的进行学名查询：
 
 ```python
-collections.get_ipni_name("属名"、"种名"、"种下单元"、"命名人")
+collections.get_ipni_name("属名", "种名", "种下单元", "命名人")
 
 #返回结果
 [
@@ -130,7 +130,7 @@ collections.get_ipni_name("属名"、"种名"、"种下单元"、"命名人")
 如果并不想程序直接返回检索结果，而是希望直接将结果写入`collections`数据表，请求时可以将`concat`参数设置为`True`:
 
 ```python
-collections.get_ipni_name("属名"、"种名"、"种下单元"、"命名人", concat=True)
+collections.get_ipni_name("属名", "种名", "种下单元", "命名人", concat=True)
 
 ```
 
