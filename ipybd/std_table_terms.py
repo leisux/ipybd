@@ -84,12 +84,12 @@ class OccurrenceTerms(Enum):
     decimalLongitude = GeoCoordinate, ('decimalLatitude', 'decimalLongitude', ';'), 1
     _minimumElevationInMeters = Number, 'minimumElevationInMeters', 1
     _maximumElevationInMeters = Number, 'maximumElevationInMeters', 1
-    minimumElevationInMeters = Number, '_minimumElevationInMeters', '_maximumElevationInMeters', 2
-    maximumElevationInMeters = Number, '_minimumElevationInMeters', '_maximumElevationInMeters', 2
+    minimumElevationInMeters = Number, 'minimumElevationInMeters', 'maximumElevationInMeters', 2
+    maximumElevationInMeters = Number, 'minimumElevationInMeters', 'maximumElevationInMeters', 2
     _minimumDepthInMeters = Number, 'minimumDepthInMeters', 1
     _maximumDepthInMeters = Number, 'maximumDepthInMeters', 1
-    minimumDepthInMeters = Number, '_minimumDepthInMeters', '_maximumDepthInMeters', 2
-    maximumDepthInMeters = Number, '_minimumDepthInMeters', '_maximumDepthInMeters', 2
+    minimumDepthInMeters = Number, 'minimumDepthInMeters', 'maximumDepthInMeters', 2
+    maximumDepthInMeters = Number, 'minimumDepthInMeters', 'maximumDepthInMeters', 2
     associatedMedia = 'associatedMedia', 1
     associatedReferences = 'associatedReferences', 1
     associatedSequences = 'associatedSequences', 1
@@ -161,15 +161,15 @@ class KingdoniaPlantTerms(Enum):
     maximumElevationInMeters = Number, 'minimumElevationInMeters', 'maximumElevationInMeters', 2
     occurrenceRemarks = 'occurrenceRemarks', 1
     _scientificName = BioName, [('genus', 'specificEpithet', 'specificEpithetAuthorShip', 'taxonRank', 'infraspecificEpithet', 'scientificNameAuthorship', ' '), 'scientificName'], 1
-    scientificName = FillNa, '_scientificName', 'unknown', 1
+    scientificName = FillNa, 'scientificName', 'unknown', 1
     _typeStatus = RadioInput, 'typeStatus', 'typeStatus', 1
-    typeStatus = FillNa, '_typeStatus', 'not type', 1
+    typeStatus = FillNa, 'typeStatus', 'not type', 1
     _identifiedBy = HumanName, 'identifiedBy', 1
-    identifiedBy = FillNa, '_identifiedBy', '无', 1
+    identifiedBy = FillNa, 'identifiedBy', '无', 1
     _dateIdentified = DateTime, 'dateIdentified', 'datetime', 1
-    dateIdentified = FillNa, '_dateIdentified', '0000:00:00 00:00:02', 1
+    dateIdentified = FillNa, 'dateIdentified', '0000:00:00 00:00:02', 1
     _identifiedByID = UniqueID, 'identifiedByID', 1
-    identifiedByID = FillNa, '_identifiedByID', '0', 1
+    identifiedByID = FillNa, 'identifiedByID', '0', 1
     identifications = ("scientificName", "identifiedByID", "identifiedBy",  "dateIdentified", "typeStatus", "l"), 1
     花 = 'flower', 1
     叶 = 'leaf', 1
@@ -189,11 +189,11 @@ class KingdoniaPlantTerms(Enum):
     organismRemarks = 'organismRemarks', 1
     associatedMedia = 'associatedMedia', 1
     _molecularMaterialSample = RadioInput, 'molecularMaterialSample', 'molecularMaterialSample', 1
-    molecularMaterialSample = FillNa, '_molecularMaterialSample', '无', 1
+    molecularMaterialSample = FillNa, 'molecularMaterialSample', '无', 1
     _seedMaterialSample = Number, 'seedMaterialSample', None, int, 1
-    seedMaterialSample = FillNa, '_seedMaterialSample', '0', 1
+    seedMaterialSample = FillNa, 'seedMaterialSample', '0', 1
     _livingMaterialSample = Number, 'livingMaterialSample', None, int, 1
-    livingMaterialSample = FillNa, '_livingMaterialSample', '0', 1
+    livingMaterialSample = FillNa, 'livingMaterialSample', '0', 1
     MaterialSample = ('molecularMaterialSample', 'seedMaterialSample', 'livingMaterialSample', 'o'), 1
 
 
