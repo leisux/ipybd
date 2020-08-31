@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 HERE = os.path.dirname(__file__)
 STD_OPTIONS_ALIAS_PATH = os.path.join(HERE, 'lib', 'std_options_alias.json')
-ADMIN_DIV_LIB_PATH = os.path.join(HERE, 'lib', 'xzqh.xlsx')
+ADMIN_DIV_LIB_PATH = os.path.join(HERE, 'lib', 'chinese_admin_div.json')
 
 SP2000_API = 'http://www.sp2000.org.cn/api/v2'
 IPNI_API = 'http://beta.ipni.org/api/1'
@@ -1022,16 +1022,17 @@ class HumanName:
 class AdminDiv:
     """中国省市县行政区匹配
 
-    本程序只会处理中国的行政区,最小行政区划到县级返回的字段值形式为“中国,北京,北京市,朝阳区”，
-    程序不能保证百分百匹配正确；
-    对于只有“白云区”、“东区”等孤立的容易重名的地点描述，程序最终很可能给予错误的匹配，需要人工
-    核查，匹配结果前有“!”标志；
-    对于“碧江”、"路南县"（云南省）这种孤立的现已撤销的地点描述但在其他省市区还有同名或者其他地
-    区名称被包括其中的行政区名称（中国,贵州省,铜仁市,碧江区，中国,湖南省,益阳市,南县）；程序一
-    定会给出错误匹配且目前并不会给出任何提示；
-    对于“四川省南川”、“云南碧江”这种曾经的行政区归属，程序会匹配字数多的行政区且这种状况下不会
-    给出提示，如前者会匹配“中国,四川省”，对于字数一致的，则匹配短的行政区，但会标识，如后者可能
-    匹配“!中国,云南省”
+    本程序只会处理中国的行政区,最小行政区划到县级返回的字段值形式为
+    “中国,北京,北京市,朝阳区”， 程序不能保证百分百匹配正确；
+    对于只有“白云区”、“东区”等孤立的容易重名的地点描述，程序最终很可能给予错误
+    的匹配，需要人工核查，匹配结果前有“!”标志；
+    对于“碧江”、"路南县"（云南省）这种孤立的现已撤销的地点描述但在其他省市区还
+    有同名或者其他地区名称被包括其中的行政区名称
+    （中国,贵州省,铜仁市,碧江区，中国,湖南省,益阳市,南县）；程序一定会给出错误
+    匹配且目前并不会给出任何提示；对于“四川省南川”、“云南碧江”这种曾经的行政区
+    归属，程序会匹配字数多的行政区且这种状况下不会给出提示，如前者会匹配
+    “中国,四川省”，对于字数一致的，则匹配短的行政区，但会标识，如后者可能匹配
+    “!中国,云南省”
     """
 
     def __init__(self, address):
@@ -1039,77 +1040,78 @@ class AdminDiv:
         self.region_mapping = dict.fromkeys(self.org_address)
 
     def format_chinese_admindiv(self):
-        new_region = []
-        dfm_stdregion = pd.read_excel(ADMIN_DIV_LIB_PATH)["MergerName"]
+        new_regions = []
+        with open(ADMIN_DIV_LIB_PATH, 'r', encoding='utf-8') as ad:
+            std_regions = json.load(ad)
         #country_split = re.compile(r"([\s\S]*?)::([\s\S]*)")
         for raw_region in tqdm(self.region_mapping, desc="行政区划", ascii=True):
             if pd.isnull(raw_region):
                 continue
-            score = (0, 0)  # 分别记录匹配的字数和匹配项的长度
-            region = raw_region.rstrip(":")
-            for stdregion in dfm_stdregion:
-                each_score = 0  # 记录累计匹配的字数
-                i = 0  # 记录 region 参与匹配的起始字符位置
-                j = 0  # 记录 stdregion 参与匹配的起始字符位置
-                while i < len(region)-1 and j < len(stdregion)-1: # 单字无法匹配
-                    k = 2  # 用于初始化、递增可匹配的字符长度
-                    n = stdregion[j:].find("::"+region[i:i+k])
-                    m = 0  # 记录最终匹配的字符数
-                    if n != -1:
-                        # 白云城矿区可能会错误的匹配“中国,内蒙古自治区,白云鄂博矿区”
-                        if region[-2] in stdregion:
-                            while n != -1 and k <= len(region[i:]):
-                                k += 1
-                                m = n
-                                n = stdregion[j:].find(region[i:i+k])
-                            i += k-1
-                            j += m+k-1
-                            each_score += k-1
-                        else:
-                            each_score = 2
-                            break
-                    else:
-                        i += 1
-                if each_score < 2:
-                    continue
-                elif each_score == score[0]:
-                    if self.region_mapping[raw_region] in stdregion:
-                        pass
-                    # 优先匹配字符短的行政区，避免“河北”匹配“中国,天津,天津市,河北区
-                    elif len(stdregion) < score[1]:
-                        score = each_score, len(stdregion)
-                        self.region_mapping[raw_region] = "!"+stdregion
-                elif each_score > score[0]:
-                    score = each_score, len(stdregion)
-                    self.region_mapping[raw_region] = stdregion
-            if score == (0, 0):
-                # 如果没有匹配到，又是中国的行政区，英文!标识 
-                if "中国" in raw_region:
-                    self.region_mapping[raw_region] = "!" + raw_region
-                else:
-                    self.region_mapping[raw_region] = raw_region
-            else:
-                continue
-            #print(raw_region, self.region_mapping[raw_region])
-        # 为提升生成效率使用列表推导式处理
-        new_region = [
+            self._build_mapping(raw_region, std_regions)
+        new_regions = [
             (
                 self.region_mapping[region].split("::") 
                 if self.region_mapping[region] else self.region_mapping[region]
                 ) for region in self.org_address
             ]
-        # 注意浅拷贝陷阱
+        # 未达县级的标准行政区，用None 补齐，注意浅拷贝陷阱
         [
             (
                 region.extend([None]*(4-len(region))) 
                 if region and len(region) < 4 else region
-                ) for region in new_region
+                ) for region in new_regions
         ] 
 
-        self.country = [(region[0] if region else None) for region in new_region]
-        self.province = [(region[1] if region else None) for region in new_region]
-        self.city = [(region[2] if region else None) for region in new_region]
-        self.county = [(region[3] if region else None) for region in new_region]
+        self.country = [(region[0] if region else None) for region in new_regions]
+        self.province = [(region[1] if region else None) for region in new_regions]
+        self.city = [(region[2] if region else None) for region in new_regions]
+        self.county = [(region[3] if region else None) for region in new_regions]
+
+    def _build_mapping(self, raw_region, std_regions):
+        score = (0, 0)  # 分别记录匹配的字数和匹配项的长度
+        region = raw_region.rstrip(":")
+        for stdregion in std_regions:
+            each_score = 0  # 记录累计匹配的字数
+            i = 0  # 记录 region 参与匹配的起始字符位置
+            j = 0  # 记录 stdregion 参与匹配的起始字符位置
+            while i < len(region)-1 and j < len(stdregion)-1: # 单字无法匹配
+                k = 2  # 用于初始化、递增可匹配的字符长度
+                n = stdregion[j:].find("::"+region[i:i+k])
+                m = 0  # 记录最终匹配的字符数
+                if n != -1:
+                    # 白云城矿区可能会错误的匹配“中国,内蒙古自治区,白云鄂博矿区”
+                    if region[-2] in stdregion:
+                        while n != -1 and k <= len(region[i:]):
+                            k += 1
+                            m = n
+                            n = stdregion[j:].find(region[i:i+k])
+                        i += k-1
+                        j += m+k-1
+                        each_score += k-1
+                    else:
+                        each_score = 2
+                        break
+                else:
+                    i += 1
+            if each_score < 2:
+                continue
+            elif each_score == score[0]:
+                if self.region_mapping[raw_region] in stdregion:
+                    pass
+                # 优先匹配短的行政区，避免“河北”匹配“中国,天津,天津市,河北区“
+                elif len(stdregion) < score[1]:
+                    score = each_score, len(stdregion)
+                    self.region_mapping[raw_region] = "!"+stdregion
+            elif each_score > score[0]:
+                score = each_score, len(stdregion)
+                self.region_mapping[raw_region] = stdregion
+        if score == (0, 0):
+            # 如果没有匹配到，又是中国的行政区，英文!标识 
+            if "中国" in raw_region:
+                self.region_mapping[raw_region] = "!" + raw_region
+            else:
+                self.region_mapping[raw_region] = raw_region
+        #print(raw_region, self.region_mapping[raw_region])
 
     def __call__(self):
         self.format_chinese_admindiv()
@@ -1121,8 +1123,8 @@ class AdminDiv:
                             })
 
 
-class  NumericalInterval:
-    def __init__(self, column, column2=None, form="float", min_num=0, max_num=8848):
+class  Number:
+    def __init__(self, column, column2=None, typ=float, min_num=0, max_num=8848):
         """
             column: 可迭代对象，数据列
             column2: 数据列2，可迭代对象
@@ -1132,7 +1134,7 @@ class  NumericalInterval:
         """
         self.column = column
         self.column2 = column2
-        self.form = form
+        self.typ = typ 
         self.min_num = min_num
         self.max_num = max_num
     
@@ -1143,9 +1145,9 @@ class  NumericalInterval:
         """
         float_pattern = re.compile(r"^[+-]?\d+[\.\d]*|\d+[\.\d]*")
         int_pattern = re.compile(r"^[+-]?\d+|\d+")
-        if self.form == "float":
+        if self.typ == float:
             pattern = float_pattern
-        elif self.form == "int":
+        elif self.typ == int:
             pattern = int_pattern
         else:
             raise ValueError
@@ -1155,13 +1157,14 @@ class  NumericalInterval:
                 for value in self.column
                 ]
             value_title = []
-            if not self.column2 :
+            if self.column2 is None:
                 for i, v in enumerate(tqdm(lst_title, desc="数值处理", ascii=True)):
-                    if len(v) == 1 and self.min_num<= float(v[0]) <= self.max_num:
-                        value_title.append(float(v[0]))
+                    if len(v) == 1 and self.min_num <= float(v[0]) <= self.max_num:
+                        value_title.append(self.typ(v[0]))
                     else:
                         if pd.isnull(self.column[i]):
                             value_title.append(None)
+                        # 如果拆分出多个值，作为错误值标记
                         else:
                             value_title.append("!" + str(self.column[i]))
                 self.column = pd.Series(value_title)
@@ -1170,35 +1173,37 @@ class  NumericalInterval:
                     pattern.findall(str(value)) if not pd.isnull(value) else [] 
                     for value in self.column2
                     ]
-                for p, q in zip(tqdm(lst_title, desc="数值区间", ascii=True), tqdm(lst_title2, desc="数值区间", ascii=True)):
-                    merge_value = p+q
-                    if len(merge_value) == 2 and self.min_num<= float(merge_value[0]) <= self.max_num and self.min_num <= float(merge_value[1]) <= self.max_num:
-                        if float(merge_value[0])<= float(merge_value[1]):
-                            p.insert(0, merge_value[0])
-                            q.insert(0, merge_value[1])
-                        elif float(merge_value[1]) == 0:  # 系统默认补0造成的高值低于低值，处理为同值
-                            p.insert(0, merge_value[0])
-                            q.insert(0, merge_value[0])
+                for p, q in zip(
+                                tqdm(lst_title, desc="数值区间", ascii=True), 
+                                tqdm(lst_title2, desc="数值区间", ascii=True)
+                                ):
+                    merge_value = p + q
+                    if len(merge_value) == 2 and self.min_num <= float(merge_value[0]) <= self.max_num and self.min_num <= float(merge_value[1]) <= self.max_num:
+                        if float(merge_value[0]) <= float(merge_value[1]):
+                            pass
+                        # 系统默认补0造成的高值低于低值，处理为同值
+                        elif float(merge_value[1]) == 0:   
+                            q[0] =  merge_value[0]
                         else:
-                            p.insert(0, merge_value[1])
-                            q.insert(0, merge_value[0])
+                            p[0] =  merge_value[1]
+                            q[0] =  merge_value[0]
                     elif len(merge_value) == 1 and self.min_num <= float(merge_value[0]) <= self.max_num:
-                        p.insert(0, merge_value[0])
-                        q.insert(0, merge_value[0])
+                        q[0] =  merge_value[0]
                     else:
-                        p.insert(0, "!")
-                        q.insert(0, "!")
+                        p[0] = "!"
+                        q[0] = "!"
                 self.column = pd.Series(
                     [
-                        float(lst_title[i][0]) 
-                        if lst_title[i][0] != "!" else "".join(["!", str(self.column[i])]) 
+                        self.typ(lst_title[i][0]) 
+                            if lst_title[i][0] != "!" 
+                            else "".join(["!", str(self.column[i])]) 
                         if not pd.isnull(self.column[i]) else self.column[i] 
                         for i in range(len(lst_title))
                         ]
                     )
                 self.column2 = pd.Series(
                     [
-                        float(lst_title2[i][0]) 
+                        self.typ(lst_title2[i][0]) 
                         if lst_title2[i][0] != "!" else "".join(["!", str(self.column2[i])]) 
                         if not pd.isnull(self.column2[i]) else self.column[i] 
                         for i in range(len(lst_title2))
@@ -1210,7 +1215,7 @@ class  NumericalInterval:
 
     def __call__(self):
         self.format_number()
-        if not self.column2 :
+        if self.column2 is None:
             return pd.DataFrame(self.column)
         else:
             return pd.DataFrame({"min_num":self.column, "max_num":self.column2})

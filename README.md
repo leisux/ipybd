@@ -30,7 +30,7 @@ from ipybd import BioName
 
 poa = BioName(["Poaceae", "Poa", "Poa annua", "Poa annua Schltdl. & Cham.", "Poa annua L.", None])
 ```
-参与实例化的学名可以不包含命名人，也可以包含命名人（但包含命名人可以提高匹配精度），格式可以比较规范，也可以是格式不太规范的人工转录学名（但不能简写属名）。
+参与实例化的学名可以包含命名人（命名人的写法没有要求），也可以不包含命名人（但包含命名人可以提高匹配精度），学名格式可以比较规范，也可以是不太规范的人工转录学名（但不能简写属名）。
 
 BioName 实例主要通过 `get`方法配合关键字从 [powo](http://www.plantsoftheworldonline.org/)、[ipni](www.ipni.org)、[中国生物物种名录](www.sp2000.org.cn) 获取相关学名的分类阶元、分类处理、物种图片、发表文献、相关异名等数据 。下面以获取上文 `poa` 实例对象在`powo`平台上的科属地位为例：
 
@@ -63,7 +63,7 @@ poa.get('powoName', typ=dict)
 }
 ```
 
-除了上述示例中的`powoName`参数，目前`BioName`的`get`方法总共支持以下九种方法：
+除了上述示例中的`powoName`参数，目前`BioName`的`get`方法总共支持以下九类需求：
 
 + `'powoName'`: 获取 powo 平台相应学名的科属地位、学名简写和命名人信息；
 
@@ -83,7 +83,7 @@ poa.get('powoName', typ=dict)
 
 + `'stdName'`: 优先获取中国生物物种名录的名称信息，如果无法获得，则获取`ipni`的信息。 
 
-使用时，只需将上例中的关键字替换为相应关键字即可。
+使用时，只需将上例`get`方法中的相应关键字替换为所需关键字即可。
 
 ### 三、FormatTable
 
@@ -95,7 +95,7 @@ collections = FormatTable(r"~/Documents/record2019-09-10.xlsx")
 
 #### 3.1 学名处理
 
-FormatTable 类基于 BioName 实例封装了一些学名处理方法，以使得在应对各种单纯基于数据表的名称处理能够更加简单和灵活，比如对于上述 `collections` 数据表，若表中的学名并非一列，而是按照 `"属名"`、`"种名"`、`"种下单元"`、`"命名人"`四列分开存储，ForamtTable 实例仍然可以轻易的进行学名查询：
+FormatTable 类基于 BioName 实例封装了一些学名处理方法，以使得在应对各种单纯基于数据表的名称处理能够更加简单和灵活，比如对于上述 `collections` 数据表，若表中的学名并非一列，而是按照 `"属名"`、`"种名"`、`"种下单元"`、`"命名人"`四列分开存储，ForamtTable 实例仍然可以直接进行学名查询：
 
 ```python
 collections.get_ipni_name("属名", "种名", "种下单元", "命名人")
@@ -122,7 +122,7 @@ collections.get_ipni_name("属名", "种名", "种下单元", "命名人")
  ]
 ```
 
-目前 FormatTable 支持以下几种名称处理方法：
+你也可以按照上述方式，根据自己的数据表结构传递自己的查询参数。目前 FormatTable 共支持以下几种名称处理方法：
 
 + `get_powp_name`: 获取 powo 平台相应学名的科属地位、学名简写和命名人信息；
 
@@ -140,7 +140,7 @@ collections.get_ipni_name("属名", "种名", "种下单元", "命名人")
 
 + `get_col_Synonyms`: 获取相应学名在中国生物物种名录中的异名信息。
 
-如果并不想程序直接返回检索结果，而是希望直接将结果写入`collections`数据表，请求时可以将`concat`参数设置为`True`:
+如果并不希望程序直接返回检索结果，而是想直接将名称的查询结果写入`collections`数据表，请求时可以将`concat`参数设置为`True`:
 
 ```python
 collections.get_ipni_name("属名", "种名", "种下单元", "命名人", concat=True)

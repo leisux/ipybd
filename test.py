@@ -1,6 +1,7 @@
-from ipybd import FormatTable, BioName
+from ipybd import KingdoniaPlant
 
-poa = poa = BioName(["Poaceae", "Poa", "Poa annua", "Poa annua Schltdl. & Cham.", "Poa annua L.", None])
-# 检索 ipni.org 名称
-poa.get('ipniName')
+from ipybd import KingdoniaPlant
+
+table = KingdoniaPlant(r"../testfile/record2019-09-10 02_51_33.xlsx")
+table.save_table(r"../testfile/record.xlsx")
 

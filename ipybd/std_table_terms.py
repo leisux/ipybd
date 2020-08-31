@@ -60,7 +60,7 @@ class OccurrenceTerms(Enum):
     preservedLocation = RadioInput, 'preservedLocation', 'preservedLocation', 1
     recordedBy = HumanName, 'recordedBy', 1
     recordNumber = 'recordNumber', 1
-    individualCount = NumericalInterval, 'individualCount', None, 'int', 1
+    individualCount = Number, 'individualCount', None, int, 1
     lifeStage = RadioInput, 'lifeStage', 'lifeStage', 1
     sex = RadioInput, 'sex', 'sex', 1
     behavior = 'behavior', 1
@@ -82,14 +82,14 @@ class OccurrenceTerms(Enum):
     locality = ('locality', 'mountain', 'waterBody', ','), 1
     decimalLatitude = GeoCoordinate, ('decimalLatitude', 'decimalLongitude', ';'), 1
     decimalLongitude = GeoCoordinate, ('decimalLatitude', 'decimalLongitude', ';'), 1
-    _minimumElevationInMeters = NumericalInterval, 'minimumElevationInMeters', 1
-    _maximumElevationInMeters = NumericalInterval, 'maximumElevationInMeters', 1
-    minimumElevationInMeters = NumericalInterval, '_minimumElevationInMeters', '_maximumElevationInMeters', 2
-    maximumElevationInMeters = NumericalInterval, '_minimumElevationInMeters', '_maximumElevationInMeters', 2
-    _minimumDepthInMeters = NumericalInterval, 'minimumDepthInMeters', 1
-    _maximumDepthInMeters = NumericalInterval, 'maximumDepthInMeters', 1
-    minimumDepthInMeters = NumericalInterval, '_minimumDepthInMeters', '_maximumDepthInMeters', 2
-    maximumDepthInMeters = NumericalInterval, '_minimumDepthInMeters', '_maximumDepthInMeters', 2
+    _minimumElevationInMeters = Number, 'minimumElevationInMeters', 1
+    _maximumElevationInMeters = Number, 'maximumElevationInMeters', 1
+    minimumElevationInMeters = Number, '_minimumElevationInMeters', '_maximumElevationInMeters', 2
+    maximumElevationInMeters = Number, '_minimumElevationInMeters', '_maximumElevationInMeters', 2
+    _minimumDepthInMeters = Number, 'minimumDepthInMeters', 1
+    _maximumDepthInMeters = Number, 'maximumDepthInMeters', 1
+    minimumDepthInMeters = Number, '_minimumDepthInMeters', '_maximumDepthInMeters', 2
+    maximumDepthInMeters = Number, '_minimumDepthInMeters', '_maximumDepthInMeters', 2
     associatedMedia = 'associatedMedia', 1
     associatedReferences = 'associatedReferences', 1
     associatedSequences = 'associatedSequences', 1
@@ -115,20 +115,20 @@ class OccurrenceTerms(Enum):
     fruit = 'fruit', 1
     seed = 'seed', 1
     # Organism of Aves
-    weightInGrams = NumericalInterval, 'weightInGrams', 1
-    bodyLengthInMillimeters = NumericalInterval, 'bodyLengthInMillimeters', 1
-    wingChordInMillimeters = NumericalInterval, 'wingLengthInMillimeters', 1
-    tailLengthInMillimeters = NumericalInterval, 'tailLengthInMillimeters', 1
-    tarsusInMillimeters = NumericalInterval, 'tarsusInMillimeters', 1
-    exposedCulmenInMillimeters = NumericalInterval, 'exposedCulmenInMillimeters', 1
+    weightInGrams = Number, 'weightInGrams', 1
+    bodyLengthInMillimeters = Number, 'bodyLengthInMillimeters', 1
+    wingChordInMillimeters = Number, 'wingLengthInMillimeters', 1
+    tailLengthInMillimeters = Number, 'tailLengthInMillimeters', 1
+    tarsusInMillimeters = Number, 'tarsusInMillimeters', 1
+    exposedCulmenInMillimeters = Number, 'exposedCulmenInMillimeters', 1
     irisColor = 'irisColor', 1
     billColor = 'billColor', 1
     legsColor = 'legsColor', 1
     fat = RadioInput, 'fat', 'fat', 1
-    heightOfNestInMeters = NumericalInterval, 'heightOfNestInMeters', 1
+    heightOfNestInMeters = Number, 'heightOfNestInMeters', 1
     substrateOfNest = 'substrateOfNest', 1
     constructionOfNest = 'constructionOfNest', 1
-    numOfEggsTaken = NumericalInterval, 'numOfEggsTaken', None, 'int', 1
+    numOfEggsTaken = Number, 'numOfEggsTaken', None, int, 1
     incubation = 'incubation', 1
     organismRemarks = 'organismRemarks', 1
 
@@ -145,7 +145,7 @@ class KingdoniaPlantTerms(Enum):
     recordedBy = HumanName, 'recordedBy', 1
     recordNumber = 'recordNumber', 1
     eventDate = DateTime, 'eventDate', 'datetime', 1
-    individualCount = NumericalInterval, 'individualCount', None, 'int', 1
+    individualCount = Number, 'individualCount', None, int, 1
     country = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
     province = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
     city = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
@@ -155,10 +155,10 @@ class KingdoniaPlantTerms(Enum):
     habit = RadioInput, 'habit', 'habit', 1
     decimalLatitude = GeoCoordinate, ('decimalLatitude', 'decimalLongitude', ';'), 1
     decimalLongitude = GeoCoordinate, ('decimalLatitude', 'decimalLongitude', ';'), 1
-    _minimumElevationInMeters = NumericalInterval, 'minimumElevationInMeters', 1
-    _maximumElevationInMeters = NumericalInterval, 'maximumElevationInMeters', 1
-    minimumElevationInMeters = NumericalInterval, '_minimumElevationInMeters', '_maximumElevationInMeters', 2
-    maximumElevationInMeters = NumericalInterval, '_minimumElevationInMeters', '_maximumElevationInMeters', 2
+    _minimumElevationInMeters = Number, 'minimumElevationInMeters', 1
+    _maximumElevationInMeters = Number, 'maximumElevationInMeters', 1
+    minimumElevationInMeters = Number, 'minimumElevationInMeters', 'maximumElevationInMeters', 2
+    maximumElevationInMeters = Number, 'minimumElevationInMeters', 'maximumElevationInMeters', 2
     occurrenceRemarks = 'occurrenceRemarks', 1
     _scientificName = BioName, [('genus', 'specificEpithet', 'specificEpithetAuthorShip', 'taxonRank', 'infraspecificEpithet', 'scientificNameAuthorship', ' '), 'scientificName'], 1
     scientificName = FillNa, '_scientificName', 'unknown', 1
@@ -181,7 +181,7 @@ class KingdoniaPlantTerms(Enum):
     #孢子囊（群）= '孢子囊（群）', 1
     #孢子叶（球）= '孢子叶（球）', 1
     频度 = RadioInput, 'frequency', 1
-    胸径 = NumericalInterval, 'DBH', 1
+    胸径 = Number, 'DBH', 1
     体高 = 'height', 1
     野外鉴定 = '野外鉴定', 1
     当地名称 = 'vernacularName', 1
@@ -190,9 +190,9 @@ class KingdoniaPlantTerms(Enum):
     associatedMedia = 'associatedMedia', 1
     _molecularMaterialSample = RadioInput, 'molecularMaterialSample', 'molecularMaterialSample', 1
     molecularMaterialSample = FillNa, '_molecularMaterialSample', '无', 1
-    _seedMaterialSample = NumericalInterval, 'seedMaterialSample', None, 'int', 1
+    _seedMaterialSample = Number, 'seedMaterialSample', None, int, 1
     seedMaterialSample = FillNa, '_seedMaterialSample', '0', 1
-    _livingMaterialSample = NumericalInterval, 'livingMaterialSample', None, 'int', 1
+    _livingMaterialSample = Number, 'livingMaterialSample', None, int, 1
     livingMaterialSample = FillNa, '_livingMaterialSample', '0', 1
     MaterialSample = ('molecularMaterialSample', 'seedMaterialSample', 'livingMaterialSample', 'o'), 1
 

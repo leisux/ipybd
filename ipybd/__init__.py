@@ -3,7 +3,7 @@ from ipybd.core import FormatTable, RestructureTable
 from ipybd.data_cleaner import (
     BioName,
     AdminDiv,
-    NumericalInterval,
+    Number,
     GeoCoordinate,
     DateTime,
     HumanName,
