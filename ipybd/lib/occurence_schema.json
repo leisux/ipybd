@@ -74,24 +74,21 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "format": "uri",
-                "pattern": "^https?://.+"
+                "format": "uri"
               }
             },
             "video": {
               "type": "array",
               "items": {
                 "type": "string",
-                "format": "uri",
-                "pattern": "^https?://.+"
+                "format": "uri"
               }
             },
             "audio": {
               "type": "array",
               "items": {
                 "type": "string",
-                "format": "uri",
-                "pattern": "^https?://.+"
+                "format": "uri"
               }
             }
           }
@@ -100,16 +97,14 @@
           "type": "array",
           "items": {
             "type": "string",
-            "format": "uri",
-            "pattern": "^https?://.+"
+            "format": "uri"
           }
         },
         "associatedSequences": {
           "type": "array",
           "items": {
             "type": "string",
-            "format": "uri",
-            "pattern": "^https?://.+"
+            "format": "uri"
           }
         },
         "occurrenceRemarks": {
@@ -321,9 +316,7 @@
           "type": "string"
         },
         "licence": {
-          "type": "string",
-          "format": "uri",
-          "pattern": "^https?://.+"
+          "type": "string"
         },
         "modified": {
           "type": "string",
@@ -333,24 +326,21 @@
           "type": "object",
           "additionalProperties": {
             "type": "string",
-            "format": "uri",
-            "pattern": "^https?://.+"
+            "format": "uri"
           }
         },
         "apiData": {
           "type": "object",
           "additionalProperties": {
             "type": "string",
-            "format": "uri",
-            "pattern": "^https?://.+"
+            "format": "uri"
           }
         },
         "thumbnails": {
           "type": "object",
           "additionalProperties": {
             "type": "string",
-            "format": "uri",
-            "pattern": "^https?://.+"
+            "format": "uri"
           }
         },
         "institutionCode": {

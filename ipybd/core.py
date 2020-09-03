@@ -543,8 +543,23 @@ class FormatTable:
     def format_datetime(self,header, inplace=True):
         pass
 
-    def format_number(self, header1, header2, inplace=True):
-        pass
+    def format_number(self, header1, header2=None, typ=float, min_num=0, 
+                      max_num=8848, inplace=True, mark=False):
+        if header2:
+            number = Number(self.df[header1], self.df[header2], typ, min_num, 
+                            max_num)
+            headers = [header1, header2]
+        else:
+            number = Number(self.df[header1], header2, typ, min_num, max_num) 
+            headers = [header1]
+        new_columns = number(mark)
+        new_columns.columns = headers
+        if inplace:
+            self.df.drop(headers, axis=1, inplace=True)
+            self.df = pd.concat([self.df, new_columns], axis=1)
+        else:
+            return new_columns
+
 
     def fromat_options(self, header, stdheader, inplace=True):
         pass

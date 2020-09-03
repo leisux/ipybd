@@ -22,10 +22,10 @@ setup(
             'bdcleaner'
             ),
         install_requires=[
-            'pandas',
-            'tqdm',
-            'prompt_toolkit',
-            'requests',
-            'aiohttp'
+            'pandas>=1.1.1',
+            'tqdm>=4.40.2',
+            'prompt_toolkit>=3.0.5',
+            'requests>=2.21.0',
+            'aiohttp>=3.6.2'
         ]
 )

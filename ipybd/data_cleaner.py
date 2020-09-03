@@ -1123,22 +1123,22 @@ class AdminDiv:
                             })
 
 
-class  Number:
-    def __init__(self, column, column2=None, typ=float, min_num=0, max_num=8848):
+class Number:
+    def __init__(self, min_column, max_column=None, typ=float, min_num=0, max_num=8848):
         """
-            column: 可迭代对象，数据列
-            column2: 数据列2，可迭代对象
-            form: title 数值的数值类型，支持 float 和 int
+            min_column: 可迭代对象，数值区间中的小数值数据列
+            max_column: 可迭代对象, 数据区间中的大数值数据列
+            typ: 数值的类型，支持 float 和 int
             min_num: 数值区间的低值
             max_num: 数值区间的高值
         """
-        self.column = column
-        self.column2 = column2
+        self.min_column = min_column
+        self.max_column = max_column
         self.typ = typ 
         self.min_num = min_num
         self.max_num = max_num
     
-    def format_number(self):
+    def format_number(self, mark=False):
         """
         return: 如果出现 keyerro，返惠列表参数错误, 否则返回处理好的table
         care: 对于“-20-30“ 的值，无法准确划分为 -20和30，会被划分为 20和30
@@ -1152,73 +1152,109 @@ class  Number:
         else:
             raise ValueError
         try:
-            lst_title = [
+            column1 = [
                 pattern.findall(str(value)) if not pd.isnull(value) else [] 
-                for value in self.column
+                for value in self.min_column
                 ]
-            value_title = []
-            if self.column2 is None:
-                for i, v in enumerate(tqdm(lst_title, desc="数值处理", ascii=True)):
-                    if len(v) == 1 and self.min_num <= float(v[0]) <= self.max_num:
-                        value_title.append(self.typ(v[0]))
+            new_column = []
+            if self.max_column is None:
+                for i, v in enumerate(tqdm(column1, desc="数值处理", ascii=True)):
+                    if (len(v) == 1 
+                            and self.min_num <= float(v[0]) <= self.max_num):
+                        new_column.append(self.typ(v[0]))
+                    elif pd.isnull(self.min_column[i]):
+                        new_column.append(None)
+                    # 如果拆分出多个值，作为错误值标记
+                    elif mark:
+                        new_column.append("!" + str(self.min_column[i]))
                     else:
-                        if pd.isnull(self.column[i]):
-                            value_title.append(None)
-                        # 如果拆分出多个值，作为错误值标记
-                        else:
-                            value_title.append("!" + str(self.column[i]))
-                self.column = pd.Series(value_title)
+                        new_column.append(None)
+                self.min_column = new_column
             else:
-                lst_title2 = [
+                column2 = [
                     pattern.findall(str(value)) if not pd.isnull(value) else [] 
-                    for value in self.column2
+                    for value in self.max_column
                     ]
-                for p, q in zip(
-                                tqdm(lst_title, desc="数值区间", ascii=True), 
-                                tqdm(lst_title2, desc="数值区间", ascii=True)
-                                ):
-                    merge_value = p + q
-                    if len(merge_value) == 2 and self.min_num <= float(merge_value[0]) <= self.max_num and self.min_num <= float(merge_value[1]) <= self.max_num:
-                        if float(merge_value[0]) <= float(merge_value[1]):
-                            pass
-                        # 系统默认补0造成的高值低于低值，处理为同值
-                        elif float(merge_value[1]) == 0:   
-                            q[0] =  merge_value[0]
-                        else:
-                            p[0] =  merge_value[1]
-                            q[0] =  merge_value[0]
-                    elif len(merge_value) == 1 and self.min_num <= float(merge_value[0]) <= self.max_num:
-                        q[0] =  merge_value[0]
-                    else:
-                        p[0] = "!"
-                        q[0] = "!"
-                self.column = pd.Series(
-                    [
-                        self.typ(lst_title[i][0]) 
-                            if lst_title[i][0] != "!" 
-                            else "".join(["!", str(self.column[i])]) 
-                        if not pd.isnull(self.column[i]) else self.column[i] 
-                        for i in range(len(lst_title))
-                        ]
-                    )
-                self.column2 = pd.Series(
-                    [
-                        self.typ(lst_title2[i][0]) 
-                        if lst_title2[i][0] != "!" else "".join(["!", str(self.column2[i])]) 
-                        if not pd.isnull(self.column2[i]) else self.column[i] 
-                        for i in range(len(lst_title2))
-                        ]
-                    )
-
+                self._min_max(column1, column2, self.typ, mark)
         except KeyError:
             return print("列表参数有误\n")
 
-    def __call__(self):
-        self.format_number()
-        if self.column2 is None:
-            return pd.DataFrame(self.column)
+    def _min_max(self, column1, column2, typ, mark=False):
+        """ 修复数值区间中相应的大小数值
+
+            column1: 小数值 list, 每个元素必须也为 list
+            column2: 大数值 list，每个元素必须也为 list
+            typ: 数值的类型，如 int, flora
+        """ 
+        for p, q in zip(
+                        tqdm(column1, desc="数值区间", ascii=True), 
+                        tqdm(column2, desc="数值区间", ascii=True)
+                        ):
+            merge_value = p + q
+            if (len(merge_value) == 2 
+                and self.min_num <= float(merge_value[0]) <= self.max_num 
+                and self.min_num <= float(merge_value[1]) <= self.max_num):
+                if float(merge_value[0])<= float(merge_value[1]):
+                    p.insert(0, merge_value[0])
+                    q.insert(0, merge_value[1])
+                # 系统默认补0造成的高值低于低值，处理为同值
+                elif float(merge_value[1]) == 0: 
+                    p.insert(0, merge_value[0])
+                    q.insert(0, merge_value[0])
+                else:
+                    p.insert(0, merge_value[1])
+                    q.insert(0, merge_value[0])
+            elif (len(merge_value) == 1 
+                  and self.min_num <= float(merge_value[0]) <= self.max_num):
+                # 若两个值中只有一个值含数字，程序会自动清非数字点的值
+                # 并使用另外一个数字填充两个值
+                p.insert(0, merge_value[0])
+                q.insert(0, merge_value[0])
+            else:
+                p.insert(0, None)
+                q.insert(0, None)
+        if mark:
+            self.min_column = [
+                    typ(column1[i][0]) 
+                        if column1[i][0] else "".join(["!", str(self.min_column[i])]) 
+                    if not pd.isnull(self.min_column[i]) else None 
+                    for i in range(len(column1))
+                    ]
+            self.max_column = [
+                    typ(column2[i][0]) 
+                        if column2[i][0] else "".join(["!", str(self.min_column[i])]) 
+                    if not pd.isnull(self.max_column[i]) else None
+                    for i in range(len(column2))
+                    ]
         else:
-            return pd.DataFrame({"min_num":self.column, "max_num":self.column2})
+            self.min_column = [
+                    typ(column1[i][0]) 
+                        if column1[i][0] else None 
+                    if not pd.isnull(self.min_column[i]) else None 
+                    for i in range(len(column1))
+                    ]
+            self.max_column = [
+                    typ(column2[i][0]) 
+                        if column2[i][0] else None 
+                    if not pd.isnull(self.max_column[i]) else None 
+                    for i in range(len(column2))
+                    ]
+
+    def __call__(self, mark=True):
+        self.format_number(mark)
+        if self.typ is int:
+            # 解决含 None 数据列，pandas 会将int数据列转换为float的问题
+            # 这里要求 pandas 版本支持
+            typ = 'Int64'
+        else:
+            typ = self.typ
+        if self.max_column is None:
+            return pd.DataFrame(self.min_column, dtype=typ)
+        else:
+            return pd.DataFrame(
+                {"min_num":self.min_column, "max_num":self.max_column},
+                dtype = typ 
+                )
 
 
 class GeoCoordinate:
