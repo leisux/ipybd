@@ -1,4 +1,47 @@
 {
+    "geodeticDatum":[
+        "坐标系",
+        "坐标基准"
+    ],
+    "fieldNote":[
+        "野外记录"
+    ],
+    "fieldNumber":[
+        "鸟网号",
+        "陷阱号"
+    ],
+    "associatedReferences":[
+        "相关文献"
+    ],
+    "establishmentMeans":[
+        "坐落方式",
+        "建群方式"
+    ],
+    "thumbnails":[
+        "缩略图"
+    ],
+    "DataApi":[
+        "数据接口"
+    ],
+    "field":[
+        "领域",
+        "研究领域"
+    ],
+    "licence":[
+        "授权",
+        "授权协议"
+    ],
+    "rightsHolder":[
+    "版权代理",
+    "所有权代理",
+    "所有权代理人"
+],
+    "rights":[
+        "所有权",
+        "版权所有",
+        "版权",
+        "所有者"
+    ],
     "identifiedByID":[
         "鉴定者ID"
         ],
@@ -42,13 +85,21 @@
     "verbatimLocality": [
         "原签产地"
     ],
+    "minimumDistanceAboveSurfaceInMeters": [
+        "最小距离"
+    ],
+    "maximumDistanceAboveSurfaceInMeters": [
+        "最大距离"
+    ],
     "minimumDepthInMeters": [
         "水深低",
-        "水深"
+        "水深",
+        "最小深度"
     ],
     "maximumDepthInMeters": [
         "水深高",
-        "最大水深"
+        "最大水深",
+        "最大深度"
     ],
     "mountain": [
         "山脉"
@@ -625,12 +676,6 @@
     ],
     "language": [
         "语言"
-    ],
-    "license": [
-        "授权"
-    ],
-    "rightHolder": [
-        "版权"
     ],
     "accessRight": [
         "访问权限",

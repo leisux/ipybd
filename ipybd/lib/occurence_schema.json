@@ -3,7 +3,7 @@
   "title": "Occurence Record Object Of NOI",
   "description": "Must Be One Record One Species, The Record Can Be From PreservedSpecimen, Literature, LivingSpecimen, FossilSpecimen, MaterialSample, HumanObservation, MachineObservation And So On",
   "properties": {
-    "Occurence": {
+    "Occurrence": {
       "type": "object",
       "properties": {
         "occurrenceID": {
@@ -15,7 +15,7 @@
         },
         "catalogNumber": {
           "type": "string",
-          "pattern":"[A-Za-z0-9]+",
+          "pattern": "[A-Za-z0-9]+",
           "minLength": 4,
           "maxLength": 20,
           "description": "L1245789"
@@ -35,8 +35,9 @@
         "sex": {
           "type": "string",
           "enum": [
-            "female",
-            "male"
+            "♂",
+            "♀",
+            "☉"
           ]
         },
         "lifeStage": {
@@ -48,11 +49,11 @@
         "establishmentMeans": {
           "type": "string",
           "enum": [
-            "native",
-            "introduced",
-            "naturalised",
-            "invasive",
-            "managed"
+            "本土",
+            "引种",
+            "归化",
+            "入侵",
+            "受控"
           ]
         },
         "preparations": {
@@ -61,36 +62,16 @@
         "disposition": {
           "type": "string",
           "enum": [
-            "in collection",
-            "missing",
-            "voucher elsewhere",
-            "duplicates elsewhere"
+            "在库",
+            "出库",
+            "遗失"
           ]
         },
         "associatedMedia": {
-          "type": "object",
-          "properties": {
-            "image": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "format": "uri"
-              }
-            },
-            "video": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "format": "uri"
-              }
-            },
-            "audio": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "format": "uri"
-              }
-            }
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
           }
         },
         "associatedReferences": {
@@ -166,6 +147,33 @@
         "locality": {
           "type": "string"
         },
+        "decimalLatitude": {
+          "type":"number",
+          "minimum":-90,
+          "maximum":90
+        },
+        "decimalLongitude":{
+          "type":"number",
+          "minimum":-180,
+          "maximum":180
+        },
+        "geodeticDatum":{
+          "type":"string",
+          "Enum":[
+            "WGS84",
+            "CGCS2000",
+            "BD09",
+            "GCJ-02",
+            "Beijing 1954",
+            "Xian 1980",
+            "EPSG:4326",
+            "NAD27", 
+            "Campo Inchauspe", 
+            "European 1950", 
+            "Clarke 1866",
+            "Unknown"
+          ]
+        },
         "minimumElevationInMeters": {
           "type": "number",
           "minimum": -800,
@@ -202,85 +210,79 @@
       ]
     },
     "Identification": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "scientificName": {
-              "type": "string",
-              "pattern": "[A-Z][a-z][a-z]+"
-            },
-            "identifiedBy": {
-              "type": "string"
-            },
-            "dateIdentified": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "typeStatus": {
-              "type": "string",
-              "enum": [
-                "Type",
-                "Type species",
-                "Type genus",
-                "Allolectotype",
-                "Alloneotype",
-                "Allotype",
-                "Cotype",
-                "Epitype",
-                "Ex-epitype",
-                "Ex-holotype",
-                "Ex-isotype",
-                "Ex-lectotype",
-                "Ex-neotype",
-                "Ex-paratype",
-                "Ex-syntype",
-                "Ex-type",
-                "Hapantotype",
-                "Holotype",
-                "Iconotype",
-                "Isolectotype",
-                "Isoneotype",
-                "Isosyntype",
-                "Isotype",
-                "Lectotype",
-                "Neotype",
-                "Paralectotype",
-                "Paraneotype",
-                "Paratype",
-                "Plastoholotype",
-                "Plastoisotype",
-                "Plastolectotype",
-                "Plastoneotype",
-                "Plastoparatype",
-                "Plastosyntype",
-                "Plastotype",
-                "Secondary type",
-                "Supplementary type",
-                "Syntype",
-                "Topotype",
-                "Original material",
-                "Not type"
-              ]
-            }
+      "type": "array",
+      "Properties": {
+        "type": "object",
+        "properties": {
+          "vernacularName":{
+            "type":"string"
+          },
+          "scientificName": {
+            "type": "string",
+            "pattern": "[A-Z][a-z][a-z]+"
+          },
+          "identifiedBy": {
+            "type": "string"
+          },
+          "dateIdentified": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "typeStatus": {
+            "type": "string",
+            "enum": [
+              "type",
+              "type species",
+              "type genus",
+              "allolectotype",
+              "alloneotype",
+              "allotype",
+              "cotype",
+              "epitype",
+              "ex-epitype",
+              "ex-holotype",
+              "ex-isotype",
+              "ex-lectotype",
+              "ex-neotype",
+              "ex-paratype",
+              "ex-syntype",
+              "ex-type",
+              "hapantotype",
+              "holotype",
+              "iconotype",
+              "isolectotype",
+              "isoneotype",
+              "isosyntype",
+              "isotype",
+              "lectotype",
+              "neotype",
+              "paralectotype",
+              "paraneotype",
+              "paratype",
+              "plastoholotype",
+              "plastoisotype",
+              "plastolectotype",
+              "plastoneotype",
+              "plastoparatype",
+              "plastosyntype",
+              "plastotype",
+              "secondary type",
+              "supplementary type",
+              "syntype",
+              "topotype",
+              "original material",
+              "not type"
+            ]
           }
         }
-      },
-      "propertyNames": {
-        "type": "string",
-        "pattern": "[A-Z]+",
-        "minLength": 1,
-        "maxLength": 5
       }
     },
     "Record": {
       "type": "object",
       "properties": {
-        "field":{
-          "type":"string",
-          "enum":[
+        "field": {
+          "type": "string",
+          "enum": [
             "Aves",
             "Amphibia",
             "Angiospermae",
@@ -299,14 +301,14 @@
         "basisOfRecord": {
           "type": "string",
           "enum": [
-            "PreservedSpecimen",
-            "Literature",
-            "LivingSpecimen",
-            "FossilSpecimen",
-            "MaterialSample",
-            "HumanObservation",
-            "MachineObservation",
-            "Unknow"
+            "生物痕迹",
+            "人体感知",
+            "设备记录",
+            "馆藏标本",
+            "活体标本",
+            "化石标本",
+            "文献记录",
+            "不清"
           ]
         },
         "rights": {
@@ -316,38 +318,27 @@
           "type": "string"
         },
         "licence": {
-          "type": "string"
+          "type": "string",
+          "format":"uri"
         },
         "modified": {
           "type": "string",
           "format": "date-time"
         },
         "references": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string",
-            "format": "uri"
-          }
+          "type": "string",
+          "format": "uri"
         },
-        "apiData": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string",
-            "format": "uri"
-          }
+        "dataApi": {
+          "type": "string",
+          "format": "uri"
         },
         "thumbnails": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string",
-            "format": "uri"
-          }
+          "type": "string",
+          "format": "uri"
         },
         "institutionCode": {
           "type": "string"
-        },
-        "dynamicProperties": {
-          "type": "object"
         }
       },
       "required": [
@@ -360,7 +351,8 @@
     }
   },
   "required": [
-    "Occurence",
+    "Occurrence",
+    "Location",
     "Event",
     "Record"
   ]

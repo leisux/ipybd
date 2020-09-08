@@ -26,6 +26,7 @@ setup(
             'tqdm>=4.40.2',
             'prompt_toolkit>=3.0.5',
             'requests>=2.21.0',
-            'aiohttp>=3.6.2'
+            'aiohttp>=3.6.2',
+            'arrow>=0.16.0'
         ]
 )

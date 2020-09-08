@@ -13,7 +13,8 @@ from ipybd.data_cleaner import (
 )
 from ipybd.std_table_objects import (
     OccurrenceRecord,
-    KingdoniaPlant
+    KingdoniaPlant,
+    NoiOccurrence
 )
 
 from ipybd.api_terms import Filters

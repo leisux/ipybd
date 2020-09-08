@@ -2,6 +2,7 @@ import os
 import re
 import time
 from datetime import date, timedelta
+import arrow
 import json
 import requests
 import urllib
@@ -740,11 +741,12 @@ class BioName:
 
 
 class  DateTime:
-    def __init__(self, date_time, style="num"):
+    def __init__(self, date_time, style="num", timezone='+08:00'):
         if isinstance(date_time, str):
             self.datetime = [date_time]
         else:
             self.datetime = date_time
+        self.zone = timezone
         # 兼容 RestructureTable，供 __call__ 调用
         self.style = style
     
@@ -752,21 +754,24 @@ class  DateTime:
     def format_datetime(self, style):
         result = []
         for date_time in tqdm(self.datetime, desc="日期处理", ascii=True):
-            try:
-                struct_datetime = time.strptime(date_time, "%Y-%m-%d %H:%M:%S")
+            # 先尝试作为 datetime 处理
+            datetime = self.datetime_valid(date_time)
+            if datetime:
                 if style == "datetime":
-                    result.append(date_time)
+                    result.append(datetime.format("YYYY-MM-DD HH:mm:ss"))
+                elif style == "utc":
+                    result.append(datetime.format("YYYY-MM-DDTHH:mm:ss"+self.zone))
                 else:
                     result.append(
-                        self.__format_style(
-                            struct_datetime.tm_year,
-                            struct_datetime.tm_mon,
-                            struct_datetime.tm_mday,
+                        self.__format_date_style(
+                            datetime.year,
+                            datetime.month,
+                            datetime.day,
                             style
                             )
                         )
-            except (TypeError,ValueError):
-                #对日期字符串的数值进行拆分提取
+            else:
+                # 然后尝试作为 date 进行处理
                 try:
                     date_degree, date_elements = self.get_date_elements(date_time)
                 except TypeError:
@@ -778,7 +783,7 @@ class  DateTime:
                     # 判断年月日的数值是否符合规范&判断各数值是 年 月 日 中的哪一个
                     try:
                         year, month, day = self.format_date_elements(date_degree, date_elements)
-                        result.append(self.__format_style(year, month, day, style))
+                        result.append(self.__format_date_style(year, month, day, style))
                     except TypeError:
                         result.append(None)
                         continue
@@ -791,7 +796,24 @@ class  DateTime:
 
         return result
 
-    def __format_style(self, year, month, day, style='num'):
+
+    def datetime_valid(self, datetime):
+        try:
+            date_time = arrow.get(datetime)
+            if date_time.datetime.hour:
+                return date_time
+            else:
+                return None
+        except:
+            return None
+            
+    
+    def to_utc(self, datetime, tz, to_tz):
+        date_time =  arrow.get(datetime).replace(tzinfo=tz).to(to_tz)
+        return date_time.format("YYYY-MM-DDTHH:MM:SS"+to_tz)
+
+
+    def __format_date_style(self, year, month, day, style='num'):
         if not month:
             if style == "num":
                 return "".join([str(year), "00", "00"])
@@ -799,6 +821,8 @@ class  DateTime:
                 return "-".join([str(year), "01", "01"])
             elif style == "datetime":
                 return "-".join([str(year), "01", "01 00:00:02"])
+            elif style == "utc":
+                return "-".join([str(year), "01", "01T00:00:02"]) + self.zone
             else:
                 raise ValueError
         elif not day:
@@ -811,6 +835,8 @@ class  DateTime:
                 return "-".join([str(year), str(month), "01"])
             elif style == "datetime":
                 return "-".join([str(year), str(month), "01 00:00:01"])
+            elif style == "utc":
+                return "-".join([str(year), str(month), "01T00:00:01"]) + self.zone
             else:
                 raise ValueError
         else:
@@ -827,6 +853,8 @@ class  DateTime:
                 return "-".join([str(year), str(month), str(day)])
             elif style == "datetime":
                 return "-".join([str(year), str(month), str(day)]) + " 00:00:00"
+            elif style == "utc":
+                return "-".join([str(year), str(month), str(day)]) + "T00:00:00" + self.zone
             else:
                 raise ValueError
 
@@ -1156,28 +1184,28 @@ class Number:
                 pattern.findall(str(value)) if not pd.isnull(value) else [] 
                 for value in self.min_column
                 ]
-            new_column = []
             if self.max_column is None:
+                new_column = []
                 for i, v in enumerate(tqdm(column1, desc="数值处理", ascii=True)):
                     if (len(v) == 1 
                             and self.min_num <= float(v[0]) <= self.max_num):
-                        new_column.append(self.typ(v[0]))
+                        new_column.append([self.typ(v[0])])
                     elif pd.isnull(self.min_column[i]):
-                        new_column.append(None)
+                        new_column.append([None])
                     # 如果拆分出多个值，作为错误值标记
                     elif mark:
-                        new_column.append("!" + str(self.min_column[i]))
+                        new_column.append(["!" + str(self.min_column[i])])
                     else:
-                        new_column.append(None)
-                self.min_column = new_column
+                        new_column.append([None])
+                return new_column
             else:
                 column2 = [
                     pattern.findall(str(value)) if not pd.isnull(value) else [] 
                     for value in self.max_column
                     ]
-                self._min_max(column1, column2, self.typ, mark)
+                return self._min_max(column1, column2, self.typ, mark)
         except KeyError:
-            return print("列表参数有误\n")
+            raise ValueError("列表参数有误\n")
 
     def _min_max(self, column1, column2, typ, mark=False):
         """ 修复数值区间中相应的大小数值
@@ -1214,48 +1242,46 @@ class Number:
                 p.insert(0, None)
                 q.insert(0, None)
         if mark:
-            self.min_column = [
-                    typ(column1[i][0]) 
-                        if column1[i][0] else "".join(["!", str(self.min_column[i])]) 
-                    if not pd.isnull(self.min_column[i]) else None 
+            min_column = [
+                    typ(column1[i][0])
+                        if column1[i][0] else "".join(["!", str(self.min_column[i])])
+                    if not pd.isnull(self.min_column[i]) else None
                     for i in range(len(column1))
                     ]
-            self.max_column = [
+            max_column = [
                     typ(column2[i][0]) 
-                        if column2[i][0] else "".join(["!", str(self.min_column[i])]) 
+                        if column2[i][0] else "".join(["!", str(self.min_column[i])])
                     if not pd.isnull(self.max_column[i]) else None
                     for i in range(len(column2))
                     ]
         else:
-            self.min_column = [
-                    typ(column1[i][0]) 
-                        if column1[i][0] else None 
-                    if not pd.isnull(self.min_column[i]) else None 
+            min_column = [
+                    typ(column1[i][0])
+                        if column1[i][0] else None
+                    if not pd.isnull(self.min_column[i]) else None
                     for i in range(len(column1))
                     ]
-            self.max_column = [
-                    typ(column2[i][0]) 
-                        if column2[i][0] else None 
-                    if not pd.isnull(self.max_column[i]) else None 
+            max_column = [
+                    typ(column2[i][0])
+                        if column2[i][0] else None
+                    if not pd.isnull(self.max_column[i]) else None
                     for i in range(len(column2))
                     ]
+        return [[i, j] for i, j in zip(min_column, max_column)]
 
     def __call__(self, mark=True):
-        self.format_number(mark)
+        new_column = self.format_number(mark)
         if self.typ is int:
             # 解决含 None 数据列，pandas 会将int数据列转换为float的问题
             # 这里要求 pandas 版本支持
             typ = 'Int64'
         else:
             typ = self.typ
-        if self.max_column is None:
-            return pd.DataFrame(self.min_column, dtype=typ)
-        else:
-            return pd.DataFrame(
-                {"min_num":self.min_column, "max_num":self.max_column},
-                dtype = typ 
-                )
-
+        try:
+            return pd.DataFrame(new_column, dtype=typ)
+        except ValueError:
+            # 解决数据列中混入某些字符串无法转 Int64 等数据类型的问题。 
+            return pd.DataFrame(new_column)
 
 class GeoCoordinate:
     def __init__(self, coordinates):
@@ -1460,6 +1486,19 @@ class FillNa:
     def __call__(self):
         return pd.DataFrame(self.df.fillna(self.fval))
 
+
+class Url:
+    def  __init__(self, column):
+        self.urls = column
+
+    def split_url_to_list(self):
+        return map(
+            lambda url:re.split(r",|\|", url) if url and not pd.isnull(url) else None, 
+            self.urls
+            )
+
+    def __call__(self):
+        return pd.DataFrame(pd.Series(self.split_url_to_list()))
 
 if __name__ == "__main__":
     pass

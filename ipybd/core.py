@@ -3,6 +3,7 @@
 
 import os
 import pandas as pd
+import numpy as np
 from tqdm import tqdm
 import json
 import re
@@ -14,6 +15,18 @@ from ipybd.data_cleaner import *
 HERE = os.path.dirname(__file__)
 STD_TERMS_ALIAS_PATH = os.path.join(HERE, 'lib', 'std_fields_alias.json')
 PERSONAL_TEMPLATE_PATH = os.path.join(HERE, 'lib', 'personal_table_map.json')
+
+
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(NpEncoder, self).default(obj)
 
 
 class ExpressionCompleter(Completer):
@@ -45,6 +58,7 @@ class ExpressionCompleter(Completer):
                         )
             except KeyError:
                 continue
+
 
 class FormatTable:
     with open(STD_TERMS_ALIAS_PATH, encoding="utf-8") as std_alias:
@@ -78,16 +92,27 @@ class FormatTable:
             else:
                 print("\n{0}:{1} 映射有误\n".format(org_field, new_field))
 
-    def split_column(self,split_column, splitters, new_headers):
+    def split_column(self,split_column, splitters, new_headers=None):
+        """ 将一列分割成多列
+
+        split_column: 要分割的列名 str
+        splitters: 分割依据的分割符 tuple 或 str
+        new_heaers: 分割出的新列列名 list
+        return: 若 new_headers=None，返回list组成的拆分结果，如果游新列名，则
+                返回由新列组成的 DataFrame
+        """
         frame = map(
                     self.__split_txt, 
                     self.df[split_column], 
                     (splitters for _ in range(self.df.shape[0]))
                     )
-        frame = pd.DataFrame(frame)
-        frame.columns = new_headers
-        self.df.drop(split_column, axis=1, inplace=True)
-        self.df = pd.concat([self.df, frame], axis=1)
+        if new_headers:
+            frame = pd.DataFrame(frame)
+            frame.columns = new_headers
+            self.df.drop(split_column, axis=1, inplace=True)
+            self.df = pd.concat([self.df, frame], axis=1)
+        else:
+            return frame
 
     def __split_txt(self, txt, splitters)->list:
         result = [txt]
@@ -175,7 +200,7 @@ class FormatTable:
         for i, r in enumerate(mergers):
             c = r.copy()
             for title, value in c.items():
-                if pd.isnull(value):
+                if not pd.Series(value).any():
                     del r[title]
             if r == {}:
                 mergers[i] = None
@@ -185,12 +210,14 @@ class FormatTable:
             if typ == 'list':
                 mergers[i] = list(r.values())
             if typ == 'jsonObject':
-                mergers[i] = json.dumps(r, ensure_ascii=False)
+                mergers[i] = json.dumps(r, cls=NpEncoder, ensure_ascii=False)
             if typ == 'rowList':
                 dict2txt = map(lambda kv:"：".join(kv), tuple(r.items()))
                 mergers[i] = "\n".join(dict2txt)
             if typ == 'jsonArray':
-                mergers[i] = json.dumps(list(r.values()), ensure_ascii=False)
+                mergers[i] = json.dumps(
+                    list(r.values()), cls=NpEncoder, ensure_ascii=False
+                    )
         return mergers
 
     def __merge_txt2line(self, ahead_txt, next_txt, separator):
@@ -690,7 +717,11 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                             self.__class__.columns_model.__members__.items() 
                         if obj is field
                         ]
-                    for col in columns:
+                    new_columns = [
+                        column[1:] if column.startswith("_") else column 
+                        for column in columns
+                        ]
+                    for col in new_columns:
                         if col not in self.df.columns:
                             self.df[col] = None
             elif len(field.value) == 2:
@@ -729,7 +760,11 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                             self.__class__.columns_model.__members__.items() 
                         if obj is field
                         ]
-                    for col in columns:
+                    new_columns = [
+                        column[1:] if column.startswith("_") else column 
+                        for column in columns
+                        ]
+                    for col in new_columns:
                         if col not in self.df.columns:
                             self.df[col] = None
                 #except:
@@ -757,7 +792,7 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                         break
             else:
                 columns = self.get_arg(param)
-            # 只要缺失一个，就终止处理
+            # 位置参数只要缺失一个，就终止处理
             if not columns:
                 #print("\n{0} 没有在原表中找到对应表头\n".format(param))
                 return None
@@ -779,10 +814,9 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                     self.merge_columns(list(clm[:-1]), clm[-1], param)
                     columns[n] = param
             # 对整个位置参数的列名映射做进一步处理
-            if len(columns) == 1:
-                # 列名可与相应位置参数一对一映射，则直接映射
-                arguments.append(columns[0])
-            else: 
+            if (len(columns) > 1 
+                or isinstance(param, tuple) and 
+                    param[-1] in ['d', 'l', 'a', 'o', 'r']):
                 # 相应位置参数需要进一步由多列合并而成
                 # 比如对于  (country, stateProvince, city, county, ",") 的 param
                 # 返回的 columns 或许就是 ["国", "省"， ”市“, "县"]，这个时候需要对
@@ -801,6 +835,10 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                 # 最后再做合并，并将合并成的新列作为真正的位置参数返回
                 self.merge_columns(fields, param[-1], title)
                 arguments.append(title)
+            else:
+                # 列名可与相应位置参数一对一映射，则直接映射
+                arguments.append(columns[0])
+
         #print(arguments)
         return arguments
 

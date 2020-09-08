@@ -1,4 +1,51 @@
 {
+    "geodeticDatum":{
+        "WGS84":[
+            "谷歌坐标系"
+        ],
+        "CGCS2000":[
+            "大地2000坐标系"
+        ],
+        "BD09":[
+            "百度坐标系"
+        ],
+        "GCJ-02":[
+            "火星坐标系"
+        ],
+        "Beijing 1954":[
+            "北京1954"
+        ],
+        "Xian 1980":[
+            "西安1980"
+        ],
+        "EPSG:3857":[],
+        "NAD27":[], 
+        "NAD83":[],
+        "Campo Inchauspe":[], 
+        "European 1950":[], 
+        "Clarke 1866":[],
+        "Unknown":[
+            "未知",
+            "不清"
+        ]
+    },
+    "establishmentMeans":{
+        "本地":[
+            "native"
+        ],
+        "入侵":[
+            "invasive"
+        ],
+        "归化":[
+            "naturalised"
+        ],
+        "引种":[
+            "introduced"
+        ],
+        "受控":[
+            "managed"
+        ]
+    },
     "taxonomicStatus": {
         "misapplied": [
             "误用"

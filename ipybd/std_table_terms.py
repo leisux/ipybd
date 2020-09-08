@@ -133,6 +133,85 @@ class OccurrenceTerms(Enum):
     organismRemarks = 'organismRemarks', 1
 
 
+class NoiOccurrenceTerms(Enum):
+
+    # Occurrence Object
+    OccurrenceID = UniqueID, ['OccurrenceID', ('institutionCode', 'catalogNumber', ':')], 1
+    catalogNumber = UniqueID, 'catalogNumber', 1
+    otherCatalogNumbers = 'otherCatalogNumbers', 1
+    recordedBy = HumanName, 'recordedBy', 1
+    recordNumber = 'recordNumber', 1
+    individualCount = Number, 'individualCount', None, int, 1
+    sex = RadioInput, 'sex', 'sex', 1
+    lifeStage = RadioInput, 'lifeStage', 'lifeStage', 1
+    behavior = 'behavior', 1
+    establismentMeans = RadioInput, 'establismentMeans', 'establismentMeans', 1 
+    preparations = RadioInput, 'preparations', 1
+    disposition = RadioInput, 'disposition', 1
+    associatedMedia = Url, 'associatedMedia', 1
+    associatedReferences = Url, 'assocatedReferences', 1
+    associatedSequences = Url, 'associatedSequences', 1
+    occurrenceRemarks = 'occurrenceRemarks', 1
+    Occurrence = ('OccurrenceId', 'catalogNumber', 'otherCatalogNumbers', 'recordedBy', 'recordNumber', 'individualCount', 'sex', 'lifeStage', 'behavior', 'establishmentMeans', 'preparations', 'disposition', 'associatedMedia', 'associatedSequences', 'assocatedReferences', 'occurrenceRemarks', 'd'), 1
+    
+    # Event Object
+    eventDate = DateTime, 'eventDate', 'utc', 1
+    habitat = 'habitat', 1
+    fieldNumber = 'fieldNumber', 1
+    samplingProtocol = 'samplingProtocol', 1
+    fieldNotes = 'fieldNotes', 1
+    fundedBy = 'fundedBy', 1
+    Event = ('eventDate', 'habitat', 'fieldNumber', 'samplingProtocol', 'fieldNotes', 'fundedBy', 'd'), 1
+
+    # Location Object
+    countryCode = 'countryCode', 1
+    country = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
+    province = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
+    city = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
+    county = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
+    locality = ('locality', 'mountain', 'waterBody', ','), 1
+    decimalLatitude = GeoCoordinate, ('decimalLatitude', 'decimalLongitude', ';'), 1
+    decimalLongitude = GeoCoordinate, ('decimalLatitude', 'decimalLongitude', ';'), 1
+    _minimumElevationInMeters = Number, 'minimumElevationInMeters', 1
+    _maximumElevationInMeters = Number, 'maximumElevationInMeters', 1
+    minimumElevationInMeters = Number, 'minimumElevationInMeters', 'maximumElevationInMeters', 2
+    maximumElevationInMeters = Number, 'minimumElevationInMeters', 'maximumElevationInMeters', 2
+    geodeticDatum = RadioInput, "geodeticDatum", "geodeticDatum", 1
+    _minimumDepthInMeters = Number, 'minimumDepthInMeters', 1
+    _maximumDepthInMeters = Number, 'maximumDepthInMeters', 1
+    minimumDepthInMeters = Number, 'minimumDepthInMeters', 'maximumDepthInMeters', 2
+    maximumDepthInMeters = Number, 'minimumDepthInMeters', 'maximumDepthInMeters', 2
+    _minimumDistanceAboveSurfaceInMeters = Number, 'minimumDistanceAboveSurfaceInMeters', 1
+    _maximumDistanceAboveSurfaceInMeters = Number, 'maximumDistanceAboveSurfaceInMeters', 1
+    minimumDistanceAboveSurfaceInMeters = Number, 'minimumDistanceAboveSurfaceInMeters', 'maximumDistanceAboveSurfaceInMeters', 2
+    maximumDistanceAboveSurfaceInMeters = Number, 'minimumDistanceAboveSurfaceInMeters', 'maximumDistanceAboveSurfaceInMeters', 2
+    Location = ('countryCode', 'country', 'province', 'city', 'county', 'locality', 'decimalLatitude', 'decimalLongitude', 'minimumElevationInMeters', 'maximumElevationInMeters', 'minimumDepthInMeters', 'maximumDepthInMeters', 'minimumDistanceAboveSurfaceInMeters', 'maximumDistanceAboveSurfaceInMeters', 'd'), 1
+
+    # Idnetification Object
+    vernacularName = 'vernacularName', 1
+    scientificName = BioName, [('genus', 'specificEpithet', 'specificEpithetAuthorShip', 'taxonRank', 'infraspecificEpithet', 'scientificNameAuthorship', ' '), 'scientificName'], 1
+    identifiedBy = HumanName, 'identifiedBy', 1
+    dateIdentified = DateTime, 'dateIdentified', 'utc', 1
+    typeStatus = RadioInput, 'typeStatus', 'typeStatus', 1
+    _Identification = ('vernacularName', 'scientificName', 'identifiedBy', 'dateIdentified', 'typeStatus', 'd'), 1
+    Identification = ('Identification', 'l'), 1
+
+    # Record Object
+    institutionCode = RadioInput, 'institutionCode', 'institutionCode', 1
+    field = RadioInput, 'field', 'field', 1
+    basisOfRecord = RadioInput, 'basisOfRecord', 'basisOfRecord', 1
+    rights = 'rights', 1
+    rightsHolder = 'rightsHolder', 1
+    references = 'references', 1
+    dataApi = 'dataApi', 1
+    thumbnails = 'thumbnails', 1
+    licence = 'licence', 1
+    modified = DateTime, 'modified', 'utc', 1
+    Record = ('institutionCode', 'field', 'basisOfRecord', 'rights', 'rightsHolder', 'references', 'dataApi', 'thumbnails', 'licence', 'modified', 'd'), 1
+    # json result
+    JsonResults = ('Occurrence', 'Location', 'Identification', 'Event', 'Record', 'o'), 1
+
+
 class KingdoniaPlantTerms(Enum):
     catalogNumber = UniqueID, 'catalogNumber', 1
     institutionCode = RadioInput, 'institutionCode', 'institutionCode', 1
@@ -141,7 +220,7 @@ class KingdoniaPlantTerms(Enum):
     lifeStage = RadioInput, 'lifeStage', 'lifeStage', 1
     disposition = RadioInput, 'disposition', 'disposition', 1
     preservedLocation = RadioInput, 'preservedLocation', 'preservedLocation', 1
-    preservedTime = DateTime, 'preservedTime', 'datetime', 1
+    preservedTime = DateTime, 'preservedTime', 'utc', 1
     recordedBy = HumanName, 'recordedBy', 1
     recordNumber = 'recordNumber', 1
     eventDate = DateTime, 'eventDate', 'datetime', 1
@@ -168,9 +247,10 @@ class KingdoniaPlantTerms(Enum):
     identifiedBy = FillNa, 'identifiedBy', '无', 1
     _dateIdentified = DateTime, 'dateIdentified', 'datetime', 1
     dateIdentified = FillNa, 'dateIdentified', '0000:00:00 00:00:02', 1
-    _identifiedByID = UniqueID, 'identifiedByID', 1
+    _identifiedByID = UniqueID, 'identifiedByID', 1 
     identifiedByID = FillNa, 'identifiedByID', '0', 1
-    identifications = ("scientificName", "identifiedByID", "identifiedBy",  "dateIdentified", "typeStatus", "l"), 1
+    _identifications = ("scientificName", "identifiedByID", "identifiedBy",  "dateIdentified", "typeStatus", "l"), 1
+    identifications = ('identifications', 'l'), 1
     花 = 'flower', 1
     叶 = 'leaf', 1
     茎 = 'stem', 1
