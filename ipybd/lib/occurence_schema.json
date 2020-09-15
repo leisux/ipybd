@@ -280,7 +280,7 @@
     "Record": {
       "type": "object",
       "properties": {
-        "field": {
+        "classification": {
           "type": "string",
           "enum": [
             "Aves",
@@ -342,7 +342,7 @@
         }
       },
       "required": [
-        "field",
+        "classification",
         "basisOfRecord",
         "rights",
         "rightsHolder",

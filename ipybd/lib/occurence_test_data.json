@@ -7,9 +7,9 @@
     "recordedNumber": "LED7896",
     "individualCount": 3,
     "lifeStage": "有花无果",
-    "establishmentMeans": "invasive",
+    "establishmentMeans": "入侵",
     "preparations": "腊叶标本",
-    "disposition": "missing",
+    "disposition": "遗失",
     "associatedMedia": [
         "https://img.cc0.cn/d/file/20191017/7eb3706e1e0e878d8bca1f7180fa8831.mp3",
         "https://img.cc0.cn/d/file/20191017/7eb3706e1e0e878d8bca1f7180fa8831.jpg",
@@ -55,14 +55,14 @@
     }
   ],
   "Record": {
-    "field": "Aves",
-    "basisOfRecord": "PreservedSpecimen",
+    "classification": "Aves",
+    "basisOfRecord": "馆藏标本",
     "rights": "刘恩德",
     "rightsHolder": "KUN",
     "licence": "https://choosealicense.com/licenses/cc-by-4.0/",
     "modified": "2019-12-23T12:23:35+00:00",
     "references": "http://kun.kingdonia.org/speciman/newshow/tpl/2/id/165193",
-    "apiData": "http://beta.ipni.org/api/1/search?perPage=500&cursor=%2A&q=Thalictrum+aquilegiifolium+var.+sibiricum&f=f_infraspecific",
+    "dataApi": "http://beta.ipni.org/api/1/search?perPage=500&cursor=%2A&q=Thalictrum+aquilegiifolium+var.+sibiricum&f=f_infraspecific",
     "thumbnails": "http://www.sp2000.org.cn/api/v2/getSpeciesByFamilyId?apiKey=42ad0f57ae46407686d1903fd44aa34c&familyId=F20171000000256&page=2",
     "institutionCode": "KUN"
   }

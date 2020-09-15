@@ -11,10 +11,13 @@ from ipybd.data_cleaner import (
     UniqueID,
     FillNa
 )
+
 from ipybd.std_table_objects import (
     OccurrenceRecord,
     KingdoniaPlant,
     NoiOccurrence
 )
+
+from ipybd import noi
 
 from ipybd.api_terms import Filters

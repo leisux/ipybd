@@ -182,19 +182,8 @@ class BioName:
         self.pbar = tqdm(total=len(search_terms), desc=action, ascii=True)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        session = loop.run_until_complete(self.creat_session())
-        tasks = [
-            asyncio.ensure_future(
-            self.web_get_track(
-                get_action[action],
-                self.querys[rawname],
-                session
-                )
-            )
-            for rawname in search_terms if self.querys[rawname]
-            ]
-        results = loop.run_until_complete(asyncio.gather(*tasks))
-        loop.run_until_complete(session.close())
+        tasks = self.build_tasks(get_action[action], search_terms)
+        results = loop.run_until_complete(tasks)
         loop.close()
         self.pbar.close()
         for res in results:
@@ -203,13 +192,23 @@ class BioName:
             except TypeError:
                 pass
 
-    async def web_get_track(self, func, param, session):
-        result = await func(param, session)
-        self.pbar.update(1)
-        return result
+    async def build_tasks(self, action_func, search_terms):
+        async with aiohttp.ClientSession() as session:
+            tasks = [
+                self.web_get_track(
+                    action_func,
+                    self.querys[rawname],
+                    session
+                    )
+                for rawname in search_terms if self.querys[rawname]
+                ]
+            return await asyncio.gather(*tasks)
 
-    async def creat_session(self):
-        return aiohttp.ClientSession()
+    async def web_get_track(self, func, param, session):
+        async with self.sema:
+            result = await func(param, session)
+            self.pbar.update(1)
+            return result
 
     def powo_images(self, name):
         """ 解析 self.cache['powo'] 中的图片
@@ -326,53 +325,52 @@ class BioName:
 
         return: 返回最能满足 query 条件的学名 dict
         """
-        async with self.sema:
-            results = await self.col_search(query[0], query[1], session)
-            if results is None or results == []:
+        results = await self.col_search(query[0], query[1], session)
+        if results is None or results == []:
+            return None
+        else:
+            names = []
+            for num, res in enumerate(results):
+                if query[1] is Filters.specific or query[1] is Filters.infraspecific:
+                    if res['scientific_name'] == query[0] and res['accepted_name_info']['author'] != "":
+                        # col 返回的结果中，没有 author team，需额外自行添加
+                        # 由于 COL 返回但结果中无学名的命名人，因此只能通过
+                        # 其接受名的 author 字段获得命名人，但接受名可能与
+                        # 检索学名不一致，所以此处暂且只能在确保检索学名为
+                        # 接受名后，才能添加命名人。
+                        if res['name_status'] == 'accepted name':
+                            results[num]['author_team'] = self.get_author_team(res['accepted_name_info']['author'])
+                            names.append(res)
+                elif query[1] is Filters.generic and res['accepted_name_info']['taxonTree']['genus'] == query[0]:
+                    # col 接口目前尚无属一级的内容返回，这里先取属下种及种
+                    # 下一级的分类阶元返回。
+                    return res['accepted_name_info']['taxonTree']
+                elif query[1] is Filters.familial and res['family'] == query[0]:
+                    return res
+            authors = self.get_author_team(query[2])
+            # 如果搜索名称和返回名称不一致，标注后待人工核查
+            if names == []:
+                #print("{0} 在中国生物物种名录中可能是异名、不存在或缺乏有效命名人，请手动核实\n".format(query[-1]))
                 return None
+            # 检索只有一个结果或者检索词命名人缺失，默认使用第一个同名结果
+            elif len(names) == 1 or authors == []:
+                name = names[0]
             else:
-                names = []
-                for num, res in enumerate(results):
-                    if query[1] is Filters.specific or query[1] is Filters.infraspecific:
-                        if res['scientific_name'] == query[0] and res['accepted_name_info']['author'] != "":
-                            # col 返回的结果中，没有 author team，需额外自行添加
-                            # 由于 COL 返回但结果中无学名的命名人，因此只能通过
-                            # 其接受名的 author 字段获得命名人，但接受名可能与
-                            # 检索学名不一致，所以此处暂且只能在确保检索学名为
-                            # 接受名后，才能添加命名人。
-                            if res['name_status'] == 'accepted name':
-                                results[num]['author_team'] = self.get_author_team(res['accepted_name_info']['author'])
-                                names.append(res)
-                    elif query[1] is Filters.generic and res['accepted_name_info']['taxonTree']['genus'] == query[0]:
-                        # col 接口目前尚无属一级的内容返回，这里先取属下种及种
-                        # 下一级的分类阶元返回。
-                        return res['accepted_name_info']['taxonTree']
-                    elif query[1] is Filters.familial and res['family'] == query[0]:
-                        return res
-                authors = self.get_author_team(query[2])
-                # 如果搜索名称和返回名称不一致，标注后待人工核查
-                if names == []:
-                    #print("{0} 在中国生物物种名录中可能是异名、不存在或缺乏有效命名人，请手动核实\n".format(query[-1]))
-                    return None
-                # 检索只有一个结果或者检索词命名人缺失，默认使用第一个同名结果
-                elif len(names) == 1 or authors == []:
-                    name = names[0]
-                else:
-                    # 提取出API返回的多个名称的命名人序列，并将其编码
-                    aut_codes = self.code_authors(authors)                
-                    std_teams = {
-                        n: self.code_authors(r['author_team']) 
-                        for n, r in enumerate(names)
-                        }
-                    #开始比对原命名人与可选学名的命名人的比对结果
-                    scores = self.contrast_code(aut_codes, std_teams)
-                    #print(scores)
-                    name = names[scores[0][1]]
-                    #if std_teams[scores[0][1]] > 10000000000:
-                    #   author = ...这里可以继续对最优值进行判断和筛选，毕竟一
-                    # 组值总有最优,但不一定是真符合
-            return name
-    
+                # 提取出API返回的多个名称的命名人序列，并将其编码
+                aut_codes = self.code_authors(authors)                
+                std_teams = {
+                    n: self.code_authors(r['author_team']) 
+                    for n, r in enumerate(names)
+                    }
+                #开始比对原命名人与可选学名的命名人的比对结果
+                scores = self.contrast_code(aut_codes, std_teams)
+                #print(scores)
+                name = names[scores[0][1]]
+                #if std_teams[scores[0][1]] > 10000000000:
+                #   author = ...这里可以继续对最优值进行判断和筛选，毕竟一
+                # 组值总有最优,但不一定是真符合
+        return name
+
     async def get_ipni_name(self, query, session):
         name = await self.check_ipni_name(query, session)
         if name:
@@ -383,41 +381,40 @@ class BioName:
 
         return: 返回最满足 query 条件的学名 dict
         """
-        async with self.sema:
-            results = await self.kew_search(query[0], query[1], IPNI_API, session)
-            if results is None or results == []:
-                # 查无结果或者未能成功查询，返回带英文问号的结果以被人工核查
+        results = await self.kew_search(query[0], query[1], IPNI_API, session)
+        if results is None or results == []:
+            # 查无结果或者未能成功查询，返回带英文问号的结果以被人工核查
+            return None
+        else:
+            names = []
+            for res in results:
+                if res["name"] == query[0]:
+                    names.append(res)
+            authors = self.get_author_team(query[2])
+            # 如果搜索名称和返回名称不一致，标注后待人工核查
+            if names == []:
+                #print(query)
                 return None
+            # 检索只有一个结果，或者检索词缺命名人，默认使用第一个同名结果
+            elif len(names) == 1 or authors == []:
+                name = names[0]
             else:
-                names = []
-                for res in results:
-                    if res["name"] == query[0]:
-                        names.append(res)
-                authors = self.get_author_team(query[2])
-                # 如果搜索名称和返回名称不一致，标注后待人工核查
-                if names == []:
-                    #print(query)
-                    return None
-                # 检索只有一个结果，或者检索词缺命名人，默认使用第一个同名结果
-                elif len(names) == 1 or authors == []:
-                    name = names[0]
-                else:
-                    # 提取出API返回的多个名称的命名人序列，并将其编码
-                    aut_codes = self.code_authors(authors)
-                    std_teams = {}
-                    for n, r in enumerate(names):
-                        t = []
-                        for a in r["authorTeam"]:
-                            t.append(a["name"])
-                        std_teams[n] = self.code_authors(t)
-                    #开始比对原命名人与可选学名的命名人的比对结果
-                    scores = self.contrast_code(aut_codes, std_teams)
-                    #print(scores)
-                    name = names[scores[0][1]]
-                    #if std_teams[scores[0][1]] > 10000000000:
-                    #   author = ...这里可以继续对最优值进行判断和筛选，毕竟一
-                    # 组值总有最优，但不一定是真符合
-            return name
+                # 提取出API返回的多个名称的命名人序列，并将其编码
+                aut_codes = self.code_authors(authors)
+                std_teams = {}
+                for n, r in enumerate(names):
+                    t = []
+                    for a in r["authorTeam"]:
+                        t.append(a["name"])
+                    std_teams[n] = self.code_authors(t)
+                #开始比对原命名人与可选学名的命名人的比对结果
+                scores = self.contrast_code(aut_codes, std_teams)
+                #print(scores)
+                name = names[scores[0][1]]
+                #if std_teams[scores[0][1]] > 10000000000:
+                #   author = ...这里可以继续对最优值进行判断和筛选，毕竟一
+                # 组值总有最优，但不一定是真符合
+        return name
 
     async def get_powo_name(self, query, session):
         """ 从 KEW API 返回的最佳匹配中，获得学名及其科属分类阶元信息
@@ -435,43 +432,42 @@ class BioName:
 
         return: 返回最满足 query 条件的学名 dict
         """
-        async with self.sema:
-            results = await self.kew_search(query[0], query[1], POWO_API, session)
-            if results is None or results == []:
-                # 查无结果或者未能成功查询，返回带英文问号的结果以被人工核查
+        results = await self.kew_search(query[0], query[1], POWO_API, session)
+        if results is None or results == []:
+            # 查无结果或者未能成功查询，返回带英文问号的结果以被人工核查
+            return None
+        else:
+            names = []
+            for res in results:
+                if res["name"] == query[0]:
+                    res['authorTeam'] = self.get_author_team(res['author'])
+                    names.append(res)
+            authors = self.get_author_team(query[2])
+            # 如果搜索名称和返回名称不一致，标注后待人工核查
+            if names == []:
+                #print(query)
                 return None
+            # 如果只检索到一个结果，默认使用这个同名结果
+            elif len(names) == 1:
+                name = names[0]
+            # 如果有多个结果，但检索名的命名人缺失，则默认返回第一个accept name
+            elif authors == []:
+                name = names[0]
+                for n in names:
+                    if n['accepted'] == True:
+                      return n
             else:
-                names = []
-                for res in results:
-                    if res["name"] == query[0]:
-                        res['authorTeam'] = self.get_author_team(res['author'])
-                        names.append(res)
-                authors = self.get_author_team(query[2])
-                # 如果搜索名称和返回名称不一致，标注后待人工核查
-                if names == []:
-                    #print(query)
-                    return None
-                # 如果只检索到一个结果，默认使用这个同名结果
-                elif len(names) == 1:
-                    name = names[0]
-                # 如果有多个结果，但检索名的命名人缺失，则默认返回第一个accept name
-                elif authors == []:
-                    name = names[0]
-                    for n in names:
-                        if n['accepted'] == True:
-                          return n
-                else:
-                    # 提取出API返回的多个名称的命名人序列，并将其编码
-                    aut_codes = self.code_authors(authors)
-                    std_teams = {n: self.code_authors(r['authorTeam']) for n, r in enumerate(names)}
-                    # 开始比对原命名人与可选学名的命名人的比对结果
-                    scores = self.contrast_code(aut_codes, std_teams)
-                    # print(query[-1], scores)
-                    name = names[scores[0][1]]
-                    #if std_teams[scores[0][1]] > 10000000000:
-                    #   author = ...这里可以继续对最优值进行判断和筛选，毕竟一组值总有最优，
-                    # 但不一定是真符合
-            return name
+                # 提取出API返回的多个名称的命名人序列，并将其编码
+                aut_codes = self.code_authors(authors)
+                std_teams = {n: self.code_authors(r['authorTeam']) for n, r in enumerate(names)}
+                # 开始比对原命名人与可选学名的命名人的比对结果
+                scores = self.contrast_code(aut_codes, std_teams)
+                # print(query[-1], scores)
+                name = names[scores[0][1]]
+                #if std_teams[scores[0][1]] > 10000000000:
+                #   author = ...这里可以继续对最优值进行判断和筛选，毕竟一组值总有最优，
+                # 但不一定是真符合
+        return name
 
     async def col_search(self, query, filters, session):
         params = self._build_col_params(query, filters)
@@ -581,13 +577,13 @@ class BioName:
         if p == 'simpleName':
             return [
                 std_names[name][0] 
-                if not pd.isnull(name) else None 
+                if std_names[name] else None 
                 for name in self.names
                 ]
         elif p == 'scientificName':
             return [
                 ' '.join([std_names[name][0], std_names[name][2]]) 
-                if  not pd.isnull(name) else None 
+                if std_names[name] else None 
                 for name in self.names
                 ]
 

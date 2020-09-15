@@ -102,7 +102,7 @@ class OccurrenceTerms(Enum):
     family = 'family', 1
     vernacularName = 'vernacularName', 1
     # Identification
-    scientificName = BioName, [('genus', 'specificEpithet', 'specificEpithetAuthorShip', 'taxonRank', 'infraspecificEpithet', 'scientificNameAuthorship', ' '), 'scientificName'], 1
+    scientificName = BioName, ['scientificName', ('genus', 'specificEpithet', 'specificEpithetAuthorShip', 'taxonRank', 'infraspecificEpithet', 'scientificNameAuthorship', ' ')], 1
     typeStatus = RadioInput, 'typeStatus', 'typeStatus', 1
     identifiedBy = HumanName, 'identifiedBy', 1
     dateIdentified = DateTime, 'dateIdentified', 1
@@ -198,7 +198,7 @@ class NoiOccurrenceTerms(Enum):
 
     # Record Object
     institutionCode = RadioInput, 'institutionCode', 'institutionCode', 1
-    field = RadioInput, 'field', 'field', 1
+    classification = RadioInput, 'field', 'field', 1
     basisOfRecord = RadioInput, 'basisOfRecord', 'basisOfRecord', 1
     rights = 'rights', 1
     rightsHolder = 'rightsHolder', 1
@@ -207,7 +207,7 @@ class NoiOccurrenceTerms(Enum):
     thumbnails = 'thumbnails', 1
     licence = 'licence', 1
     modified = DateTime, 'modified', 'utc', 1
-    Record = ('institutionCode', 'field', 'basisOfRecord', 'rights', 'rightsHolder', 'references', 'dataApi', 'thumbnails', 'licence', 'modified', 'd'), 1
+    Record = ('institutionCode', 'classification', 'basisOfRecord', 'rights', 'rightsHolder', 'references', 'dataApi', 'thumbnails', 'licence', 'modified', 'd'), 1
     # json result
     JsonResults = ('Occurrence', 'Location', 'Identification', 'Event', 'Record', 'o'), 1
 
