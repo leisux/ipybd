@@ -29,7 +29,12 @@ class KingdoniaPlant(RestructureTable):
 
     def cleaning_null_identifications(self):
         self.df['identifications'] = [
-            None if idt[0][0]=='unknown' 
-            else json.dumps(idt, ensure_ascii=False) 
+            None if idt[0][0]=='unknown'
+            else json.dumps(idt, ensure_ascii=False)
             for idt in self.df['identifications']
             ]
+
+
+# class CVH(RestructureTable):
+#     pass
+

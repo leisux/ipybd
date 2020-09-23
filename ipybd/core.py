@@ -10,7 +10,8 @@ import re
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.shortcuts import prompt
-from ipybd.data_cleaner import *
+from ipybd.data_cleaner import BioName, GeoCoordinate, DateTime, Number
+
 
 HERE = os.path.dirname(__file__)
 STD_TERMS_ALIAS_PATH = os.path.join(HERE, 'lib', 'std_fields_alias.json')
@@ -37,7 +38,7 @@ class ExpressionCompleter(Completer):
         self._fields_num = [n for n, _ in enumerate(self._raw_fields)]
         self._fields_num.extend([m for m, _ in enumerate(self._std_fields)])
         self.terms = self._raw_fields + self._std_fields
-        #print(self.terms)
+        # print(self.terms)
 
     def get_completions(self, document, complete_event):
         word = document.get_word_before_cursor()
@@ -70,7 +71,7 @@ class FormatTable:
         self.raw_columns = tuple(self.df.columns)
         self.size = self.df.size
 
-    def table_mapping(self, mapping:dict):
+    def table_mapping(self, mapping: dict):
         """按照给定的 dict 对 dataframe 各列进行列拆分、合并、修改列名
 
             mapping: dataframe 需要重塑的各列映射关系，相应写法如下：
@@ -82,17 +83,17 @@ class FormatTable:
         for org_field, new_field in mapping.items():
             # 只修改列名
             if isinstance(org_field, str):
-                self.df.rename(columns={org_field:new_field}, inplace=True)
+                self.df.rename(columns={org_field: new_field}, inplace=True)
             # 列拆分
             elif len(org_field) == 2 and isinstance(org_field, tuple):
                 self.split_column(org_field[0], org_field[1], new_field)
             # 列合并
             elif len(org_field) > 2 and isinstance(org_field, tuple):
-                self.merge_columns(org_field[:-1], org_field[-1], new_field)    
+                self.merge_columns(org_field[:-1], org_field[-1], new_field)
             else:
                 print("\n{0}:{1} 映射有误\n".format(org_field, new_field))
 
-    def split_column(self,split_column, splitters, new_headers=None):
+    def split_column(self, split_column, splitters, new_headers=None):
         """ 将一列分割成多列
 
         split_column: 要分割的列名 str
@@ -102,8 +103,8 @@ class FormatTable:
                 返回由新列组成的 DataFrame
         """
         frame = map(
-                    self.__split_txt, 
-                    self.df[split_column], 
+                    self.__split_txt,
+                    self.df[split_column],
                     (splitters for _ in range(self.df.shape[0]))
                     )
         if new_headers:
@@ -114,19 +115,19 @@ class FormatTable:
         else:
             return frame
 
-    def __split_txt(self, txt, splitters)->list:
+    def __split_txt(self, txt, splitters) -> list:
         result = [txt]
         for splitter in splitters:
             try:
                 if splitter == "$":
                     # 中英文分列
                     match = re.match(
-                        r"[\s\"\']*[\u4e00-\u9fa5][^a-zA-Z]*", 
+                        r"[\s\"\']*[\u4e00-\u9fa5][^a-zA-Z]*",
                         result[-1]
                         )
                     if match:
                         result[-1:] = [
-                            match.group(0).strip(), 
+                            match.group(0).strip(),
                             result[-1][match.span()[1]:]
                             ]
                     else:
@@ -136,7 +137,7 @@ class FormatTable:
                             )
                         if match:
                             result[-1:] = [
-                                match.group(0).strip(), 
+                                match.group(0).strip(),
                                 result[-1][match.span()[1]:]
                                 ]
                 else:
@@ -172,18 +173,18 @@ class FormatTable:
             mergers = self.df[columns[0]]
             for column in columns[1:]:
                 mergers = map(
-                              self.__merge_txt2line, 
-                              mergers, 
-                              self.df[column], 
+                              self.__merge_txt2line,
+                              mergers,
+                              self.df[column],
                               (separators for _ in range(self.df.shape[0]))
                               )
         elif isinstance(separators, tuple):
             mergers = self.df[columns[0]]
             for column, sepa in zip(columns[1:], separators):
                 mergers = map(
-                              self.__merge_txt2line, 
-                              mergers, 
-                              self.df[column], 
+                              self.__merge_txt2line,
+                              mergers,
+                              self.df[column],
                               (sepa for _ in range(self.df.shape[0]))
                               )
         if new_header:
@@ -212,7 +213,7 @@ class FormatTable:
             if typ == 'jsonObject':
                 mergers[i] = json.dumps(r, cls=NpEncoder, ensure_ascii=False)
             if typ == 'rowList':
-                dict2txt = map(lambda kv:"：".join(kv), tuple(r.items()))
+                dict2txt = map(lambda kv: "：".join(kv), tuple(r.items()))
                 mergers[i] = "\n".join(dict2txt)
             if typ == 'jsonArray':
                 mergers[i] = json.dumps(
@@ -232,7 +233,7 @@ class FormatTable:
             else:
                 return separator.join([ahead_txt, next_txt])
 
-    def _prt_items(self, col_num, seq, seq_num = None):
+    def _prt_items(self, col_num, seq, seq_num=None):
         for n, v in enumerate(seq):
             if seq_num:
                 strings = "{0}. {1}".format(seq_num.index(v), v)
@@ -240,11 +241,11 @@ class FormatTable:
                 strings = "{0}. {1}".format(n+1, v)
             else:
                 strings = "{0}. {1}".format(n+1, v[:-1])
-            if (n+1)%col_num > 0:
+            if (n+1) % col_num > 0:
                 print(strings.ljust(25), end="\t")
             else:
                 print(strings.ljust(25), end="\n")
-    
+
     def __mapping_clean(self, org_field):
         try:
             del self.columns_mapping[org_field]
@@ -262,9 +263,9 @@ class FormatTable:
                 del self.columns_mapping[del_field]
             return relax_field
 
-    def __unmapped_columns2std(self, unmapped_fields:list):
+    def __unmapped_columns2std(self, unmapped_fields: list):
         """解析用户通过表达式说明的列名重组意图
-        
+
         unmapped_fields: 未能与标准列名表形成对应关系的表格原始列名序列
 
         func: 用户输入的表达式以指定列名的拆分/合并/转换的映射关系，其规则如下：
@@ -280,13 +281,13 @@ class FormatTable:
 
         print("\n\n以下是还需通过手录表达式指定其标准名的原始表格表头：\n")
         self._prt_items(2, unmapped_fields, self.raw_columns)
-        expression = prompt("\n\n请输入列名转换表达式，录入 0 忽略所有：", 
-                                completer=ExpressionCompleter(
-                                self.raw_columns, 
-                                self._stdfields, 
-                                FormatTable.std_field_alias), 
-                                complete_while_typing=False
-                                )
+        expression = prompt("\n\n请输入列名转换表达式，录入 0 忽略所有：",
+                            completer=ExpressionCompleter(
+                                self.raw_columns,
+                                self._stdfields,
+                                FormatTable.std_field_alias),
+                            complete_while_typing=False
+                            )
         # 如果忽略所有，这些列名将映射到自身
         if expression.strip() == "0":
             for field in unmapped_fields:
@@ -319,15 +320,15 @@ class FormatTable:
                 separators = elements[0][0]
             else:
                 separators = tuple(
-                    sep[2].strip() if set(sep[2]) != {" "} else " " 
+                    sep[2].strip() if set(sep[2]) != {" "} else " "
                     for sep in elements[0:-2]
                     )
             if separators == ():
                 # 如果合并的列名只有一个，为一对一映射
-                self.columns_mapping.update({fields2merge[0]:std_field})
+                self.columns_mapping.update({fields2merge[0]: std_field})
             else:
                 fields2merge.append(separators)
-                self.columns_mapping.update({tuple(fields2merge):std_field})
+                self.columns_mapping.update({tuple(fields2merge): std_field})
         # 单个列名分拆为多个标准列名
         elif elements[0][-1].strip() == "=" and elements[-1][-1].strip() == "":
             num2split = elements[0][1]
@@ -337,7 +338,8 @@ class FormatTable:
                 return unmapped_fields
             try:
                 field2split = [self.raw_columns[int(num2split)]]
-                std_fields = tuple(self._stdfields[int(n)] for n in num2stdfields)
+                std_fields = tuple(self._stdfields[int(n)]
+                                   for n in num2stdfields)
             except IndexError:
                 print("\n输入的表达式数值有误，请重新输入\n")
             try:
@@ -348,17 +350,17 @@ class FormatTable:
             unmapped_fields.extend(self.__mapping_clean(field2split[0]))
             # 分隔符是空格的，保留一个空格，非空格的分隔符去除两侧空格
             splitters = tuple(
-                spl[2].strip() if set(spl[1]) != {" "} else " " 
+                spl[2].strip() if set(spl[1]) != {" "} else " "
                 for spl in elements[1:-1]
                 )
             field2split.append(splitters)
-            self.columns_mapping.update({tuple(field2split):std_fields})
-            #print(self.columns_mapping)
+            self.columns_mapping.update({tuple(field2split): std_fields})
+            # print(self.columns_mapping)
         else:
             print("\n录入的表达式有误，请重新输入\n")
         return unmapped_fields
 
-    def __manual2std_fields(self, invalid_mapping:dict):
+    def __manual2std_fields(self, invalid_mapping: dict):
         # 手动解决映射冲突，意味着一定会产生无映射字段，先建立无映射字段容器
         try:
             unmapped_fields = invalid_mapping[None]
@@ -368,9 +370,7 @@ class FormatTable:
         for std_field, raw_fields in invalid_mapping.items():
             if std_field:
                 print(
-                    "\n\n以下多个列名指向 {0} 字段，请选择与之正确对应的，若\
-                    均不正确，请输入 0 忽略所有：\n\n".format(std_field)
-                    )
+                    "\n\n以下多个列名指向 {0} 字段，请选择与之正确对应的，若均不正确，请输入 0 忽略所有：\n\n".format(std_field))
                 self._prt_items(2, raw_fields)
                 # 正确映射的列名需从冲突列名序列内删除
                 while True:
@@ -417,7 +417,7 @@ class FormatTable:
                     # 被手动拆分的字段，也可能与其他映射字段存在冲突
                     elif type(map_field) == tuple and std_field in map_field:
                         raw_fields.append(rawfield)
-                invalid_mapping.update({std_field:raw_fields})
+                invalid_mapping.update({std_field: raw_fields})
         return invalid_mapping
 
     def __auto2std_field(self, raw_field):
@@ -447,7 +447,8 @@ class FormatTable:
                         self.columns_mapping[raw_field] = None
                         break
                     try:
-                        self.columns_mapping[raw_field] = std_options[int(choice2std)-1]
+                        self.columns_mapping[raw_field] = std_options[int(
+                            choice2std)-1]
                         break
                     except (IndexError, ValueError):
                         print("\n所选值有误，请重新输入\n")
@@ -458,15 +459,16 @@ class FormatTable:
         invalid_mapping = self.__check_duplicate_mapping()
         self._stdfields = tuple(FormatTable.std_field_alias.keys())
         while invalid_mapping:
-            #print("\n下方式是可以映射的标准列名序列表：\n")
-            #self._prt_items(2, self._stdfields)
+            # print("\n下方式是可以映射的标准列名序列表：\n")
+            # self._prt_items(2, self._stdfields)
             self.__manual2std_fields(invalid_mapping)
             invalid_mapping = self.__check_duplicate_mapping()
         # 完成的映射，存储于私人模板之中，避免用户日后再次执行映射
-        #print(self.columns_mapping)
-        json_template = {str(k):str(v) for k, v in self.columns_mapping.items()}
+        # print(self.columns_mapping)
+        json_template = {str(k): str(v)
+                         for k, v in self.columns_mapping.items()}
         with open(PERSONAL_TEMPLATE_PATH, "w", encoding="utf-8") as pt:
-           pt.write(json.dumps(json_template, ensure_ascii=False))
+            pt.write(json.dumps(json_template, ensure_ascii=False))
 
     def save_table(self, path):
         if path.endswith('.xlsx'):
@@ -479,7 +481,7 @@ class FormatTable:
             pass
         else:
             raise ValueError("file type must be sql, csv, excel!")
-        
+
     def read_table(self, io):
         print(
             "\n开始载入数据表格...\n\n \
@@ -488,7 +490,7 @@ class FormatTable:
              )
         try:
             table = pd.read_excel(io, dtype=str)
-        except:
+        except BaseException:
             table = pd.read_csv(io)
         print("\n数据表载入完毕。\n")
         return table
@@ -498,7 +500,8 @@ class FormatTable:
 
     def get_name(func):
         def get_func(self, *args, **kwargs):
-            get_action, headers, concat, new_headers = func(self, *args, **kwargs)
+            get_action, headers, concat, new_headers = func(
+                self, *args, **kwargs)
             if len(headers) > 1:
                 names = self.merge_columns(list(headers), " ")
             else:
@@ -518,31 +521,37 @@ class FormatTable:
 
     @get_name
     def get_ipni_name(self, *headers, concat=False):
-        return 'ipniName', headers, concat, ('ipniName', 'ipniAuthors', 'ipniFamily')
+        return 'ipniName', headers, concat, ('ipniName',
+                                             'ipniAuthors', 'ipniFamily')
 
     @get_name
     def get_ipni_reference(self, *headers, concat=False):
-        return 'ipniReference', headers, concat, ('publishingAuthor', 'publicationYear', 'publication', 'reference')
+        return 'ipniReference', headers, concat, (
+            'publishingAuthor', 'publicationYear', 'publication', 'reference')
 
     @get_name
     def get_powo_name(self, *headers, concat=False):
-        return 'powoName', headers, concat, ('powoName', 'powoAuthors', 'powoFamily')
-    
+        return 'powoName', headers, concat, ('powoName',
+                                             'powoAuthors', 'powoFamily')
+
     @get_name
     def get_powo_images(self, *headers, concat=False):
-        return 'powoImages', headers, concat, ('powoImage1', 'powoImage2', 'powoImage3')
-    
+        return 'powoImages', headers, concat, (
+            'powoImage1', 'powoImage2', 'powoImage3')
+
     @get_name
     def get_powo_accepted(self, *headers, concat=False):
         return 'powoAccepted', headers, concat, ('powoAccepted',)
-    
+
     @get_name
     def get_col_taxontree(self, *headers, concat=False):
-        return 'colTaxonTree', headers, concat, ('colGenus', 'colFamily', 'colOrder', 'colClass', 'colPhylum','colKingdom')
+        return 'colTaxonTree', headers, concat, (
+            'colGenus', 'colFamily', 'colOrder', 'colClass', 'colPhylum', 'colKingdom')
 
     @get_name
     def get_col_name(self, *headers, concat=False):
-        return 'colName', headers, concat, ('colName', 'colAuthors', 'colFamily')
+        return 'colName', headers, concat, ('colName',
+                                            'colAuthors', 'colFamily')
 
     @get_name
     def get_col_synonyms(self, *headers, concat=False):
@@ -554,7 +563,7 @@ class FormatTable:
         headers: 经纬度列名，可以是多个字段名组成的序列，也可以是单个字段名
         inplace: 是否替换 self.df 中相应的列
         """
-        if len(position) > 1:
+        if len(headers) > 1:
             latlon = self.merge_columns(list(headers), ";")
         else:
             latlon = self.df[headers]
@@ -567,17 +576,17 @@ class FormatTable:
     def format_admindiv(self, *headers, inplace=True):
         pass
 
-    def format_datetime(self,header, inplace=True):
+    def format_datetime(self, header, inplace=True):
         pass
 
-    def format_number(self, header1, header2=None, typ=float, min_num=0, 
+    def format_number(self, header1, header2=None, typ=float, min_num=0,
                       max_num=8848, inplace=True, mark=False):
         if header2:
-            number = Number(self.df[header1], self.df[header2], typ, min_num, 
+            number = Number(self.df[header1], self.df[header2], typ, min_num,
                             max_num)
             headers = [header1, header2]
         else:
-            number = Number(self.df[header1], header2, typ, min_num, max_num) 
+            number = Number(self.df[header1], header2, typ, min_num, max_num)
             headers = [header1]
         new_columns = number(mark)
         new_columns.columns = headers
@@ -586,7 +595,6 @@ class FormatTable:
             self.df = pd.concat([self.df, new_columns], axis=1)
         else:
             return new_columns
-
 
     def fromat_options(self, header, stdheader, inplace=True):
         pass
@@ -598,13 +606,14 @@ class FormatTable:
 class RestructureTableMeta(type):
     def __new__(cls, name, bases, dct):
         if name != 'RestructureTable' and 'columns_model' not in dct:
-            raise TypeError('subclass {} should implement columns_model attr'.format(name))
+            raise TypeError(
+                'subclass {} should implement columns_model attr'.format(name))
         return super().__new__(cls, name, bases, dct)
 
 
 class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
-    #self.__class__.columns_model from std_table_objects
-    def __init__(self, io, fcol = False):
+    # self.__class__.columns_model from std_table_objects
+    def __init__(self, io, fcol=False):
         super(RestructureTable, self).__init__(io)
         self.fill_column = fcol  # 是否要补齐原表中缺失的字段
         self.rebuild_table()
@@ -641,7 +650,8 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                 old_columns.append(field)
         # 判断表格字段与之前表格的是否一致
         if set(old_columns) == set(self.raw_columns):
-            if input("\n 检测发现该表格与您上一次处理的表格字段一致，请问是否直接使用上一次表格转换模板以简化操作 (y/n) :\n\n") == 'y':
+            if input(
+                    "\n 检测发现该表格与您上一次处理的表格字段一致，请问是否直接使用上一次表格转换模板以简化操作 (y/n) :\n\n") == 'y':
                 pass
             else:
                 return True
@@ -653,19 +663,19 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                     except NameError:
                         old_mapping[eval(column)] = old_mapping[column]
                     del old_mapping[column]
-            self.columns_mapping = old_mapping          
+            self.columns_mapping = old_mapping
             return False
         else:
             return True
-        
+
     def _re_range_columns(self, cut=False):
         std_columns = [
-          column for column in self.__class__.columns_model.__members__.keys() 
-            if column in self.df.columns
-            ]
+          column for column in self.__class__.columns_model.__members__.keys()
+          if column in self.df.columns
+        ]
         if not cut:
             other_columns = [
-                column for column in self.df.columns 
+                column for column in self.df.columns
                 if column not in std_columns
                 ]
             std_columns.extend(other_columns)
@@ -692,33 +702,33 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                 std_fields = field.value[:-1]
                 args_name = self.build_args(field.name, std_fields)
                 # _ 开头的名称是模板用于临时定义使用，命名时需要去除 _
-                column_name = field.name[1:] if field.name.startswith("_") \
-                              else field.name
-                #print(column_name)
+                column_name = field.name[1:] \
+                    if field.name.startswith("_") else field.name
+                # print(column_name)
                 if args_name:
-                    #print(args_name)
+                    # print(args_name)
                     if len(args_name) == 1:
                         # 只对原表相应对字段名进行修改，args_name 为 str 类型
                         self.df.rename(
-                            columns={args_name[0]:column_name}, 
+                            columns={args_name[0]: column_name},
                             inplace=True
                             )
                     else:
                         # 进一步合并已经被映射转换过的列
                         self.merge_columns(
-                            std_fields, 
-                            field.value[-1], 
+                            std_fields,
+                            field.value[-1],
                             column_name
                             )
                 # 如果原表中无法找到相应的列，用 None 填充新列
                 elif self.fill_column:
                     columns = [
-                        name for name, obj in 
-                            self.__class__.columns_model.__members__.items() 
+                        name for name, obj in
+                        self.__class__.columns_model.__members__.items()
                         if obj is field
                         ]
                     new_columns = [
-                        column[1:] if column.startswith("_") else column 
+                        column[1:] if column.startswith("_") else column
                         for column in columns
                         ]
                     for col in new_columns:
@@ -728,9 +738,9 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                 print("\n标准结构模板 {0} 参数值有误\n".format(field))
                 break
             else:
-                #try:
+                # try:
                 args_name = self.build_args(
-                    field.name, 
+                    field.name,
                     field.value[1:1+field.value[-1]]
                     )
                 if args_name:
@@ -743,33 +753,33 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                             list(field.value[field.value[-1]+1:-1])
                     new_cols = field.value[0](*args)()
                     columns = [
-                        name for name, obj in 
-                            self.__class__.columns_model.__members__.items() 
+                        name for name, obj in
+                        self.__class__.columns_model.__members__.items()
                         if obj is field
                         ]
                     # _ 开头的名称是模板用于临时定义使用，命名时需要去除 _
                     new_cols.columns = [
-                        column[1:] if column.startswith("_") else column 
+                        column[1:] if column.startswith("_") else column
                         for column in columns
                         ]
                     self.df.drop(args_name, axis=1, inplace=True)
                     self.df = pd.concat([self.df, new_cols], axis=1)
                 elif self.fill_column:
                     columns = [
-                        name for name, obj in 
-                            self.__class__.columns_model.__members__.items() 
+                        name for name, obj in
+                        self.__class__.columns_model.__members__.items()
                         if obj is field
                         ]
                     new_columns = [
-                        column[1:] if column.startswith("_") else column 
+                        column[1:] if column.startswith("_") else column
                         for column in columns
                         ]
                     for col in new_columns:
                         if col not in self.df.columns:
                             self.df[col] = None
-                #except:
-                    #print("\n标准结构模板 {0} 参数值有误\n".format(field))
-                    #break
+                # except:
+                    # print("\n标准结构模板 {1} 参数值有误\n".format(field))
+                    # break
 
     def build_args(self, title, params):
         """ 将列值校验所涉及的数据列拆分或合并为配置文件中定义的标准列名
@@ -782,8 +792,8 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
         for param in params:
             # 如果某个位置参数有多种可能的情况，则发现首个符合条件的就终止
             # 比如学名既可能是由一个字段存储也可能是由表中多个字段拼接而成
-            # 此时在定义std_table_alias的位置参数时，需要根据潜在权重按
-            # 序在[]中定义好多种可能
+            # 此时在定义std_table_alias的位置参数时，
+            # 需要根据潜在权重按序在 [] 中定义好多种可能
             if isinstance(param, list):
                 for clm in param:
                     columns = self.get_arg(clm)
@@ -794,15 +804,16 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                 columns = self.get_arg(param)
             # 位置参数只要缺失一个，就终止处理
             if not columns:
-                #print("\n{0} 没有在原表中找到对应表头\n".format(param))
+                # print("\n{0} 没有在原表中找到对应表头\n".format(param))
                 return None
             # 对位置参数的列名映射元素做进一步处理
-            for n, clm in enumerate(columns): 
-                # 找到的字段若需进一步分列后再合并为位置参数，则保留原字段
-                # 如 clm = [("GPS", (";"))] 而枚举定义的数值处理参数为
+            for n, clm in enumerate(columns):
+                # 找到的字段若需进一步分列后再合并为位置参数，
+                # 则保留原字段如 clm = [("GPS", (";"))]
+                # 而枚举定义的数值处理参数为
                 # （"decimalLatitude", "decimalLongitude", ";"）
-                # 则不需要对 "GPS" 再做任何拆分与合并，直接可以用作数值处理程序
-                # 的实际参数。
+                # 则不需要对 "GPS" 再做任何拆分与合并，
+                # 直接可以用作数值处理程序的实际参数。
                 if isinstance(clm, tuple) and len(clm) == 2:
                     columns[n] = clm[0]
                 # 找到的字段若需进一步合并，先执行合并
@@ -814,23 +825,24 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                     self.merge_columns(list(clm[:-1]), clm[-1], param)
                     columns[n] = param
             # 对整个位置参数的列名映射做进一步处理
-            if (len(columns) > 1 
-                or isinstance(param, tuple) and 
+            if (len(columns) > 1
+                or isinstance(param, tuple) and
                     param[-1] in ['d', 'l', 'a', 'o', 'r']):
-                # 相应位置参数需要进一步由多列合并而成
-                # 比如对于  (country, stateProvince, city, county, ",") 的 param
-                # 返回的 columns 或许就是 ["国", "省"， ”市“, "县"]，这个时候需要对
-                # columns 进行进一步的合并才能获得 param
+                # 相应位置参数需要进一步由多列合并而成比如对于
+                # (country, stateProvince, city, county, ",") 的 param
+                # 返回的 columns 或许就是 ["国", "省"， ”市“, "县"]，
+                # 这个时候需要对 columns 进行进一步的合并才能获得 param
                 fields = []
-                # 合并之前先去除真实数据表中未能找到的列，比如 
-                # (country, stateProvince, city, county) 这样的单个位置参数
-                # 是由多个标准列进一步合并而成，真实数据表中可能就不存在 country
-                # 然后将相应原始字段名转换为标准字段名以统一合并值中的 key
+                # 合并之前先去除真实数据表中未能找到的列，
+                # 比如 (country, stateProvince, city, county)
+                # 这样的单个位置参数是由多个标准列进一步合并而成，
+                # 真实数据表中可能就不存在 country ,然后将相应原始字段名
+                # 转换为标准字段名以统一合并值中的 key
                 for col, std_col in zip(columns, param):
                     if col is None:
                         continue
                     else:
-                        self.df.rename(columns={col:std_col}, inplace=True)
+                        self.df.rename(columns={col: std_col}, inplace=True)
                         fields.append(std_col)
                 # 最后再做合并，并将合并成的新列作为真正的位置参数返回
                 self.merge_columns(fields, param[-1], title)
@@ -839,26 +851,30 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                 # 列名可与相应位置参数一对一映射，则直接映射
                 arguments.append(columns[0])
 
-        #print(arguments)
+        # print(arguments)
         return arguments
 
     def get_arg(self, param):
         """ 将位置参数转换为真实可调用的表名
 
-        param: std_table_terms 定义的单个位置参数，可能是个str字段名，也可能是 tuple
-               如果是tuple，tuple 中的元素都为 str，表示该位置参数需由多个标准字段先
-               合并组成，tuple 最后一个元素为合并字段之间的连接符组成的元组，其他元素
-               为参与合并的字段名。
+        param: std_table_terms 定义的单个位置参数，可能是个str字段名，
+               也可能是 tuple 如果是tuple，tuple 中的元素都为 str，
+               表示该位置参数需由多个标准字段先合并组成，
+               tuple 最后一个元素为合并字段之间的连接符组成的元组，
+               其他元素为参与合并的字段名。
         return: 返回与 param 对应的真实可调用列名组成的 list，
-               list 是由 str 或 tuple 元素组成的列表；如果找不到对应列名，返回 None
+                list 是由 str 或 tuple 元素组成的列表；
+                如果找不到对应列名，返回 None
         """
         column_names = []
-        # 如果 ReStructureTable 已经与 FormatTable 一致，则直接用原始表中与之对应列
-        if param in self.columns_mapping.values() or param[0:-1] in self.columns_mapping.values():
+        # 如果 ReStructureTable 已经与 FormatTable 一致，
+        # 则直接用原始表中与之对应列
+        if (param in self.columns_mapping.values() or
+                param[0:-1] in self.columns_mapping.values()):
             column_names.append(self.__get_key(param))
             del self.columns_mapping[column_names[0]]
-        # 对于ReStructureTable与 FormatTable 不一致的字段转换，综合比较后以前者为
-        # 主修改后者，前者未覆盖的则依据后者处理
+        # 对于ReStructureTable与 FormatTable 不一致的字段转换，
+        # 综合比较后以前者为主修改后者，前者未覆盖的则依据后者处理。
         else:
             if isinstance(param, str):
                 param = (param, "")
@@ -873,22 +889,24 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                         del self.columns_mapping[self.__get_key(field)]
                         for header in field:
                             if header != clm:
-                                self.columns_mapping.update({header:header})
+                                self.columns_mapping.update({header: header})
                         column_names.append(clm)
                 if len(column_names) < n + 1:
-                    # 对于需要进行多次映射处理的字段，self.columns_mapping 只会记录
-                    # 字段的首次映射关系，因此若 self.columns_mapping 无法找到 clm，
-                    # 则进一步寻找实际表格字段名
+                    # 对于需要进行多次映射处理的字段，self.columns_mapping
+                    # 只会记录字段的首次映射关系，因此若 self.columns_mapping
+                    # 无法找到 clm，则进一步寻找实际表格字段名
                     if clm in self.df.columns:
                         column_names.append(clm)
-                    # 一些 tuple 型位置参数在实际表中并非每个字段都可以找到，缺失字
-                    # 段名会用 None 占位，但不会强制用户补全。位置参数中如行政区划就
-                    # 是由 (country, stateProvince, city, county, ",") 进一步组
-                    # 合而成。其中的 country 在实际表格中确实有可能就不存在，这种标
-                    # 准结构字段，有些确实会因部分字段缺失导致信息不可用，比如学名中
-                    # 的属名，有些则 对数据的进 一步校验影响不大。但无论如何对于缺失
-                    # 的字段，这里都不会强求用户补全，而会在具体的数值校验程序中进行
-                    # 处理。
+                    # 一些 tuple 型位置参数在实际表中并非每个字段都可以找到，
+                    # 缺失字段名会用 None 占位，但不会强制用户补全。
+                    # 位置参数中如行政区划就是由
+                    # (country, stateProvince, city, county, ",")
+                    # 进一步组合而成。其中的 country 在实际表格中确实有可能
+                    # 就不存在，这种标准结构字段，有些确实会因部分字段缺失
+                    # 导致信息不可用，比如学名中的属名，
+                    # 有些则对数据的进一步校验影响不大。
+                    # 但无论如何对于缺失的字段，这里都不会强求用户补全，
+                    # 而会在具体的数值校验程序中进行处理。
                     else:
                         column_names.append(None)
         # 如果没有找到对应字段，则返回 None
@@ -896,12 +914,8 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
             return None
         else:
             return column_names
-    
+
     def __get_key(self, value):
         for k, v in self.columns_mapping.items():
             if v == value or v == value[:-1]:
                 return k
-
-
-if __name__ == "__main__":
-    pass

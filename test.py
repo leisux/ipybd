@@ -1,75 +1,42 @@
-from ipybd.noi import Api
+from ipybd.noi import Add
+from ipybd import OccurrenceRecord, NoiOccurrence
 
-data = {
-  "Occurrence": {
-    "occurrenceID": "KUN:1234334",
-    "catalogNumber": "1206578",
-    "otherCatalogNumbers": "657894",
-    "recordedBy": "徐洲锋,刘恩德,魏志丹",
-    "recordedNumber": "LED7896",
-    "individualCount": 3,
-    "lifeStage": "有花无果",
-    "establishmentMeans": "入侵",
-    "preparations": "腊叶标本",
-    "disposition": "遗失",
-    "associatedMedia": [
-        "https://img.cc0.cn/d/file/20191017/7eb3706e1e0e878d8bca1f7180fa8831.mp3",
-        "https://img.cc0.cn/d/file/20191017/7eb3706e1e0e878d8bca1f7180fa8831.jpg",
-        "https://img.cc0.cn/d/file/20191017/7eb3706e1e0e878d8bca1f7180fa8831.avi",
-        "https://img.cc0.cn/d/file/20191017/7eb3706e1e0e878d8bca1f7180fa8831.jpg"
-    ],
-    "associatedSequences": [
-      "http://www.ncbi.nlm.nih.gov/nuccore/U34853.1",
-      "http://www.ncbi.nlm.nih.gov/nuccore/GU328060",
-      "http://www.ncbi.nlm.nih.gov/nuccore/AF326093"
-    ],
-    "associatedReferences": [
-      "http://www.sciencemag.org/cgi/content/abstract/322/5899/261"
-    ]
-  },
-  "Event": {
-    "eventDate": "2020-12-23T12:31:54+00:00",
-    "habitat": "距湖边300m的松林内。",
-    "fundedBy": "QTP 植物多样性调查"
-  },
-  "Location": {
-    "country": "中国",
-    "countryCode": "CN",
-    "province": "云南省",
-    "city": "昆明市",
-    "locality": "松华坝水库",
-    "decimalLatitude":-89.237890,
-    "decimalLongitude":179.222323,
-    "minimumElevationInMeters": 2615,
-    "maximumElevationInMeters": 3456.67
-  },
-  "Identification": [
-    {
-      "scientificName": "Rho",
-      "identifiedBy": "徐洲锋",
-      "dateIdentified": "2012-12-28T08:23:45+00:00"
-    },
-    {
-      "scientificName": "Rhododendron sinsis Smith.",
-      "identifiedBy": "刘恩德",
-      "dateIdentified": "2012-12-30T08:23:45+08:00",
-      "typeStatus": "holotype"
-    }
-  ],
-  "Record": {
-    "classification": "Aves",
-    "basisOfRecord": "馆藏标本",
-    "rights": "刘恩德",
-    "rightsHolder": "KUN",
-    "licence": "https://choosealicense.com/licenses/cc-by-4.0/",
-    "modified": "2019-12-23T12:23:35+00:00",
-    "references": "http://kun.kingdonia.org/speciman/newshow/tpl/2/id/165193",
-    "dataApi": "http://beta.ipni.org/api/1/search?perPage=500&cursor=%2A&q=Thalictrum+aquilegiifolium+var.+sibiricum&f=f_infraspecific",
-    "thumbnails": "http://www.sp2000.org.cn/api/v2/getSpeciesByFamilyId?apiKey=42ad0f57ae46407686d1903fd44aa34c&familyId=F20171000000256&page=2",
-    "institutionCode": "KUN"
-  }
-}
+data = [{'Occurrence': {'occurrenceID': 'KUN:1233170',
+                        'catalogNumber': '1233170',
+                        'otherCatalogNumbers': '0969439',
+                        'recordedBy': '陈文允,于文涛,黄永江',
+                        'recordNumber': 'CYH036',
+                        'individualCount': 2,
+                        'lifeStage': '无花有果',
+                        'disposition': '在库',
+                        'associatedMedia': ['http://upyun.kingdonia.org/KUN/img/11/2019_08_09/d5c142da27c2fb41_11_1565324738.jpg'],
+                        'occurrenceRemarks': '{"入库批号": "Z201103", "采集单位": "周浙昆", "伴生": "乌头，钩柱唐松草，尼泊尔蝇子草，狭苞橐吾，穗花荆芥等"}'},
+         'Location': {'country': '中国',
+                      'province': '四川省',
+                      'city': '甘孜藏族自治州',
+                      'county': '巴塘县',
+                      'locality': '德达乡',
+                      'decimalLatitude': 30.266389,
+                      'decimalLongitude': 99.455,
+                      'minimumElevationInMeters': 3963.0,
+                      'maximumElevationInMeters': 3963.0},
+         'Identification': [{'vernacularName': '钩柱唐松草',
+                             'scientificName': 'Thalictrum ',
+                             'identifiedBy': '于文涛',
+                             'dateIdentified': '2010-12-20T00:00:00+08:00'}],
+         'Event': {'eventDate': '2010-09-09T00:00:00+08:00',
+                   'habitat': '山坡，沟谷中'},
+         'Record': {'institutionCode': 'KUN',
+                    'classification': 'Angiospermae',
+                    'basisOfRecord': '馆藏标本',
+                    'rights': 'GBWS',
+                    'rightsHolder': 'KUN',
+                    'licence': 'http://www.cvh.ac.cn'}}]
 
-test = Api(data, "KUN", "KUN", "CVH", 9)
+# noi = NoiOccurrence(r'/Users/xuzhoufeng/OneDrive/xmwj/NOI/gbwstest.xlsx')
+# noi.save_table(r'/Users/xuzhoufeng/OneDrive/xmwj/NOI/gbws.xlsx')
+# datas = noi.df['DictForNoiOccurrence']
 
-test.register()
+test = Add(data, "KUN", 9)
+result = test.add()
+print(result)

@@ -11,7 +11,7 @@ from ipybd.data_cleaner import *
     由标准列名库中定义的列名作为参数；
     最后的参数用于标注位置参数中实际传递给校验功能的数据列数量，以让程序从参数中区分出哪
     些参数是实际的数据，以便在校验之前做必要的预处理。如下方的 individualCount 字段，
-    虽然校值时，需要传递两个位置参数‘individualCount’和'int'，但只有individualCount 
+    虽然校值时，需要传递两个位置参数‘individualCount’和'int'，但只有individualCount
     这个参数是数据表中真实有对应的数据列， 而 'int' 参数只是指示程序按照整型数字处理数
     据而已，因此其最后一个值设为 1。
 
@@ -136,7 +136,7 @@ class OccurrenceTerms(Enum):
 class NoiOccurrenceTerms(Enum):
 
     # Occurrence Object
-    OccurrenceID = UniqueID, ['OccurrenceID', ('institutionCode', 'catalogNumber', ':')], 1
+    occurrenceID = UniqueID, 'occurrenceID', 1
     catalogNumber = UniqueID, 'catalogNumber', 1
     otherCatalogNumbers = 'otherCatalogNumbers', 1
     recordedBy = HumanName, 'recordedBy', 1
@@ -145,15 +145,15 @@ class NoiOccurrenceTerms(Enum):
     sex = RadioInput, 'sex', 'sex', 1
     lifeStage = RadioInput, 'lifeStage', 'lifeStage', 1
     behavior = 'behavior', 1
-    establismentMeans = RadioInput, 'establismentMeans', 'establismentMeans', 1 
-    preparations = RadioInput, 'preparations', 1
-    disposition = RadioInput, 'disposition', 1
+    establismentMeans = RadioInput, 'establismentMeans', 'establismentMeans', 1
+    preparations = RadioInput, 'preparations', 'preparations', 1
+    disposition = RadioInput, 'disposition', 'disposition', 1
     associatedMedia = Url, 'associatedMedia', 1
     associatedReferences = Url, 'assocatedReferences', 1
     associatedSequences = Url, 'associatedSequences', 1
     occurrenceRemarks = 'occurrenceRemarks', 1
-    Occurrence = ('OccurrenceId', 'catalogNumber', 'otherCatalogNumbers', 'recordedBy', 'recordNumber', 'individualCount', 'sex', 'lifeStage', 'behavior', 'establishmentMeans', 'preparations', 'disposition', 'associatedMedia', 'associatedSequences', 'assocatedReferences', 'occurrenceRemarks', 'd'), 1
-    
+    Occurrence = ('occurrenceID', 'catalogNumber', 'otherCatalogNumbers', 'recordedBy', 'recordNumber', 'individualCount', 'sex', 'lifeStage', 'behavior', 'establishmentMeans', 'preparations', 'disposition', 'associatedMedia', 'associatedSequences', 'assocatedReferences', 'occurrenceRemarks', 'd'), 1
+
     # Event Object
     eventDate = DateTime, 'eventDate', 'utc', 1
     habitat = 'habitat', 1
@@ -209,7 +209,7 @@ class NoiOccurrenceTerms(Enum):
     modified = DateTime, 'modified', 'utc', 1
     Record = ('institutionCode', 'classification', 'basisOfRecord', 'rights', 'rightsHolder', 'references', 'dataApi', 'thumbnails', 'licence', 'modified', 'd'), 1
     # json result
-    JsonResults = ('Occurrence', 'Location', 'Identification', 'Event', 'Record', 'o'), 1
+    DictForNoiOccurrence = ('Occurrence', 'Location', 'Identification', 'Event', 'Record', 'd'), 1
 
 
 class KingdoniaPlantTerms(Enum):
@@ -247,7 +247,7 @@ class KingdoniaPlantTerms(Enum):
     identifiedBy = FillNa, 'identifiedBy', '无', 1
     _dateIdentified = DateTime, 'dateIdentified', 'datetime', 1
     dateIdentified = FillNa, 'dateIdentified', '0000:00:00 00:00:02', 1
-    _identifiedByID = UniqueID, 'identifiedByID', 1 
+    _identifiedByID = UniqueID, 'identifiedByID', 1
     identifiedByID = FillNa, 'identifiedByID', '0', 1
     _identifications = ("scientificName", "identifiedByID", "identifiedBy",  "dateIdentified", "typeStatus", "l"), 1
     identifications = ('identifications', 'l'), 1
@@ -260,7 +260,7 @@ class KingdoniaPlantTerms(Enum):
     不定根 = 'rhizoids', 1
     #孢子囊（群）= '孢子囊（群）', 1
     #孢子叶（球）= '孢子叶（球）', 1
-    频度 = RadioInput, 'frequency', 1
+    频度 = RadioInput, 'frequency', 'frequency', 1
     胸径 = Number, 'DBH', 1
     体高 = 'height', 1
     野外鉴定 = '野外鉴定', 1

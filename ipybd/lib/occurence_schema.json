@@ -93,6 +93,7 @@
         }
       },
       "required": [
+        "occurrenceID",
         "recordedBy"
       ]
     },

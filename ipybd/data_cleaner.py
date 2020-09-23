@@ -21,6 +21,7 @@ SP2000_API = 'http://www.sp2000.org.cn/api/v2'
 IPNI_API = 'http://beta.ipni.org/api/1'
 POWO_API = 'http://www.plantsoftheworldonline.org/api/2'
 
+
 class BioName:
     def __init__(self, names):
         if isinstance(names, str):
@@ -28,25 +29,25 @@ class BioName:
         else:
             self.names = names
         self.querys = self.build_querys(self.names)
-        self.cache = {'ipni':{}, 'col':{}, 'powo':{}}
+        self.cache = {'ipni': {}, 'col': {}, 'powo': {}}
         self.sema = asyncio.Semaphore(500)
 
     def get(self, action, typ=list, mark=False):
         results = self.__build_cache_and_get_results(action)
         if results:
             if typ is list:
-               return self._results2list(results, mark)
+                return self._results2list(results, mark)
             elif typ is dict:
-               return results 
+                return results
         else:
             if typ is list:
-               return []
+                return []
             elif typ is dict:
-               return {} 
+                return {}
 
-    def _results2list(self, results:dict, mark):
+    def _results2list(self, results: dict, mark):
         """ 对 get 的结果进行组装
-        
+
         results: 从 self.cache 中解析得到的结果字典, 每个元素都为元组
         mark: 如果为 True，没有获得结果的检索词会被虽结果返回并以!标记
               如果为 None，没有检索结果则返回由 None 组成的与其他结果等长的元组
@@ -80,21 +81,22 @@ class BioName:
 
         action: 要进行的查询操作描述字符串
         querys: 要进行 WEB 查询的检索词:解析出的检索要素组成的字典
-        
+
         return 返回检索结果字典 results，字典由原始检索词:检索结果组成
                检索过程中，会一并生成 self.names 在相应平台的检索返回内容缓存
         """
         cache_mapping = {
-                         'stdName':{**self.cache['col'], **self.cache['ipni']},
-                         'colTaxonTree':self.cache['col'],
-                         'colName':self.cache['col'],
-                         'colSynonyms':self.cache['col'],
-                         'ipniName':self.cache['ipni'],
-                         'ipniReference':self.cache['ipni'],
-                         'powoName':self.cache['powo'],
-                         'powoAccepted':self.cache['powo'],
-                         'powoImages':self.cache['powo']
-                }
+            'stdName': {
+                **self.cache['col'],
+                **self.cache['ipni']},
+            'colTaxonTree': self.cache['col'],
+            'colName': self.cache['col'],
+            'colSynonyms': self.cache['col'],
+            'ipniName': self.cache['ipni'],
+            'ipniReference': self.cache['ipni'],
+            'powoName': self.cache['powo'],
+            'powoAccepted': self.cache['powo'],
+            'powoImages': self.cache['powo']}
         results = {}
         cache = cache_mapping[action]
         if cache:
@@ -102,33 +104,33 @@ class BioName:
                 names = querys
             else:
                 names = self.querys
-            action_func = { # 注意 stdName 的 col 函数置于元组最后，
+            action_func = {  # 注意 stdName 的 col 函数置于元组最后，
                             # 以避免 ipni/powo 中与 col 同名的字段
                             # 被 col 函数解析。
-                            'stdName':(self.ipni_name, self.col_name),
-                            'colTaxonTree':self.col_taxontree,
-                            'colName':self.col_name,
-                            'colSynonyms':self.col_synonyms,
-                            'ipniName':self.ipni_name,
-                            'ipniReference':self.ipni_reference,
-                            'powoName':self.powo_name,
-                            'powoAccepted':self.powo_accepted,
-                            'powoImages':self.powo_images
+                            'stdName': (self.ipni_name, self.col_name),
+                            'colTaxonTree': self.col_taxontree,
+                            'colName': self.col_name,
+                            'colSynonyms': self.col_synonyms,
+                            'ipniName': self.ipni_name,
+                            'ipniReference': self.ipni_reference,
+                            'powoName': self.powo_name,
+                            'powoAccepted': self.powo_accepted,
+                            'powoImages': self.powo_images
                            }
             # 如果存在缓存，则直接从缓存数据中提取结果
-            # 如果没有缓存，则先生成缓存，再取数据 
+            # 如果没有缓存，则先生成缓存，再取数据
             search_terms = {}
             for org_name, query in names.items():
                 try:
                     results[org_name] = self.get_cache_result(
-                        cache[org_name], 
+                        cache[org_name],
                         action_func[action]
                         )
                 except KeyError:
                     # 缓存中不存在 org_name 检索结果时触发
-                    if query:  
+                    if query:
                         # 如果检索词是合法的，加入检索项
-                        search_terms.update({org_name:query})
+                        search_terms.update({org_name: query})
                 except ValueError:
                     # 如果缓存的相应结果中不存在特定数据
                     # 则不写入 results
@@ -144,7 +146,8 @@ class BioName:
             # 后将不再继续执行递归
             self.web_get(action, search_terms)
             # 这里的递归最多只执行一次
-            sub_results = self.__build_cache_and_get_results(action, search_terms)
+            sub_results = self.__build_cache_and_get_results(
+                action, search_terms)
             results.update(sub_results)
         return results
 
@@ -161,23 +164,23 @@ class BioName:
                 # 若多个 API 返回结果的 keys 通用，这里可能不会触发 KeyError,目
                 # 前已知 col 和 ipni/powo 部分keys 通用，且 col 不存在属查询，
                 # family 检索和 species 返回的数据结构也不一致，因此其内部需要
-                # 处理相关 KeyError 错误，与这里的处理会有冲突，因此该函数 func 
-                # 中 col 的处理函数应该至于最后，以避免 ipni/powo 的数据被 col 
+                # 处理相关 KeyError 错误，与这里的处理会有冲突，因此该函数 func
+                # 中 col 的处理函数应该至于最后，以避免 ipni/powo 的数据被 col
                 # 处理函数处理。
                 except KeyError:
                     continue
 
     def web_get(self, action, search_terms):
         get_action = {
-                       'stdName':self.get_name,
-                       'colTaxonTree':self.get_col_name,
-                       'colName':self.get_col_name,
-                       'colSynonyms':self.get_col_name,
-                       'ipniName':self.get_ipni_name,
-                       'ipniReference':self.get_ipni_name,
-                       'powoName':self.get_powo_name,
-                       'powoAccepted':self.get_powo_name,
-                       'powoImages':self.get_powo_name
+                       'stdName': self.get_name,
+                       'colTaxonTree': self.get_col_name,
+                       'colName': self.get_col_name,
+                       'colSynonyms': self.get_col_name,
+                       'ipniName': self.get_ipni_name,
+                       'ipniReference': self.get_ipni_name,
+                       'powoName': self.get_powo_name,
+                       'powoAccepted': self.get_powo_name,
+                       'powoImages': self.get_powo_name
                        }
         self.pbar = tqdm(total=len(search_terms), desc=action, ascii=True)
         loop = asyncio.new_event_loop()
@@ -244,8 +247,8 @@ class BioName:
     def col_synonyms(self, name):
         try:
             synonyms = [
-                synonym['synonym'] for synonym 
-                    in name['accepted_name_info']['Synonyms']
+                synonym['synonym'] for synonym
+                in name['accepted_name_info']['Synonyms']
                 ]
             return synonyms
         except KeyError:
@@ -267,7 +270,7 @@ class BioName:
                 _class = name['class']
                 phylum = name['phylum']
                 kingdom = name['kingdom']
-            except:
+            except BaseException:
                 genus = None
                 family = name['family']
                 order = name['order']
@@ -286,7 +289,7 @@ class BioName:
                 scientific_name = name['genus']
                 author = None
                 family = name['family']
-            except KeyError:  #科的检索结果
+            except KeyError:  # 科的检索结果
                 family = name['family']
                 author = None
                 scientific_name = family
@@ -300,7 +303,7 @@ class BioName:
         family = name['family']
         #print(query[-1], genus, family, author)
         return scientific_name, author, family
-        
+
     def ipni_reference(self, name):
         publishing_author = name['publishingAuthor']
         publication_year = name['publicationYear']
@@ -308,12 +311,12 @@ class BioName:
         reference = name['reference']
         return publishing_author, publication_year, publication, reference
 
-    async def get_name(self,query, session):
+    async def get_name(self, query, session):
         name = await self.get_col_name(query, session)
         if name:
             return name
         else:
-             return await self.get_ipni_name(query,session)
+            return await self.get_ipni_name(query, session)
 
     async def get_col_name(self, query, session):
         name = await self.check_col_name(query, session)
@@ -339,7 +342,8 @@ class BioName:
                         # 检索学名不一致，所以此处暂且只能在确保检索学名为
                         # 接受名后，才能添加命名人。
                         if res['name_status'] == 'accepted name':
-                            results[num]['author_team'] = self.get_author_team(res['accepted_name_info']['author'])
+                            results[num]['author_team'] = self.get_author_team(
+                                res['accepted_name_info']['author'])
                             names.append(res)
                 elif query[1] is Filters.generic and res['accepted_name_info']['taxonTree']['genus'] == query[0]:
                     # col 接口目前尚无属一级的内容返回，这里先取属下种及种
@@ -357,16 +361,16 @@ class BioName:
                 name = names[0]
             else:
                 # 提取出API返回的多个名称的命名人序列，并将其编码
-                aut_codes = self.code_authors(authors)                
+                aut_codes = self.code_authors(authors)
                 std_teams = {
-                    n: self.code_authors(r['author_team']) 
+                    n: self.code_authors(r['author_team'])
                     for n, r in enumerate(names)
                     }
-                #开始比对原命名人与可选学名的命名人的比对结果
+                # 开始比对原命名人与可选学名的命名人的比对结果
                 scores = self.contrast_code(aut_codes, std_teams)
-                #print(scores)
+                # print(scores)
                 name = names[scores[0][1]]
-                #if std_teams[scores[0][1]] > 10000000000:
+                # if std_teams[scores[0][1]] > 10000000000:
                 #   author = ...这里可以继续对最优值进行判断和筛选，毕竟一
                 # 组值总有最优,但不一定是真符合
         return name
@@ -393,7 +397,7 @@ class BioName:
             authors = self.get_author_team(query[2])
             # 如果搜索名称和返回名称不一致，标注后待人工核查
             if names == []:
-                #print(query)
+                # print(query)
                 return None
             # 检索只有一个结果，或者检索词缺命名人，默认使用第一个同名结果
             elif len(names) == 1 or authors == []:
@@ -407,11 +411,11 @@ class BioName:
                     for a in r["authorTeam"]:
                         t.append(a["name"])
                     std_teams[n] = self.code_authors(t)
-                #开始比对原命名人与可选学名的命名人的比对结果
+                # 开始比对原命名人与可选学名的命名人的比对结果
                 scores = self.contrast_code(aut_codes, std_teams)
-                #print(scores)
+                # print(scores)
                 name = names[scores[0][1]]
-                #if std_teams[scores[0][1]] > 10000000000:
+                # if std_teams[scores[0][1]] > 10000000000:
                 #   author = ...这里可以继续对最优值进行判断和筛选，毕竟一
                 # 组值总有最优，但不一定是真符合
         return name
@@ -445,7 +449,7 @@ class BioName:
             authors = self.get_author_team(query[2])
             # 如果搜索名称和返回名称不一致，标注后待人工核查
             if names == []:
-                #print(query)
+                # print(query)
                 return None
             # 如果只检索到一个结果，默认使用这个同名结果
             elif len(names) == 1:
@@ -455,16 +459,19 @@ class BioName:
                 name = names[0]
                 for n in names:
                     if n['accepted'] == True:
-                      return n
+                        return n
             else:
                 # 提取出API返回的多个名称的命名人序列，并将其编码
                 aut_codes = self.code_authors(authors)
-                std_teams = {n: self.code_authors(r['authorTeam']) for n, r in enumerate(names)}
+                std_teams = {
+                    n: self.code_authors(
+                        r['authorTeam']) for n,
+                    r in enumerate(names)}
                 # 开始比对原命名人与可选学名的命名人的比对结果
                 scores = self.contrast_code(aut_codes, std_teams)
                 # print(query[-1], scores)
                 name = names[scores[0][1]]
-                #if std_teams[scores[0][1]] > 10000000000:
+                # if std_teams[scores[0][1]] > 10000000000:
                 #   author = ...这里可以继续对最优值进行判断和筛选，毕竟一组值总有最优，
                 # 但不一定是真符合
         return name
@@ -480,7 +487,7 @@ class BioName:
                     return resp['data']['species']
                 except KeyError:
                     # 出错后，确定可以返回科的信息
-                    return resp['data'] ['familes']
+                    return resp['data']['familes']
             elif resp['code'] == 400:
                 print("\n参数不合法：{0}\n".format(url))
                 return None
@@ -507,14 +514,14 @@ class BioName:
     async def async_request(self, url, session):
         try:
             while True:
-                #print(url)
+                # print(url)
                 async with session.get(url, timeout=60) as resp:
                     if resp.status == 429:
                         await asyncio.sleep(3)
                     else:
                         response = await resp.json()
                         break
-        except:  #如果异步请求出错，改为正常的 Get 请求以尽可能确保有返回结果
+        except BaseException:  # 如果异步请求出错，改为正常的 Get 请求以尽可能确保有返回结果
             response = await self.normal_request(url)
         if not response:
             print(url, "联网超时，请检查网络连接！")
@@ -524,16 +531,16 @@ class BioName:
         try:
             while True:
                 rps = requests.get(url)
-                #print(rps.status_code)
+                # print(rps.status_code)
                 if rps.status_code == 429:
                     await asyncio.sleep(3)
                 else:
                     return rps.json()
-        except:
+        except BaseException:
             return None
 
     def _build_col_params(self, query, filters):
-        params = {'apiKey':'42ad0f57ae46407686d1903fd44aa34c'}
+        params = {'apiKey': '42ad0f57ae46407686d1903fd44aa34c'}
         if filters is Filters.familial:
             params['familyName'] = query
         elif filters is Filters.commonname:
@@ -553,9 +560,9 @@ class BioName:
 
     def build_url(self, api, method, params):
         return '{base}/{method}?{opt}'.format(
-               base = api,
-               method = method,
-               opt = urllib.parse.urlencode(params)
+               base=api,
+               method=method,
+               opt=urllib.parse.urlencode(params)
         )
 
     def _format_kew_query(self, query):
@@ -572,18 +579,18 @@ class BioName:
         else:
             return filters.value['kew']
 
-    def format(self, p = 'scientificName'):
+    def format(self, p='scientificName'):
         std_names = self.build_querys(self.names)
         if p == 'simpleName':
             return [
-                std_names[name][0] 
-                if std_names[name] else None 
+                std_names[name][0]
+                if std_names[name] else None
                 for name in self.names
                 ]
         elif p == 'scientificName':
             return [
-                ' '.join([std_names[name][0], std_names[name][2]]) 
-                if std_names[name] else None 
+                ' '.join([std_names[name][0], std_names[name][2]])
+                if std_names[name] else None
                 for name in self.names
                 ]
 
@@ -601,25 +608,27 @@ class BioName:
 
             目前仍有个别命名人十分复杂的名称，清洗后无法得到正确而的结果，使用时需注意
         """
-        species_pattern = re.compile(r"\b([A-Z][a-zàäçéèêëöôùûüîï-]+)\s*([×Xx])?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*(.*)")
-        subspecies_pattern = re.compile(r"(.*?)\s*(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)\s*([(（A-Z].*)")
+        species_pattern = re.compile(
+            r"\b([A-Z][a-zàäçéèêëöôùûüîï-]+)\s*([×Xx])?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*(.*)")
+        subspecies_pattern = re.compile(
+            r"(.*?)\s*(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)\s*([(（A-Z].*)")
         try:
             species_split = species_pattern.findall(raw_name)[0]
-        except:
+        except BaseException:
             return None
         subspec_split = subspecies_pattern.findall(species_split[3])
 
         if subspec_split == []:
             simple_name = " ".join([species_split[0], species_split[2]]) if \
-            species_split[1]=="" else " ".join(
+                species_split[1] == "" else " ".join(
                 [species_split[0], species_split[1], species_split[2]]
                 )
             author = species_split[3]
             if species_split[2] != "":
                 rank = Filters.specific
             elif species_split[0].lower().endswith((
-                "aceae", "idae","umbelliferae", "labiatae", "compositae", "gramineae", 
-                "leguminosae")):
+                "aceae", "idae", "umbelliferae", "labiatae", "compositae", "gramineae",
+                    "leguminosae")):
                 rank = Filters.familial
             else:
                 rank = Filters.generic
@@ -627,13 +636,13 @@ class BioName:
             if subspec_split[0][1]:
                 simple_name = " ".join(
                     [species_split[0], species_split[2], subspec_split[0][1], subspec_split[0][2]]
-                    ) if species_split[1]=="" else " ".join(
+                    ) if species_split[1] == "" else " ".join(
                         [species_split[0], species_split[1], species_split[2], subspec_split[0][1], subspec_split[0][2]]
                         )
             else:
                 simple_name = " ".join(
                     [species_split[0], species_split[2], subspec_split[0][2]]
-                    ) if species_split[1]=="" else " ".join(
+                    ) if species_split[1] == "" else " ".join(
                         [species_split[0], species_split[1], species_split[2], subspec_split[0][2]]
                         )
             author = subspec_split[0][3]
@@ -659,20 +668,21 @@ class BioName:
             for author in raw_code:
                 scores = []
                 for name in authorship:
-                    scores.append(max(author, name)%min(author, name))
+                    scores.append(max(author, name) % min(author, name))
                 # 每个人名取匹配度分数最低的分值
                 k_score.append(min(scores))
-            std_codes[k] = (sum(k_score)//len(raw_code)+1)*2**abs(len(raw_code)-len(authorship))
+            std_codes[k] = (
+                sum(k_score)//len(raw_code)+1)*2**abs(len(raw_code)-len(authorship))
         # 开始从比对结果中，结果将取命名人偏差最小的API返回结果
         # std_teams中可能存在多个最优，而程序无法判定采用哪一个比如原始数据
         # 命名人为(A. K. Skvortsov et Borodina) A. J. Li，而ipni返回
-        # 的标准名称中存在命名人分别为 A. K. Skvortsov 和 
+        # 的标准名称中存在命名人分别为 A. K. Skvortsov 和
         # Borodina et A. J. Li 两个同名学名，其std_teams值都将为最小偏差
         # 值 0， 此时程序将任选一个其实这里也可以考虑将其标识，等再考虑考虑，
         # 有的时候ipni数据也有可能有错，比如 Phaeonychium parryoides 就存
         # 在这个问题，但这种情况应该是小比率，对于结果的帅选逻辑，可以修改下方逻辑
         scores = [(x, y) for y, x in std_codes.items()]
-        scores.sort(key=lambda s:s[0])
+        scores.sort(key=lambda s: s[0])
         return scores
 
     def code_authors(self, authors):
@@ -690,11 +700,11 @@ class BioName:
                 n = ord(letter)
                 if n == 32:  # 排除空格
                     code_author = code_author
-                elif aut[i-1] == letter and i != 0: #避免前后字母序号差相减等于 0 
+                elif aut[i-1] == letter and i != 0:  # 避免前后字母序号差相减等于 0
                     pass
                 elif n < 91:  # 人名中的大写字母
                     code_author = code_author * (ord(letter)-64)
-                elif aut[i-1] == " " and n > 96:  #人名之中的小写首字母
+                elif aut[i-1] == " " and n > 96:  # 人名之中的小写首字母
                     code_author = code_author * (ord(letter)-96)
                 else:
                     code_author = code_author * abs((ord(aut[i-1])-n))
@@ -710,8 +720,10 @@ class BioName:
                 相同，对于 Hook. f. 目前只能提取出 Hook. ，程序仍需进一步完善，不过对于
                 学名之间的人名比较，已经足够用了
         """
-        p4 = re.compile(r"\b[A-Z][A-Za-z\.-]+\s+[A-Z][A-Za-z\.]+\s+[A-Z][A-Za-z\.]+\s+[A-Z][A-Za-z\.]+")
-        p3 = re.compile(r"\b[A-Z][A-Za-z\.-]+\s+[A-Z][A-Za-z\.]+\s+[A-Z][A-Za-z\.]+")
+        p4 = re.compile(
+            r"\b[A-Z][A-Za-z\.-]+\s+[A-Z][A-Za-z\.]+\s+[A-Z][A-Za-z\.]+\s+[A-Z][A-Za-z\.]+")
+        p3 = re.compile(
+            r"\b[A-Z][A-Za-z\.-]+\s+[A-Z][A-Za-z\.]+\s+[A-Z][A-Za-z\.]+")
         p2 = re.compile(r"\b[A-Z][A-Za-z\.-]+\s+[A-Z][A-Za-z\.]+")
         p1 = re.compile(r"\b[A-Z][A-Za-z\.-]+")
         author_team = []
@@ -723,12 +735,13 @@ class BioName:
         return author_team
 
     def __call__(self):
-        choose = input("\n是否执行拼写检查，在线检查将基于 sp2000.org.cn、ipni.org 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会惠耗费较长时间（y/n）\n")
+        choose = input(
+            "\n是否执行拼写检查，在线检查将基于 sp2000.org.cn、ipni.org 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会惠耗费较长时间（y/n）\n")
         if choose.strip() == 'y':
             return pd.DataFrame(
                 [
                     ' '.join([name[0], name[1]]).strip()
-                    if name[1] else name[0] 
+                    if name[1] else name[0]
                     for name in self.get('stdName', mark=True)
                     ]
             )
@@ -736,7 +749,7 @@ class BioName:
             return pd.DataFrame(self.format())
 
 
-class  DateTime:
+class DateTime:
     def __init__(self, date_time, style="num", timezone='+08:00'):
         if isinstance(date_time, str):
             self.datetime = [date_time]
@@ -745,7 +758,6 @@ class  DateTime:
         self.zone = timezone
         # 兼容 RestructureTable，供 __call__ 调用
         self.style = style
-    
 
     def format_datetime(self, style):
         result = []
@@ -756,7 +768,10 @@ class  DateTime:
                 if style == "datetime":
                     result.append(datetime.format("YYYY-MM-DD HH:mm:ss"))
                 elif style == "utc":
-                    result.append(datetime.format("YYYY-MM-DDTHH:mm:ss"+self.zone))
+                    result.append(
+                        datetime.format(
+                            "YYYY-MM-DDTHH:mm:ss" +
+                            self.zone))
                 else:
                     result.append(
                         self.__format_date_style(
@@ -769,17 +784,23 @@ class  DateTime:
             else:
                 # 然后尝试作为 date 进行处理
                 try:
-                    date_degree, date_elements = self.get_date_elements(date_time)
+                    date_degree, date_elements = self.get_date_elements(
+                                                                        date_time)
                 except TypeError:
                     result.append(None)
                     continue
                 # 获取单个日期的年月日值，如果单个日期的年月日值有不同的拼写法，则全部转换成整型
-                date_elements = self.mapping_date_element(date_degree, date_elements)
+                date_elements = self.mapping_date_element(
+                    date_degree, date_elements)
                 if date_elements:
                     # 判断年月日的数值是否符合规范&判断各数值是 年 月 日 中的哪一个
                     try:
-                        year, month, day = self.format_date_elements(date_degree, date_elements)
-                        result.append(self.__format_date_style(year, month, day, style))
+                        year, month, day = self.format_date_elements(
+                                                                     date_degree,
+                                                                     date_elements)
+                        result.append(
+                            self.__format_date_style(
+                                year, month, day, style))
                     except TypeError:
                         result.append(None)
                         continue
@@ -792,7 +813,6 @@ class  DateTime:
 
         return result
 
-
     def datetime_valid(self, datetime):
         try:
             date_time = arrow.get(datetime)
@@ -800,14 +820,12 @@ class  DateTime:
                 return date_time
             else:
                 return None
-        except:
+        except BaseException:
             return None
-            
-    
-    def to_utc(self, datetime, tz, to_tz):
-        date_time =  arrow.get(datetime).replace(tzinfo=tz).to(to_tz)
-        return date_time.format("YYYY-MM-DDTHH:MM:SS"+to_tz)
 
+    def to_utc(self, datetime, tz, to_tz):
+        date_time = arrow.get(datetime).replace(tzinfo=tz).to(to_tz)
+        return date_time.format("YYYY-MM-DDTHH:MM:SS"+to_tz)
 
     def __format_date_style(self, year, month, day, style='num'):
         if not month:
@@ -832,7 +850,10 @@ class  DateTime:
             elif style == "datetime":
                 return "-".join([str(year), str(month), "01 00:00:01"])
             elif style == "utc":
-                return "-".join([str(year), str(month), "01T00:00:01"]) + self.zone
+                month = str(month)
+                if len(month) == 1:
+                    month = '0' + month
+                return "-".join([str(year), month, "01T00:00:01"]) + self.zone
             else:
                 raise ValueError
         else:
@@ -848,9 +869,16 @@ class  DateTime:
             elif style == "date":
                 return "-".join([str(year), str(month), str(day)])
             elif style == "datetime":
-                return "-".join([str(year), str(month), str(day)]) + " 00:00:00"
+                return "-".join([str(year), str(month),
+                                 str(day)]) + " 00:00:00"
             elif style == "utc":
-                return "-".join([str(year), str(month), str(day)]) + "T00:00:00" + self.zone
+                month = str(month)
+                if len(month) == 1:
+                    month = '0' + month
+                day = str(day)
+                if len(day) == 1:
+                    day = '0' + day
+                return "-".join([str(year), month, day]) + "T00:00:00" + self.zone
             else:
                 raise ValueError
 
@@ -928,25 +956,67 @@ class  DateTime:
             return None
         except TypeError:
             pass
-    
+
         return year, month, day
 
-    def mapping_date_element(self, date_degree, date_elements:list):
+    def mapping_date_element(self, date_degree, date_elements: list):
         alias_map = {
-            "JAN":1, "FEB":2, "MAR":3, "APR":4, "APRI":4, "MAY":5, "JUN":6, 
-            "JUL":7, "AUG":8, "SEP":9, "SEPT":9, "OCT":10, "NOV":11, "DEC":12,
-            "Jan":1, "Feb":2, "Mar":3, "Apr":4, "Apri":4, "May":5, "Jun":6, 
-            "Jul":7, "Aug":8, "Sep":9, "Sept":9, "Oct":10, "Nov":11, "Dec":12, 
-            "January":1, "February":2, "March":3, "April":4, "June":6, 
-            "July":7, "August":8, "September":9, "October":10, "November":11, 
-            "December":12, "I":1, "II":2, "III":3, "IV":4, "V":5, "VI":6, 
-            "VII":7, "VIII":8, "IX":9, "X":10, "XI":11, "XII":12
-            }
+            "JAN": 1,
+            "FEB": 2,
+            "MAR": 3,
+            "APR": 4,
+            "APRI": 4,
+            "MAY": 5,
+            "JUN": 6,
+            "JUL": 7,
+            "AUG": 8,
+            "SEP": 9,
+            "SEPT": 9,
+            "OCT": 10,
+            "NOV": 11,
+            "DEC": 12,
+            "Jan": 1,
+            "Feb": 2,
+            "Mar": 3,
+            "Apr": 4,
+            "Apri": 4,
+            "May": 5,
+            "Jun": 6,
+            "Jul": 7,
+            "Aug": 8,
+            "Sep": 9,
+            "Sept": 9,
+            "Oct": 10,
+            "Nov": 11,
+            "Dec": 12,
+            "January": 1,
+            "February": 2,
+            "March": 3,
+            "April": 4,
+            "June": 6,
+            "July": 7,
+            "August": 8,
+            "September": 9,
+            "October": 10,
+            "November": 11,
+            "December": 12,
+            "I": 1,
+            "II": 2,
+            "III": 3,
+            "IV": 4,
+            "V": 5,
+            "VI": 6,
+            "VII": 7,
+            "VIII": 8,
+            "IX": 9,
+            "X": 10,
+            "XI": 11,
+            "XII": 12}
         for i in range(date_degree):
             try:
                 date_elements[i] = int(date_elements[i])
             except ValueError:
-                #print(date_elements)
+                # print(date_elements)
                 if date_elements[i] in alias_map:
                     date_elements[i] = alias_map[date_elements[i]]
                 else:
@@ -981,7 +1051,7 @@ class  DateTime:
             else:
                 return None
         return date_degree, date_elements
-        
+
     def __call__(self):
         std_datetime = self.format_datetime(self.style)
         for i in range(len(self.datetime)):
@@ -992,24 +1062,26 @@ class  DateTime:
                     except TypeError:
                         std_datetime[i] = "".join(["!", str(self.datetime[i])])
 
-        return pd.DataFrame({"dateTime":std_datetime})
+        return pd.DataFrame({"dateTime": std_datetime})
 
 
 class HumanName:
     def __init__(self, names):
         self.names = names
-    
+
     def format_names(self):
         """
-        返回以英文逗号分隔的人名字符串，可中英文人名混排“徐洲锋,A. Henry,徐衡”，并以 
+        返回以英文逗号分隔的人名字符串，可中英文人名混排“徐洲锋,A. Henry,徐衡”，并以
         “!“ 标识可能错误写法的字符串，注意尚无法处理“徐洲锋 洪丽林 徐衡” 这样以空格切
         分的中文人名字符串
         """
         names_mapping = dict.fromkeys(self.names)
-        pattern = re.compile(r'[\u4e00-\u9fa5\s]*[\u4e00-\u9fa5][\|\d]*|[A-Za-z][A-Za-z\.\s\-]+[a-z][\|\d]*')
+        pattern = re.compile(
+            r'[\u4e00-\u9fa5\s]*[\u4e00-\u9fa5][\|\d]*|[A-Za-z][A-Za-z\.\s\-]+[a-z][\|\d]*')
         for rec_names in tqdm(names_mapping, desc="人名处理", ascii=True):
             try:
-                names = [name.strip().title() for name in pattern.findall(rec_names)]
+                names = [name.strip().title()
+                         for name in pattern.findall(rec_names)]
                 for i, name in enumerate(names):
                     if re.search(r"[a-z\u4e00-\u9fa5]\|\d", name):
                         pass
@@ -1018,7 +1090,7 @@ class HumanName:
                     else:
                         raise ValueError
                     if re.search(u"[\u4e00-\u9fa5]", name):
-                        if len(name)<2:
+                        if len(name) < 2:
                             raise ValueError
                         else:
                             names[i] = name.replace(" ", "")
@@ -1026,10 +1098,13 @@ class HumanName:
                         if len(name) < 3:
                             raise ValueError
                         else:
-                            en_name = [e + "." if len(e)==1 else e for e in re.split(r"\.\s*", name)]
+                            en_name = [
+                                e + "."
+                                if len(e) == 1 else e
+                                for e in re.split(r"\.\s*", name)]
                             names[i] = " ".join(en_name)
                 names_mapping[rec_names] = ",".join(names)
-            except:
+            except BaseException:
                 if pd.isnull(rec_names):
                     continue
                 else:
@@ -1037,10 +1112,8 @@ class HumanName:
 
         return [names_mapping[txt] for txt in self.names]
 
-
     def __call__(self):
         return pd.DataFrame(pd.Series(self.format_names()))
-
 
 
 class AdminDiv:
@@ -1074,22 +1147,25 @@ class AdminDiv:
             self._build_mapping(raw_region, std_regions)
         new_regions = [
             (
-                self.region_mapping[region].split("::") 
+                self.region_mapping[region].split("::")
                 if self.region_mapping[region] else self.region_mapping[region]
                 ) for region in self.org_address
             ]
         # 未达县级的标准行政区，用None 补齐，注意浅拷贝陷阱
         [
             (
-                region.extend([None]*(4-len(region))) 
+                region.extend([None]*(4-len(region)))
                 if region and len(region) < 4 else region
                 ) for region in new_regions
-        ] 
+        ]
 
-        self.country = [(region[0] if region else None) for region in new_regions]
-        self.province = [(region[1] if region else None) for region in new_regions]
+        self.country = [(region[0] if region else None)
+                        for region in new_regions]
+        self.province = [(region[1] if region else None)
+                         for region in new_regions]
         self.city = [(region[2] if region else None) for region in new_regions]
-        self.county = [(region[3] if region else None) for region in new_regions]
+        self.county = [(region[3] if region else None)
+                       for region in new_regions]
 
     def _build_mapping(self, raw_region, std_regions):
         score = (0, 0)  # 分别记录匹配的字数和匹配项的长度
@@ -1098,7 +1174,7 @@ class AdminDiv:
             each_score = 0  # 记录累计匹配的字数
             i = 0  # 记录 region 参与匹配的起始字符位置
             j = 0  # 记录 stdregion 参与匹配的起始字符位置
-            while i < len(region)-1 and j < len(stdregion)-1: # 单字无法匹配
+            while i < len(region)-1 and j < len(stdregion)-1:  # 单字无法匹配
                 k = 2  # 用于初始化、递增可匹配的字符长度
                 n = stdregion[j:].find("::"+region[i:i+k])
                 m = 0  # 记录最终匹配的字符数
@@ -1130,7 +1206,7 @@ class AdminDiv:
                 score = each_score, len(stdregion)
                 self.region_mapping[raw_region] = stdregion
         if score == (0, 0):
-            # 如果没有匹配到，又是中国的行政区，英文!标识 
+            # 如果没有匹配到，又是中国的行政区，英文!标识
             if "中国" in raw_region:
                 self.region_mapping[raw_region] = "!" + raw_region
             else:
@@ -1140,15 +1216,16 @@ class AdminDiv:
     def __call__(self):
         self.format_chinese_admindiv()
         return pd.DataFrame({
-                            'country':self.country, 
-                            'Province':self.province, 
-                            'city':self.city, 
-                            'county':self.county
+                            'country': self.country,
+                            'Province': self.province,
+                            'city': self.city,
+                            'county': self.county
                             })
 
 
 class Number:
-    def __init__(self, min_column, max_column=None, typ=float, min_num=0, max_num=8848):
+    def __init__(self, min_column, max_column=None,
+                 typ=float, min_num=0, max_num=8848):
         """
             min_column: 可迭代对象，数值区间中的小数值数据列
             max_column: 可迭代对象, 数据区间中的大数值数据列
@@ -1158,10 +1235,10 @@ class Number:
         """
         self.min_column = min_column
         self.max_column = max_column
-        self.typ = typ 
+        self.typ = typ
         self.min_num = min_num
         self.max_num = max_num
-    
+
     def format_number(self, mark=False):
         """
         return: 如果出现 keyerro，返惠列表参数错误, 否则返回处理好的table
@@ -1177,13 +1254,13 @@ class Number:
             raise ValueError
         try:
             column1 = [
-                pattern.findall(str(value)) if not pd.isnull(value) else [] 
+                pattern.findall(str(value)) if not pd.isnull(value) else []
                 for value in self.min_column
                 ]
             if self.max_column is None:
                 new_column = []
                 for i, v in enumerate(tqdm(column1, desc="数值处理", ascii=True)):
-                    if (len(v) == 1 
+                    if (len(v) == 1
                             and self.min_num <= float(v[0]) <= self.max_num):
                         new_column.append([self.typ(v[0])])
                     elif pd.isnull(self.min_column[i]):
@@ -1196,7 +1273,7 @@ class Number:
                 return new_column
             else:
                 column2 = [
-                    pattern.findall(str(value)) if not pd.isnull(value) else [] 
+                    pattern.findall(str(value)) if not pd.isnull(value) else []
                     for value in self.max_column
                     ]
                 return self._min_max(column1, column2, self.typ, mark)
@@ -1209,26 +1286,26 @@ class Number:
             column1: 小数值 list, 每个元素必须也为 list
             column2: 大数值 list，每个元素必须也为 list
             typ: 数值的类型，如 int, flora
-        """ 
+        """
         for p, q in zip(
-                        tqdm(column1, desc="数值区间", ascii=True), 
+                        tqdm(column1, desc="数值区间", ascii=True),
                         tqdm(column2, desc="数值区间", ascii=True)
                         ):
             merge_value = p + q
-            if (len(merge_value) == 2 
-                and self.min_num <= float(merge_value[0]) <= self.max_num 
-                and self.min_num <= float(merge_value[1]) <= self.max_num):
-                if float(merge_value[0])<= float(merge_value[1]):
+            if (len(merge_value) == 2
+                and self.min_num <= float(merge_value[0]) <= self.max_num
+                    and self.min_num <= float(merge_value[1]) <= self.max_num):
+                if float(merge_value[0]) <= float(merge_value[1]):
                     p.insert(0, merge_value[0])
                     q.insert(0, merge_value[1])
                 # 系统默认补0造成的高值低于低值，处理为同值
-                elif float(merge_value[1]) == 0: 
+                elif float(merge_value[1]) == 0:
                     p.insert(0, merge_value[0])
                     q.insert(0, merge_value[0])
                 else:
                     p.insert(0, merge_value[1])
                     q.insert(0, merge_value[0])
-            elif (len(merge_value) == 1 
+            elif (len(merge_value) == 1
                   and self.min_num <= float(merge_value[0]) <= self.max_num):
                 # 若两个值中只有一个值含数字，程序会自动清非数字点的值
                 # 并使用另外一个数字填充两个值
@@ -1239,17 +1316,17 @@ class Number:
                 q.insert(0, None)
         if mark:
             min_column = [
-                    typ(column1[i][0])
-                        if column1[i][0] else "".join(["!", str(self.min_column[i])])
-                    if not pd.isnull(self.min_column[i]) else None
-                    for i in range(len(column1))
-                    ]
+                typ(column1[i][0])
+                if column1[i][0] else "".join(
+                    ["!", str(self.min_column[i])])
+                if not pd.isnull(self.min_column[i]) else None
+                for i in range(len(column1))]
             max_column = [
-                    typ(column2[i][0]) 
-                        if column2[i][0] else "".join(["!", str(self.min_column[i])])
-                    if not pd.isnull(self.max_column[i]) else None
-                    for i in range(len(column2))
-                    ]
+                typ(column2[i][0])
+                if column2[i][0] else "".join(
+                    ["!", str(self.min_column[i])])
+                if not pd.isnull(self.max_column[i]) else None
+                for i in range(len(column2))]
         else:
             min_column = [
                     typ(column1[i][0])
@@ -1276,8 +1353,9 @@ class Number:
         try:
             return pd.DataFrame(new_column, dtype=typ)
         except ValueError:
-            # 解决数据列中混入某些字符串无法转 Int64 等数据类型的问题。 
+            # 解决数据列中混入某些字符串无法转 Int64 等数据类型的问题。
             return pd.DataFrame(new_column)
+
 
 class GeoCoordinate:
     def __init__(self, coordinates):
@@ -1287,35 +1365,44 @@ class GeoCoordinate:
     def format_coordinates(self):
         new_lng = [None]*len(self.coordinates)
         new_lat = [None]*len(self.coordinates)
-        gps_p_1 = re.compile(r"[NESWnesw][^A-Za-z,，；;]*[0-9][^A-Za-z,，；;]+")  # NSWE 前置经纬度
+        gps_p_1 = re.compile(
+            r"[NESWnesw][^A-Za-z,，；;]*[0-9][^A-Za-z,，；;]+")  # NSWE 前置经纬度
         gps_p_2 = re.compile(r"[0-9][^A-Za-z,，；;]+[NESWnesw]")  # NSWE 后置经纬度
         gps_p_3 = re.compile(r"[+-]?\d+[\.\d]*")  # 十进制经纬度
         gps_p_num = re.compile(r"[\d\.]+")
         gps_p_NSEW = re.compile(r"[NESWnesw]")
         for i in tqdm(range(len(self.coordinates)), desc="经纬度", ascii=True):
             try:
-                gps_elements = gps_p_1.findall(self.coordinates[i])  #提取坐标，并将其列表化，正常情况下将有两个元素组成列表
-                if len(gps_elements) != 2:  #通过小数点个数和列表长度初步判断是否是合格的坐标
+                gps_elements = gps_p_1.findall(
+                    self.coordinates[i])  # 提取坐标，并将其列表化，正常情况下将有两个元素组成列表
+                if len(gps_elements) != 2:  # 通过小数点个数和列表长度初步判断是否是合格的坐标
                     gps_elements = gps_p_2.findall(self.coordinates[i])
                     if len(gps_elements) != 2:
                         gps_elements = gps_p_3.findall(self.coordinates[i])
-                        #print(gps_elements)
-                        if len(gps_elements) == 2 and abs(float(gps_elements[0])) <= 90 and abs(float(gps_elements[1])) <= 180:
+                        # print(gps_elements)
+                        if len(gps_elements) == 2 and abs(
+                                float(gps_elements[0])) <= 90 and abs(
+                                float(gps_elements[1])) <= 180:
                             new_lng[i] = round(float(gps_elements[1]), 6)
                             new_lat[i] = round(float(gps_elements[0]), 6)
                             continue
                         else:
                             #print(gps_elements ,type(gps_elements[1]))
-                            #如果值有错误，则保留原值，如果是数值型值，考虑到已无法恢复，则触发错误不做任何保留                            
+                            # 如果值有错误，则保留原值，如果是数值型值，考虑到已无法恢复，则触发错误不做任何保留
                             new_lat[i] = "!" + gps_elements[0]
                             new_lng[i] = "!" + gps_elements[1]
                             continue
-                direct_fir = gps_p_NSEW.findall(gps_elements[0])[0]   #单个单元格内，坐标第一个值的方向指示
-                direct_sec = gps_p_NSEW.findall(gps_elements[1])[0]  #单个单元格内，坐标第二个值的方向指示
-                gps_fir_num = gps_p_num.findall(gps_elements[0])  #获得由坐标中的度分秒值组成的数列
+                direct_fir = gps_p_NSEW.findall(
+                    gps_elements[0])[0]  # 单个单元格内，坐标第一个值的方向指示
+                direct_sec = gps_p_NSEW.findall(
+                    gps_elements[1])[0]  # 单个单元格内，坐标第二个值的方向指示
+                gps_fir_num = gps_p_num.findall(
+                    gps_elements[0])  # 获得由坐标中的度分秒值组成的数列
                 gps_sec_num = gps_p_num.findall(gps_elements[1])
                 #print(i, " ", direct_fir, direct_sec, gps_fir_num, gps_sec_num)
-                if direct_fir in "NSns" and direct_sec in "EWew" and float(gps_fir_num[0]) <= 90 and float(gps_sec_num[0]) <= 180:  #判断哪一个数值是纬度数值，哪一个数值是经度数值
+                if direct_fir in "NSns" and direct_sec in "EWew" and float(
+                        gps_fir_num[0]) <= 90 and float(
+                        gps_sec_num[0]) <= 180:  # 判断哪一个数值是纬度数值，哪一个数值是经度数值
                     direct_fir_seq = 1
                 elif direct_fir in "EWew" and direct_sec in "NSns" and float(gps_sec_num[0]) <= 90 and float(gps_fir_num[0]) <= 180:
                     direct_fir_seq = 0
@@ -1323,53 +1410,101 @@ class GeoCoordinate:
                     new_lng[i] = "!" + gps_elements[1]
                     new_lat[i] = "!" + gps_elements[0]
                     continue
-                direct = {"N":1, "S":-1, "E":1, "W":-1, "n":1, "s":-1, "e":1, "w":-1}
+                direct = {
+                    "N": 1,
+                    "S": -1,
+                    "E": 1,
+                    "W": -1,
+                    "n": 1,
+                    "s": -1,
+                    "e": 1,
+                    "w": -1}
                 if len(gps_fir_num) == 3 and len(gps_sec_num) == 3:
                     if int(gps_fir_num[1]) >= 60:
                         new_lng[i] = "!" + gps_elements[1]
                         new_lat[i] = "!" + gps_elements[0]
                         continue
-                    if float(gps_fir_num[2]) >= 60 or float(gps_sec_num[2]) >= 60:  #度分表示法写成了度分秒表示法
+                    if float(gps_fir_num[2]) >= 60 or float(
+                            gps_sec_num[2]) >= 60:  # 度分表示法写成了度分秒表示法
                         if direct_fir_seq == 1:
-                            new_lat[i] = direct[direct_fir]*round(int(gps_fir_num[0]) + float(gps_fir_num[1] + "." + gps_fir_num[2])/60, 6)
-                            new_lng[i] = direct[direct_sec]*round(int(gps_sec_num[0]) + float(gps_sec_num[1] + "." + gps_sec_num[2])/60, 6)
+                            new_lat[i] = direct[direct_fir] * round(
+                                int(gps_fir_num[0]) +
+                                float(gps_fir_num[1] + "." + gps_fir_num[2]) / 60,
+                                6)
+                            new_lng[i] = direct[direct_sec] * round(
+                                int(gps_sec_num[0]) +
+                                float(gps_sec_num[1] + "." + gps_sec_num[2]) / 60,
+                                6)
                         else:
-                            new_lng[i] = direct[direct_fir]*round(int(gps_fir_num[0]) + float(gps_fir_num[1] + "." + gps_fir_num[2])/60, 6)
-                            new_lat[i] = direct[direct_sec]*round(int(gps_sec_num[0]) + float(gps_sec_num[1] + "." + gps_sec_num[2])/60, 6)
-                    else:                                                                        #度分秒表示法
+                            new_lng[i] = direct[direct_fir] * round(
+                                int(gps_fir_num[0]) +
+                                float(gps_fir_num[1] + "." + gps_fir_num[2]) / 60,
+                                6)
+                            new_lat[i] = direct[direct_sec] * round(
+                                int(gps_sec_num[0]) +
+                                float(gps_sec_num[1] + "." + gps_sec_num[2]) / 60,
+                                6)
+                    else:  # 度分秒表示法
                         if direct_fir_seq == 1:
-                            new_lat[i] = direct[direct_fir]*round(int(gps_fir_num[0]) + int(gps_fir_num[1])/60 + float(gps_fir_num[2])/3600, 6)
-                            new_lng[i] = direct[direct_sec]*round(int(gps_sec_num[0]) + int(gps_sec_num[1])/60 + float(gps_sec_num[2])/3600, 6)
+                            new_lat[i] = direct[direct_fir] * round(
+                                int(gps_fir_num[0]) + int(gps_fir_num[1]) / 60 +
+                                float(gps_fir_num[2]) / 3600, 6)
+                            new_lng[i] = direct[direct_sec] * round(
+                                int(gps_sec_num[0]) + int(gps_sec_num[1]) / 60 +
+                                float(gps_sec_num[2]) / 3600, 6)
                         else:
-                            new_lng[i] = direct[direct_fir]*round(int(gps_fir_num[0]) + int(gps_fir_num[1])/60 + float(gps_fir_num[2])/3600, 6)
-                            new_lat[i] = direct[direct_sec]*round(int(gps_sec_num[0]) + int(gps_sec_num[1])/60 + float(gps_sec_num[2])/3600, 6)
-                elif len(gps_fir_num) == 2 and len(gps_sec_num) == 2:             #度分表示法
+                            new_lng[i] = direct[direct_fir] * round(
+                                int(gps_fir_num[0]) + int(gps_fir_num[1]) / 60 +
+                                float(gps_fir_num[2]) / 3600, 6)
+                            new_lat[i] = direct[direct_sec] * round(
+                                int(gps_sec_num[0]) + int(gps_sec_num[1]) / 60 +
+                                float(gps_sec_num[2]) / 3600, 6)
+                elif len(gps_fir_num) == 2 and len(gps_sec_num) == 2:  # 度分表示法
                     if float(gps_fir_num[1]) >= 60:
                         new_lng[i] = "!" + gps_elements[1]
                         new_lat[i] = "!" + gps_elements[0]
                         continue
-                    if direct_fir_seq ==1:
-                        new_lat[i] = direct[direct_fir]*round(int(gps_fir_num[0]) + float(gps_fir_num[1])/60, 6)
-                        new_lng[i] = direct[direct_sec]*round(int(gps_sec_num[0]) + float(gps_sec_num[1])/60, 6)
+                    if direct_fir_seq == 1:
+                        new_lat[i] = direct[direct_fir] * round(
+                            int(gps_fir_num[0]) + float(gps_fir_num[1]) / 60, 6)
+                        new_lng[i] = direct[direct_sec] * round(
+                            int(gps_sec_num[0]) + float(gps_sec_num[1]) / 60, 6)
                     else:
-                        new_lng[i] = direct[direct_fir]*round(int(gps_fir_num[0]) + float(gps_fir_num[1])/60, 6)
-                        new_lat[i] = direct[direct_sec]*round(int(gps_sec_num[0]) + float(gps_sec_num[1])/60, 6)
-                elif len(gps_fir_num) == 1 and len(gps_sec_num) == 1:            #度表示法
-                    if direct_fir_seq ==1:
-                        new_lat[i] = direct[direct_fir]*round(float(gps_fir_num[0]), 6)
-                        new_lng[i] = direct[direct_sec]*round(float(gps_sec_num[0]), 6)
+                        new_lng[i] = direct[direct_fir] * round(
+                            int(gps_fir_num[0]) + float(gps_fir_num[1]) / 60, 6)
+                        new_lat[i] = direct[direct_sec] * round(
+                            int(gps_sec_num[0]) + float(gps_sec_num[1]) / 60, 6)
+                elif len(gps_fir_num) == 1 and len(gps_sec_num) == 1:  # 度表示法
+                    if direct_fir_seq == 1:
+                        new_lat[i] = direct[direct_fir] * \
+                            round(float(gps_fir_num[0]), 6)
+                        new_lng[i] = direct[direct_sec] * \
+                            round(float(gps_sec_num[0]), 6)
                     else:
-                        new_lng[i] = direct[direct_fir]*round(float(gps_fir_num[0]), 6)
-                        new_lat[i] = direct[direct_sec]*round(float(gps_sec_num[0]), 6)
-                elif len(gps_fir_num) < 4 and len(gps_sec_num) < 4:  #处理度分/度分秒表示法中，纬度、经度最后一项正好为0被省略导致经纬度不等长的问题
-                    if False not in [f() for f in [(lambda i=i:float(i)<60) for i in gps_fir_num[1:]+gps_sec_num[1:]]]:
-                        if (lambda n = min(gps_fir_num, gps_sec_num)[-1]:"." not in n)():
+                        new_lng[i] = direct[direct_fir] * \
+                            round(float(gps_fir_num[0]), 6)
+                        new_lat[i] = direct[direct_sec] * \
+                            round(float(gps_sec_num[0]), 6)
+                # 处理度分/度分秒表示法中，纬度、经度最后一项正好为0被省略导致经纬度不等长的问题
+                elif len(gps_fir_num) < 4 and len(gps_sec_num) < 4:
+                    if False not in [
+                        f()
+                        for f
+                        in
+                        [(lambda i=i: float(i) < 60)
+                         for i in gps_fir_num[1:] + gps_sec_num[1:]]]:
+                        if (lambda n=min(gps_fir_num, gps_sec_num)
+                                [-1]: "." not in n)():
                             if direct_fir_seq == 1:
-                                new_lat[i] = direct[direct_fir]*round(sum([float(gps_fir_num[i])/pow(60, i) for i in range(len(gps_fir_num))]),6)
-                                new_lng[i] = direct[direct_sec]*round(sum([float(gps_sec_num[i])/pow(60, i) for i in range(len(gps_sec_num))]),6)
+                                new_lat[i] = direct[direct_fir]*round(
+                                    sum([float(gps_fir_num[i])/pow(60, i) for i in range(len(gps_fir_num))]), 6)
+                                new_lng[i] = direct[direct_sec]*round(
+                                    sum([float(gps_sec_num[i])/pow(60, i) for i in range(len(gps_sec_num))]), 6)
                             else:
-                                new_lng[i] = direct[direct_fir]*round(sum([float(gps_fir_num[i])/pow(60, i) for i in range(len(gps_fir_num))]),6)
-                                new_lat[i] = direct[direct_sec]*round(sum([float(gps_sec_num[i])/pow(60, i) for i in range(len(gps_sec_num))]),6)
+                                new_lng[i] = direct[direct_fir]*round(
+                                    sum([float(gps_fir_num[i])/pow(60, i) for i in range(len(gps_fir_num))]), 6)
+                                new_lat[i] = direct[direct_sec]*round(
+                                    sum([float(gps_sec_num[i])/pow(60, i) for i in range(len(gps_sec_num))]), 6)
                         else:
                             new_lng[i] = "!" + gps_elements[1]
                             new_lat[i] = "!" + gps_elements[0]
@@ -1377,8 +1512,8 @@ class GeoCoordinate:
                         new_lng[i] = "!" + gps_elements[1]
                         new_lat[i] = "!" + gps_elements[0]
                 else:
-                        new_lng[i] = "!" + gps_elements[1]
-                        new_lat[i] = "!" + gps_elements[0]
+                    new_lng[i] = "!" + gps_elements[1]
+                    new_lat[i] = "!" + gps_elements[0]
 
             except TypeError:
                 continue
@@ -1393,8 +1528,8 @@ class GeoCoordinate:
     def __call__(self):
         self.lat, self.lng = self.format_coordinates()
         return pd.DataFrame({
-                             "decimalLatitude":self.lat, 
-                             "decimalLongitude":self.lng
+                             "decimalLatitude": self.lat,
+                             "decimalLongitude": self.lng
                              })
 
 
@@ -1402,7 +1537,7 @@ class RadioInput:
     def __init__(self, column, title):
         self.column = column
         self.title = title
-    
+
     def format_option(self):
         options_mapping = dict.fromkeys(self.column)
         with open(STD_OPTIONS_ALIAS_PATH, "r", encoding="utf-8") as o:
@@ -1424,12 +1559,18 @@ class RadioInput:
                         mana2std.append(option)
         # 手动指定无法自动匹配的可选值
         if mana2std:
-            if int(input("\n{0} 内有 {1} 个值需要逐个手动指定，手动指定请输入 1 ，全部忽略请输入 0：\n".format(self.title, len(mana2std)))):
+            if int(
+                input(
+                    "\n{0} 内有 {1} 个值需要逐个手动指定，手动指定请输入 1 ，全部忽略请输入 0：\n".format(
+                        self.title, len(mana2std)))):
                 for option in mana2std:
-                    print("".join(["\n\n", str(option), "=>请将该值对应至以下可选值中的某一个:\n"]))
+                    print(
+                        "".join(
+                            ["\n\n", str(option),
+                             "=>请将该值对应至以下可选值中的某一个:\n"]))
                     for n, m in enumerate(std_titles):
                         strings = str(n+1) + ". " + m
-                        if (n+1)%3 > 0:
+                        if (n+1) % 3 > 0:
                             print(strings.ljust(25), end="\t")
                         else:
                             print(strings.ljust(25), end="\n\n")
@@ -1440,17 +1581,17 @@ class RadioInput:
                             break
                         else:
                             try:
-                                std2alias[self.title][std_titles[int(n)-1]].append(option)
+                                std2alias[self.title][std_titles[int(
+                                    n)-1]].append(option)
                                 options_mapping[option] = std_titles[int(n)-1]
                                 break
-                            except:
+                            except BaseException:
                                 print("\n输入的字符有误...\n")
 
                 with open(STD_OPTIONS_ALIAS_PATH, "w", encoding="utf-8") as f:
                     f.write(json.dumps(std2alias, ensure_ascii=False))
 
         return [options_mapping[w] for w in self.column]
-            
 
     def __call__(self):
         return pd.DataFrame(pd.Series(self.format_option()))
@@ -1460,22 +1601,22 @@ class UniqueID:
     def __init__(self, *columns):
         # columns 可以包含多个数据列联合判重
         self.df = pd.concat(columns, axis=1)
-    
+
     def mark_duplicate(self):
         self.duplicated = self.df.duplicated(keep=False)
         marks = [
-            "".join(["!", m]) if d and not pd.isnull(m) else m 
+            "".join(["!", m]) if d and not pd.isnull(m) else m
             for m, d in zip(self.df[self.df.columns[0]], self.duplicated)
             ]
         return marks
-    
+
     def __call__(self):
         self.df[self.df.columns[0]] = self.mark_duplicate()
         return self.df
 
 
 class FillNa:
-    def __init__(self, df:"Series or DataFrame isinstance", fval):
+    def __init__(self, df: "Series or DataFrame isinstance", fval):
         self.df = df
         self.fval = fval
 
@@ -1484,17 +1625,18 @@ class FillNa:
 
 
 class Url:
-    def  __init__(self, column):
+    def __init__(self, column):
         self.urls = column
+        self.pattern = re.compile(
+            r"http://[^,\|\"\']+|https://[^,\|\"\']+|ftp://[^,\|\"\']+")
 
     def split_url_to_list(self):
-        return map(
-            lambda url:re.split(r",|\|", url) if url and not pd.isnull(url) else None, 
-            self.urls
-            )
+        return map(lambda url: self.pattern.findall(url)
+                   if url and not pd.isnull(url) else None, self.urls)
 
     def __call__(self):
         return pd.DataFrame(pd.Series(self.split_url_to_list()))
+
 
 if __name__ == "__main__":
     pass

@@ -1,4 +1,8 @@
 {
+    "occurrenceID":[
+        "唯一标识符",
+        "数据库标识"
+    ],
     "geodeticDatum":[
         "坐标系",
         "坐标基准"
@@ -384,7 +388,8 @@
         "幼体"
     ],
     "seed": [
-        "种质"
+        "种质",
+        "种子"
     ],
     "city": [
         "市",
@@ -573,24 +578,26 @@
         "Locality",
         "产地3"
     ],
-    "野外鉴定": [
     "vernacularName": [
         "中文名",
         "中名",
         "种中文名",
-        "LOCAL_NAME"
+        "LOCAL_NAME",
+        "当地名称"
     ],
     "vernacularGenusName": [
         "中文属名",
         "属中文名",
         "属名",
-        "属"
+        "属",
+        "genusNameZH"
     ],
     "vernaculaFamilyName": [
         "中文科名",
         "科中文名",
         "科名",
-        "科"
+        "科",
+        "familyNameZH"
     ],
     "子实层": [],
     "stem": [
@@ -599,7 +606,8 @@
         "茎（树皮）",
         "Skin",
         "Stem",
-        "StemBark"
+        "StemBark",
+        "茎"
     ],
     "taxonRank": [
         "种下等级",
@@ -623,7 +631,9 @@
         "科拉丁名",
         "拉丁科名",
         "FAMILY",
-        "Family"
+        "Family",
+        "FamilyName",
+        "familyName"
     ],
     "subfamily": [
         "亚科名",
@@ -635,7 +645,8 @@
         "拉丁属名",
         "genus",
         "Genus",
-        "GENUS"
+        "GENUS",
+        "genusName"
     ],
     "subgenus": [
         "亚属名",
