@@ -13,11 +13,15 @@ from ipybd.data_cleaner import (
 )
 
 from ipybd.std_table_objects import (
+    record,
     OccurrenceRecord,
     KingdoniaPlant,
-    NoiOccurrence
+    NoiOccurrence,
+    NSII
 )
 
 from ipybd import noi
+
+from ipybd.label.label_maker import Label
 
 from ipybd.api_terms import Filters

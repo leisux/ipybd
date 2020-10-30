@@ -13,13 +13,14 @@ setup(
             '':['lib/*.json', 'lib/*.xlsx']
             },
         platforms = 'any',
-        python_requires=">=3.6.1",        
+        python_requires=">=3.6.1",
         keywords = (
-            'biodiversity', 
-            'scientificName', 
-            'herbarium', 
+            'biodiversity',
+            'scientificName',
+            'herbarium',
             'specimens',
-            'bdcleaner'
+            'bdcleaner',
+            'labelmaker'
             ),
         install_requires=[
             'pandas>=1.1.1',
@@ -27,6 +28,7 @@ setup(
             'prompt_toolkit>=3.0.5',
             'requests>=2.21.0',
             'aiohttp>=3.6.2',
-            'arrow>=0.16.0'
+            'arrow>=0.16.0',
+            'pystache>=0.5.4'
         ]
 )

@@ -1,4 +1,4 @@
-from ipybd.noi import Add
+from ipybd.noi import Link
 from ipybd import OccurrenceRecord, NoiOccurrence
 
 data = [{'Occurrence': {'occurrenceID': 'KUN:1233170',
@@ -33,10 +33,10 @@ data = [{'Occurrence': {'occurrenceID': 'KUN:1233170',
                     'rightsHolder': 'KUN',
                     'licence': 'http://www.cvh.ac.cn'}}]
 
-# noi = NoiOccurrence(r'/Users/xuzhoufeng/OneDrive/xmwj/NOI/gbwstest.xlsx')
-# noi.save_table(r'/Users/xuzhoufeng/OneDrive/xmwj/NOI/gbws.xlsx')
-# datas = noi.df['DictForNoiOccurrence']
+noi = NoiOccurrence(r'/Users/xuzhoufeng/OneDrive/xmwj/NOI/gbwstest.xlsx')
+noi.save_table(r'/Users/xuzhoufeng/OneDrive/xmwj/NOI/gbws.xlsx')
+datas = noi.df['DictForNoiOccurrence']
 
-test = Add(data, "KUN", 9)
-result = test.add()
-print(result)
+test = Link(datas, "KUN", 9)
+test.link()
+print(test.unvalid_resps)

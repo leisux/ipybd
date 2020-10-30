@@ -24,11 +24,8 @@ SECRETKEY = "qk3ps9sot5dbnz8wihf3ruetprovzks1"
 
 class Api:
     def __init__(
-            self, json_data, registrant, data_rights,
-            data_rights_holder, data_model_id
-            ):
+            self, json_data, data_rights, data_rights_holder, data_model_id):
         self.data = json_data
-        self.registrant = registrant
         self.rights = data_rights
         self.rights_holder = data_rights_holder
         self.model_id = data_model_id
@@ -52,7 +49,6 @@ class Api:
         json_policy = json.dumps(
                 {
                     'data_info': self.data,
-                    'data_registrant': self.registrant,
                     'data_from': self.rights_holder,
                     'data_copyright': self.rights,
                     'data_modelid': self.model_id
@@ -68,17 +64,25 @@ class Api:
         return ":".join([ACCESSKEY, sign])
 
 
-class Add:
-    def __init__(self, datas, registrant, model_id):
-        self.sem = asyncio.Semaphore(50)
+class Link:
+    def __init__(self, datas:dict, model_id):
         self.datas = datas
-        self.registrant = registrant
         self.model_id = model_id
+
+    def link(self):
+        responses = self.add()
+        self.unvalid_resps = []
+        for resp, data in zip(responses, self.datas):
+            if resp:
+                pass
+            else:
+                self.unvalid_resps.append(data)
 
     def add(self):
         self.pbar = tqdm(total=len(self.datas), desc="注册数据", ascii=True)
-        tasks = self.build_tasks()
         loop = asyncio.get_event_loop()
+        self.sem = asyncio.Semaphore(50, loop)
+        tasks = self.build_tasks()
         resp = loop.run_until_complete(tasks)
         loop.close()
         self.pbar.close()
@@ -96,20 +100,19 @@ class Add:
             self.pbar.update(1)
             return result
 
-    def build_post_data(self, data):
+    def build_post_data(self, data:dict):
         rights = data["Record"]["rights"]
         rights_holder = data["Record"]["rightsHolder"]
         json_data = json.dumps(data, cls=NpEncoder, ensure_ascii=False)
         # print(json_data)
         api = Api(
             json_data,
-            self.registrant,
             rights,
             rights_holder,
             self.model_id)
         return api.build_post_info()
 
-    async def fetch(self, data, token, session):
+    async def fetch(self, data:'json', token, session):
         while True:
             async with session.post(URL,
                                     data=data,

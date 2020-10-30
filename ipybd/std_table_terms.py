@@ -102,7 +102,7 @@ class OccurrenceTerms(Enum):
     family = 'family', 1
     vernacularName = 'vernacularName', 1
     # Identification
-    scientificName = BioName, ['scientificName', ('genus', 'specificEpithet', 'specificEpithetAuthorShip', 'taxonRank', 'infraspecificEpithet', 'scientificNameAuthorship', ' ')], 1
+    scientificName = BioName, ['scientificName', ('genus', 'specificEpithet', 'specificAuthorship', 'taxonRank', 'infraspecificEpithet', 'scientificNameAuthorship', ' ')], 1
     typeStatus = RadioInput, 'typeStatus', 'typeStatus', 1
     identifiedBy = HumanName, 'identifiedBy', 1
     dateIdentified = DateTime, 'dateIdentified', 1
@@ -189,7 +189,7 @@ class NoiOccurrenceTerms(Enum):
 
     # Idnetification Object
     vernacularName = 'vernacularName', 1
-    scientificName = BioName, [('genus', 'specificEpithet', 'specificEpithetAuthorShip', 'taxonRank', 'infraspecificEpithet', 'scientificNameAuthorship', ' '), 'scientificName'], 1
+    scientificName = BioName, ['scientificName', ('genus', 'specificEpithet', 'specificAuthorship', 'taxonRank', 'infraspecificEpithet', 'scientificNameAuthorship', ' ')], 1
     identifiedBy = HumanName, 'identifiedBy', 1
     dateIdentified = DateTime, 'dateIdentified', 'utc', 1
     typeStatus = RadioInput, 'typeStatus', 'typeStatus', 1
@@ -224,7 +224,8 @@ class KingdoniaPlantTerms(Enum):
     recordedBy = HumanName, 'recordedBy', 1
     recordNumber = 'recordNumber', 1
     eventDate = DateTime, 'eventDate', 'datetime', 1
-    individualCount = Number, 'individualCount', None, int, 1
+    _individualCount = Number, 'individualCount', None, int, 1
+    individualCount = FillNa, 'individualCount', '0', 1
     country = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
     province = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
     city = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
@@ -239,7 +240,7 @@ class KingdoniaPlantTerms(Enum):
     minimumElevationInMeters = Number, 'minimumElevationInMeters', 'maximumElevationInMeters', 2
     maximumElevationInMeters = Number, 'minimumElevationInMeters', 'maximumElevationInMeters', 2
     occurrenceRemarks = 'occurrenceRemarks', 1
-    _scientificName = BioName, [('genus', 'specificEpithet', 'specificEpithetAuthorShip', 'taxonRank', 'infraspecificEpithet', 'scientificNameAuthorship', ' '), 'scientificName'], 1
+    _scientificName = BioName, ['scientificName', ('genus', 'specificEpithet', 'specificAuthorship', 'taxonRank', 'infraspecificEpithet', 'scientificNameAuthorship', ' ')], 1
     scientificName = FillNa, 'scientificName', 'unknown', 1
     _typeStatus = RadioInput, 'typeStatus', 'typeStatus', 1
     typeStatus = FillNa, 'typeStatus', 'not type', 1
@@ -263,8 +264,8 @@ class KingdoniaPlantTerms(Enum):
     频度 = RadioInput, 'frequency', 'frequency', 1
     胸径 = Number, 'DBH', 1
     体高 = 'height', 1
-    野外鉴定 = '野外鉴定', 1
-    当地名称 = 'vernacularName', 1
+    野外鉴定 = 'temporaryIdentification', 1
+    当地名称 = 'dialectName', 1
     dynamicProperties = ('频度', '胸径', '体高', '孢子囊（群）', '孢子叶（球）', '花', '叶', '茎', '果实', '种子', '根', '不定根', '野外鉴定', '当地名称', 'o'), 1
     organismRemarks = 'organismRemarks', 1
     associatedMedia = 'associatedMedia', 1
@@ -279,3 +280,103 @@ class KingdoniaPlantTerms(Enum):
 
 class KingdoniaAvesTerms(Enum):
     pass
+
+
+class HerbLabelTerms(Enum):
+    institutionName = 'institutionName', 1
+    institutionCode = 'institutionCode', 1
+    fundedBy = 'fundedBy', 1
+    family = 'family', 1
+    genus = 'genus', 1
+    specificEpithet = 'specificEpithet', 1
+    specificAuthorship = 'specificAuthorship', 1
+    taxonRank = 'taxonRank', 1
+    infraspecificEpithet = 'infraspecificEpithet', 1
+    scientificNameAuthorship = 'scientificNameAuthorship', 1
+    identifiedBy = HumanName, 'identifiedBy', 1
+    dateIdentified = DateTime, 'dateIdentified', 'date', 1
+    country = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
+    province = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
+    city = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
+    county = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
+    locality = ('locality', 'mountain', 'waterBody', ','), 1
+    habitat = 'habitat', 1
+    individualCount = Number, 'individualCount', None, int, 1
+    habit = RadioInput, 'habit', 'habit', 1
+    flower = 'flower',1
+    leaf = 'leaf', 1
+    stem = 'stem', 1
+    fruit = 'fruit', 1
+    seed = 'seed', 1
+    root =  'root', 1
+    rhizoids = 'rhizoids', 1
+    # 孢子囊 = '孢子囊（群）', 1
+    # 孢子叶 = '孢子叶（球）', 1
+    frequency = RadioInput, 'frequency', 'frequency', 1
+    DBH = Number, 'DBH', 1
+    height = 'height', 1
+    temporaryIdentification = 'temporaryIdentification', 1
+    dialectName = 'dialectName', 1
+    molecularMaterialSample = 'molecularMaterialSample', 1
+    seedMaterialSample = 'seedMaterialSample', 1
+    livingMaterialSample = 'livingMaterialSample', 1
+    decimalLatitude = GeoCoordinate, ('decimalLatitude', 'decimalLongitude', ';'), 1
+    decimalLongitude = GeoCoordinate, ('decimalLatitude', 'decimalLongitude', ';'), 1
+    minimumElevationInMeters = Number, 'minimumElevationInMeters', None, int, 1
+    maximumElevationInMeters = Number, 'maximumElevationInMeters', None, int, 1
+    recordedBy = HumanName, 'recordedBy', 1
+    recordNumber = 'recordNumber', 1
+    eventDate = DateTime, 'eventDate', 'date', 1
+    occurrenceRemarks = 'occurrenceRemarks', 1
+
+
+class NsiiTerms(Enum):
+    basisOfRecord = RadioInput, 'basisOfRecord', 'basisOfRecord', 1
+    rights = 'rights', 1
+    rightsHolder = 'rightsHolder', 1
+    licence = 'licence', 1
+    modified = DateTime, 'modified', 'datetime', 1
+    references = 'references', 1
+    institutionCode = RadioInput, 'institutionCode', 'institutionCode', 1
+    # Occurrence
+    catalogNumber = UniqueID, 'catalogNumber', 1
+    recordedBy = HumanName, 'recordedBy', 1
+    recordNumber = 'recordNumber', 1
+    individualCount = Number, 'individualCount', None, int, 1
+    # Event
+    eventDate = DateTime, 'eventDate', 1
+    habitat = 'habitat', 1
+    fundedBy = 'fundedBy', 1
+    # Location
+    country = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
+    province = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
+    city = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
+    county = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
+    locality = ('locality', 'mountain', 'waterBody', ','), 1
+    decimalLatitude = GeoCoordinate, ('decimalLatitude', 'decimalLongitude', ';'), 1
+    decimalLongitude = GeoCoordinate, ('decimalLatitude', 'decimalLongitude', ';'), 1
+    _minimumElevationInMeters = Number, 'minimumElevationInMeters', 1
+    _maximumElevationInMeters = Number, 'maximumElevationInMeters', 1
+    minimumElevationInMeters = Number, 'minimumElevationInMeters', 'maximumElevationInMeters', 2
+    maximumElevationInMeters = Number, 'minimumElevationInMeters', 'maximumElevationInMeters', 2
+    _minimumDepthInMeters = Number, 'minimumDepthInMeters', 1
+    _maximumDepthInMeters = Number, 'maximumDepthInMeters', 1
+    minimumDepthInMeters = Number, 'minimumDepthInMeters', 'maximumDepthInMeters', 2
+    maximumDepthInMeters = Number, 'minimumDepthInMeters', 'maximumDepthInMeters', 2
+    associatedMedia = 'associatedMedia', 1
+    associatedReferences = 'associatedReferences', 1
+    associatedSequences = 'associatedSequences', 1
+    occurrenceRemarks = 'occurrenceRemarks', 1
+    # Taxon
+    kingdom = 'kingdom', 1
+    phylum = 'phylum', 1
+    _class  = 'class', 1
+    order = 'order', 1
+    family = 'family', 1
+    vernacularName = 'vernacularName', 1
+    # Identification
+    scientificName = BioName, ['scientificName', ('genus', 'specificEpithet', 'specificAuthorship', 'taxonRank', 'infraspecificEpithet', 'scientificNameAuthorship', ' ')], 1
+    typeStatus = RadioInput, 'typeStatus', 'typeStatus', 1
+    identifiedBy = HumanName, 'identifiedBy', 1
+    dateIdentified = DateTime, 'dateIdentified', 1
+    identificationRemarks = 'identificationRemarks', 1

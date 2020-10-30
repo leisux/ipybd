@@ -1,7 +1,6 @@
 import os
 import re
-import time
-from datetime import date, timedelta
+from datetime import date
 import arrow
 import json
 import requests
@@ -30,7 +29,6 @@ class BioName:
             self.names = names
         self.querys = self.build_querys(self.names)
         self.cache = {'ipni': {}, 'col': {}, 'powo': {}}
-        self.sema = asyncio.Semaphore(500)
 
     def get(self, action, typ=list, mark=False):
         results = self.__build_cache_and_get_results(action)
@@ -76,6 +74,9 @@ class BioName:
             results[name] = tuple(results[name])
         return [results[w] for w in self.names]
 
+    # 以下多个方法用于组装 get 协程
+    # 跟踪协程的执行，并将执行结果生成缓存
+
     def __build_cache_and_get_results(self, action, querys=None):
         """ 构建查询缓存、返回查询结果
 
@@ -104,19 +105,20 @@ class BioName:
                 names = querys
             else:
                 names = self.querys
-            action_func = {  # 注意 stdName 的 col 函数置于元组最后，
-                            # 以避免 ipni/powo 中与 col 同名的字段
-                            # 被 col 函数解析。
-                            'stdName': (self.ipni_name, self.col_name),
-                            'colTaxonTree': self.col_taxontree,
-                            'colName': self.col_name,
-                            'colSynonyms': self.col_synonyms,
-                            'ipniName': self.ipni_name,
-                            'ipniReference': self.ipni_reference,
-                            'powoName': self.powo_name,
-                            'powoAccepted': self.powo_accepted,
-                            'powoImages': self.powo_images
-                           }
+            action_func = {
+                # 注意 stdName 的 col 函数置于元组最后，
+                # 以避免 ipni/powo 中与 col 同名的字段
+                # 被 col 函数解析。
+                'stdName': (self.ipni_name, self.col_name),
+                'colTaxonTree': self.col_taxontree,
+                'colName': self.col_name,
+                'colSynonyms': self.col_synonyms,
+                'ipniName': self.ipni_name,
+                'ipniReference': self.ipni_reference,
+                'powoName': self.powo_name,
+                'powoAccepted': self.powo_accepted,
+                'powoImages': self.powo_images
+                }
             # 如果存在缓存，则直接从缓存数据中提取结果
             # 如果没有缓存，则先生成缓存，再取数据
             search_terms = {}
@@ -185,6 +187,7 @@ class BioName:
         self.pbar = tqdm(total=len(search_terms), desc=action, ascii=True)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+        self.sema = asyncio.Semaphore(500, loop=loop)
         tasks = self.build_tasks(get_action[action], search_terms)
         results = loop.run_until_complete(tasks)
         loop.close()
@@ -202,7 +205,7 @@ class BioName:
                     action_func,
                     self.querys[rawname],
                     session
-                    )
+                )
                 for rawname in search_terms if self.querys[rawname]
                 ]
             return await asyncio.gather(*tasks)
@@ -212,6 +215,9 @@ class BioName:
             result = await func(param, session)
             self.pbar.update(1)
             return result
+
+    # 以下多个方法用于对 Api 返回结果进行有针对性的处理
+    # 并根据具体调用的方法，返回用户所需要的数据
 
     def powo_images(self, name):
         """ 解析 self.cache['powo'] 中的图片
@@ -241,7 +247,7 @@ class BioName:
         scientific_name = name["name"]
         author = name["author"]
         family = name['family']
-        #print(query[-1], genus, family, author)
+        # print(query[-1], genus, family, author)
         return scientific_name, author, family
 
     def col_synonyms(self, name):
@@ -293,15 +299,13 @@ class BioName:
                 family = name['family']
                 author = None
                 scientific_name = family
-                genus = None
-        #print(query[-1], genus, family, author)
         return scientific_name, author, family
 
     def ipni_name(self, name):
         scientific_name = name["name"]
         author = name["authors"]
         family = name['family']
-        #print(query[-1], genus, family, author)
+        # print(query[-1], genus, family, author)
         return scientific_name, author, family
 
     def ipni_reference(self, name):
@@ -317,6 +321,9 @@ class BioName:
             return name
         else:
             return await self.get_ipni_name(query, session)
+
+    # 以下多个方法用于请求相应 API 接口
+    # 以获取api返回，并对返回结果对合理性做必要的判断
 
     async def get_col_name(self, query, session):
         name = await self.check_col_name(query, session)
@@ -354,7 +361,7 @@ class BioName:
             authors = self.get_author_team(query[2])
             # 如果搜索名称和返回名称不一致，标注后待人工核查
             if names == []:
-                #print("{0} 在中国生物物种名录中可能是异名、不存在或缺乏有效命名人，请手动核实\n".format(query[-1]))
+                # print("{0} 在中国生物物种名录中可能是异名、不存在或缺乏有效命名人，请手动核实\n".format(query[-1]))
                 return None
             # 检索只有一个结果或者检索词命名人缺失，默认使用第一个同名结果
             elif len(names) == 1 or authors == []:
@@ -603,10 +610,12 @@ class BioName:
     def format_name(self, raw_name):
         """ 将手写学名转成规范格式
 
-            raw_name: 各类手录学名，目前仅支持 属名 x 种名 种命名人 种下加词 种下命名人
-                      这类学名格式的清洗，其中杂交符、种命名人、种下命名人均可缺省。
+            raw_name: 各类动植物学名，目前仅支持:
+                      属名 x 种名 种命名人 种下加词 种下命名人
+                      这类学名格式的清洗，
+                      其中杂交符、种命名人、种下命名人均可缺省。
 
-            目前仍有个别命名人十分复杂的名称，清洗后无法得到正确而的结果，使用时需注意
+            目前仍有个别命名人十分复杂的名称，无法准确提取命名人，使用时需注意
         """
         species_pattern = re.compile(
             r"\b([A-Z][a-zàäçéèêëöôùûüîï-]+)\s*([×Xx])?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*(.*)")
@@ -674,13 +683,13 @@ class BioName:
             std_codes[k] = (
                 sum(k_score)//len(raw_code)+1)*2**abs(len(raw_code)-len(authorship))
         # 开始从比对结果中，结果将取命名人偏差最小的API返回结果
-        # std_teams中可能存在多个最优，而程序无法判定采用哪一个比如原始数据
-        # 命名人为(A. K. Skvortsov et Borodina) A. J. Li，而ipni返回
-        # 的标准名称中存在命名人分别为 A. K. Skvortsov 和
-        # Borodina et A. J. Li 两个同名学名，其std_teams值都将为最小偏差
-        # 值 0， 此时程序将任选一个其实这里也可以考虑将其标识，等再考虑考虑，
-        # 有的时候ipni数据也有可能有错，比如 Phaeonychium parryoides 就存
-        # 在这个问题，但这种情况应该是小比率，对于结果的帅选逻辑，可以修改下方逻辑
+        # std_teams 中可能存在多个最优，而程序无法判定采用哪一个比如原始数据
+        # 命名人为 (A. K. Skvortsov et Borodina) A. J. Li，而 ipni 返回的标准
+        # 名称中存在命名人分别为 A. K. Skvortsov 和 Borodina et A. J. Li 两个
+        # 同名学名，其 std_teams 值都将为最小偏差值 0，
+        # 此时程序将任选一个其实这里也可以考虑将其标识，等再考虑考虑，
+        # 有的时候ipni数据也有可能有错，比如 Phaeonychium parryoides 就存在这
+        # 个问题，但这种情况应该是小比率，对于结果的帅选逻辑，可以修改下方逻辑
         scores = [(x, y) for y, x in std_codes.items()]
         scores.sort(key=lambda s: s[0])
         return scores
@@ -700,7 +709,7 @@ class BioName:
                 n = ord(letter)
                 if n == 32:  # 排除空格
                     code_author = code_author
-                elif aut[i-1] == letter and i != 0:  # 避免前后字母序号差相减等于 0
+                elif aut[i-1] == letter and i != 0:  # 避免前后字母序号相减等于 0
                     pass
                 elif n < 91:  # 人名中的大写字母
                     code_author = code_author * (ord(letter)-64)
@@ -734,19 +743,34 @@ class BioName:
                 authors = authors.replace(author, "", 1)
         return author_team
 
-    def __call__(self):
-        choose = input(
-            "\n是否执行拼写检查，在线检查将基于 sp2000.org.cn、ipni.org 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会惠耗费较长时间（y/n）\n")
-        if choose.strip() == 'y':
-            return pd.DataFrame(
-                [
-                    ' '.join([name[0], name[1]]).strip()
-                    if name[1] else name[0]
-                    for name in self.get('stdName', mark=True)
-                    ]
-            )
+    def __call__(self, mark=True):
+        if input("经处理返回的学名，是否需要携带命名人？(y/n)") == 'y':
+            choose = input(
+                "\n是否执行拼写检查，在线检查将基于 sp2000.org.cn、ipni.org 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
+            if choose.strip() == 'y':
+                return pd.DataFrame(
+                    [
+                        ' '.join([name[0], name[1]]).strip()
+                        if name[1] else name[0]
+                        for name in self.get('stdName', mark)
+                        ]
+                )
+            else:
+                return pd.DataFrame(self.format(p="scientificName"))
         else:
-            return pd.DataFrame(self.format())
+            choose = input(
+                "\n是否执行拼写检查，在线检查将基于 sp2000.org.cn、ipni.org 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
+            if choose.strip() == 'y':
+                return pd.DataFrame(
+                    [
+                        name[0].strip()
+                        if name[1] else name[0]
+                        for name in self.get('stdName', mark)
+                        ]
+                )
+            else:
+                return pd.DataFrame(self.format(p="simpleName"))
+
 
 
 class DateTime:
@@ -878,7 +902,8 @@ class DateTime:
                 day = str(day)
                 if len(day) == 1:
                     day = '0' + day
-                return "-".join([str(year), month, day]) + "T00:00:00" + self.zone
+                return "-".join([str(year), month, day]
+                                ) + "T00:00:00" + self.zone
             else:
                 raise ValueError
 
@@ -1052,16 +1077,17 @@ class DateTime:
                 return None
         return date_degree, date_elements
 
-    def __call__(self):
+    def __call__(self, mark=True):
         std_datetime = self.format_datetime(self.style)
-        for i in range(len(self.datetime)):
-            if not std_datetime[i]:
-                if not pd.isnull(self.datetime[i]):
-                    try:
-                        std_datetime[i] = "".join(["!", self.datetime[i]])
-                    except TypeError:
-                        std_datetime[i] = "".join(["!", str(self.datetime[i])])
-
+        if mark:
+            for i in range(len(self.datetime)):
+                if not std_datetime[i]:
+                    if not pd.isnull(self.datetime[i]):
+                        try:
+                            std_datetime[i] = "".join(["!", self.datetime[i]])
+                        except TypeError:
+                            std_datetime[i] = "".join(
+                                ["!", str(self.datetime[i])])
         return pd.DataFrame({"dateTime": std_datetime})
 
 
@@ -1103,7 +1129,7 @@ class HumanName:
                                 if len(e) == 1 else e
                                 for e in re.split(r"\.\s*", name)]
                             names[i] = " ".join(en_name)
-                names_mapping[rec_names] = ",".join(names)
+                names_mapping[rec_names] = "，".join(names)
             except BaseException:
                 if pd.isnull(rec_names):
                     continue
@@ -1140,7 +1166,7 @@ class AdminDiv:
         new_regions = []
         with open(ADMIN_DIV_LIB_PATH, 'r', encoding='utf-8') as ad:
             std_regions = json.load(ad)
-        #country_split = re.compile(r"([\s\S]*?)::([\s\S]*)")
+        # country_split = re.compile(r"([\s\S]*?)::([\s\S]*)")
         for raw_region in tqdm(self.region_mapping, desc="行政区划", ascii=True):
             if pd.isnull(raw_region):
                 continue
@@ -1211,13 +1237,13 @@ class AdminDiv:
                 self.region_mapping[raw_region] = "!" + raw_region
             else:
                 self.region_mapping[raw_region] = raw_region
-        #print(raw_region, self.region_mapping[raw_region])
+        # print(raw_region, self.region_mapping[raw_region])
 
     def __call__(self):
         self.format_chinese_admindiv()
         return pd.DataFrame({
                             'country': self.country,
-                            'Province': self.province,
+                            'province': self.province,
                             'city': self.city,
                             'county': self.county
                             })
@@ -1387,7 +1413,7 @@ class GeoCoordinate:
                             new_lat[i] = round(float(gps_elements[0]), 6)
                             continue
                         else:
-                            #print(gps_elements ,type(gps_elements[1]))
+                            # print(gps_elements ,type(gps_elements[1]))
                             # 如果值有错误，则保留原值，如果是数值型值，考虑到已无法恢复，则触发错误不做任何保留
                             new_lat[i] = "!" + gps_elements[0]
                             new_lng[i] = "!" + gps_elements[1]
@@ -1399,7 +1425,7 @@ class GeoCoordinate:
                 gps_fir_num = gps_p_num.findall(
                     gps_elements[0])  # 获得由坐标中的度分秒值组成的数列
                 gps_sec_num = gps_p_num.findall(gps_elements[1])
-                #print(i, " ", direct_fir, direct_sec, gps_fir_num, gps_sec_num)
+                # print(i, " ", direct_fir, direct_sec, gps_fir_num, gps_sec_num)
                 if direct_fir in "NSns" and direct_sec in "EWew" and float(
                         gps_fir_num[0]) <= 90 and float(
                         gps_sec_num[0]) <= 180:  # 判断哪一个数值是纬度数值，哪一个数值是经度数值

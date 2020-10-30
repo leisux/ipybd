@@ -1,139 +1,197 @@
 {
+    "institutionName":[
+        "机构名称"
+    ],
+    "elevationUnit":[
+        "海拔单位"
+    ],
+    "temporaryIdentification":[
+        "临时鉴定",
+        "野外鉴定",
+        "TEMPORARYIDENTIFICATION"
+    ],
+    "vernacularName":[
+        "CHINESENAME",
+        "中文名",
+        "中文种名",
+        "中名",
+        "种中文名",
+        "COMMONNAME",
+        "VERNACULARNAME"
+    ],
     "occurrenceID":[
         "唯一标识符",
-        "数据库标识"
+        "数据库标识",
+        "OCCURRENCEID"
     ],
     "geodeticDatum":[
         "坐标系",
-        "坐标基准"
+        "坐标基准",
+        "GEODETICDATUM"
     ],
     "fieldNote":[
-        "野外记录"
+        "考察记录",
+        "野外记录",
+        "FIELDNOTE"
     ],
     "fieldNumber":[
         "鸟网号",
-        "陷阱号"
+        "陷阱号",
+        "FIELDNUMBER"
     ],
     "associatedReferences":[
-        "相关文献"
+        "相关文献",
+        "ASSOCIATEDREFERENCES"
     ],
     "establishmentMeans":[
         "坐落方式",
-        "建群方式"
+        "建群方式",
+        "ESTABLISHMENTMEANS"
     ],
     "thumbnails":[
-        "缩略图"
+        "缩略图",
+        "THUMBNAILS"
     ],
     "DataApi":[
-        "数据接口"
+        "数据接口",
+        "DATAAPI"
     ],
     "licence":[
         "授权",
-        "授权协议"
+        "授权协议",
+        "LICENCE"
     ],
     "rightsHolder":[
     "版权代理",
     "所有权代理",
-    "所有权代理人"
+    "所有权代理人",
+    "PROVIDER",
+    "RIGHTSHOLDER"
 ],
     "rights":[
         "所有权",
         "版权所有",
         "版权",
-        "所有者"
+        "所有者",
+        "COPYRIGHT",
+        "RIGHTS"
     ],
     "identifiedByID":[
-        "鉴定者ID"
+        "鉴定者ID",
+        "IDENTIFIEDbYID"
         ],
     "nameAccordingTo":[
         "名称来源",
-        "学名来源"
+        "学名来源",
+        "NAMEACCORDINGTO"
     ],
     "originalNameUsage":[
         "原名",
-        "基名"
+        "基名",
+        "ORIGINALNAMEUSAGE"
     ],
     "namePublishedInYear": [
         "名称发表年份",
-        "出版年份"
+        "出版年份",
+        "NAMEPUBLISHEDINYEAR"
     ],
     "originalNameUsageID": [
-        "基名ID"
+        "基名ID",
+        "ORIGINALNAMEUSAGEID"
     ],
     "taxonID": [
-        "identificationID",
-        "鉴定ID"
+        "IDENTIFICATIONID",
+        "鉴定ID",
+        "TAXONID"
     ],
     "scientificNameID": [
-        "学名ID"
+        "学名ID",
+        "SCIENTIFICNAMEID"
     ],
     "acceptedNameUsageID": [
-        "接受名ID"
+        "接受名ID",
+        "ACCEPTEDNAMEUSAGEID"
     ],
     "taxonomicStatus": [
-        "分类学状态"
+        "分类学状态",
+        "TAXONOMICSTATUS"
     ],
     "nomenclaturalStatus": [
-        "命名学状态"
+        "命名学状态",
+        "NOMENCLATURALSTATUS"
     ],
     "namePublishedIn": [
-        "cite1",
+        "CITE1",
         "发表期刊",
         "出版物",
-        "名称来源"
+        "名称来源",
+        "NAMEPUBLISHEDIN"
     ],
     "verbatimLocality": [
-        "原签产地"
+        "原签产地",
+        "VERBATIMLOCALITY"
     ],
     "minimumDistanceAboveSurfaceInMeters": [
-        "最小距离"
+        "最小距离",
+        "MINIMUMDISTANCEABOVESURFACEINMETERS"
     ],
     "maximumDistanceAboveSurfaceInMeters": [
-        "最大距离"
+        "最大距离",
+        "MAXIMUMDISTANCEABOVESURFACEINMETERS"
     ],
     "minimumDepthInMeters": [
         "水深低",
         "水深",
-        "最小深度"
+        "最小深度",
+        "MINIMUMDEPTHINMETERS"
     ],
     "maximumDepthInMeters": [
         "水深高",
         "最大水深",
-        "最大深度"
+        "最大深度",
+        "MAXIMUMDEPTHINMETERS"
     ],
     "mountain": [
-        "山脉"
+        "山脉",
+        "MOUNTAIN"
     ],
     "waterBody": [
-        "湖泊名称"
+        "湖泊名称",
+        "WATERBODY"
     ],
     "numOfEggsTaken": [
-        "鸟卵数量"
+        "鸟卵数量",
+        "NUMOFEGGSTAKEN"
     ],
     "incubation": [
         "孵化",
-        "孵卵"
+        "孵卵",
+        "INCUBATION"
     ],
     "constructionOfNest": [
-        "鸟巢构造"
+        "鸟巢构造",
+        "CONSTRUCTIONOFNEST"
     ],
     "heightOfNest": [
         "巢高",
-        "离地高度"
+        "离地高度",
+        "HEIGHTOFNEST"
     ],
     "substrateOfNest": [
-        "巢基"
+        "巢基",
+        "SUBSTRATEOFNEST"
     ],
     "sex": [
-        "性别"
+        "性别",
+        "SEX"
     ],
     "weightInKiloGrams": [
         "体重",
         "体重（千克）",
         "体重(千克)",
-        "体重(Kg)",
-        "体重（Kg）",
-        "重量"
+        "体重(kG)",
+        "重量",
+        "WEIGHTINKILOGRAMS"
     ],
     "weightInGrams": [
         "体重",
@@ -141,60 +199,74 @@
         "体重(克)",
         "体重（g）",
         "体重(g)",
-        "重量"
+        "重量",
+        "WEIGHTINGRAMS"
     ],
     "bodyLengthInMillimeters": [
         "体长",
-        "体长（cm）",
-        "体长(cm)",
-        "全长"
+        "体长（CM）",
+        "体长(CM)",
+        "全长",
+        "BODYLENGTHINMILLIMETERS"
     ],
     "wingChordInMillimeters": [
-        "翅长"
+        "翅长",
+        "WINGcHORDINMILLIMETERS"
     ],
     "tailLengthInMillimeters": [
         "尾长",
-        "尾翼长"
+        "尾翼长",
+        "TAILlENGTHINMILLIMETERS"
     ],
     "exposedCulmenInMillimeters": [
-        "嘴峰"
+        "嘴峰",
+        "EXPOSEDCULMENINMILLIMETERS"
     ],
     "tarsusInMillimeters": [
-        "跗蹠长"
+        "跗蹠长",
+        "TARSUSINMILLIMETERS"
     ],
     "irisColor": [
         "虹膜",
-        "虹膜颜色"
+        "虹膜颜色",
+        "IRISCOLOR"
     ],
     "billColor": [
-        "嘴色"
+        "嘴色",
+        "BILLCOLOR"
     ],
     "legsColor": [
         "脚色",
-        "腿色"
+        "腿色",
+        "LEGSCOLOR"
     ],
     "fat": [
-        "脂肪"
+        "脂肪",
+        "FAT"
     ],
     "preparations": [
         "处理方式",
         "保存方式",
-        "保藏方式"
+        "保藏方式",
+        "PREPARATIONS"
     ],
     "samplingProtocol": [
         "捕获方式",
         "采集方式",
         "获得方式",
-        "获取方式"
+        "获取方式",
+        "SAMPLINGPROTOCOL"
     ],
     "basisOfRecord": [
         "记录依据",
-        "数据依据"
+        "数据依据",
+        "BASISOFRECORD"
     ],
     "decimalLongitude": [
         "经度",
-        "Lon",
-        "Longitude"
+        "LON",
+        "LONGITUDE",
+        "DECIMALLONGITUDE"
     ],
     "preservedTime": [
         "入库时间",
@@ -204,13 +276,14 @@
         "入库日期",
         "收藏时间",
         "收藏日期",
-        "入库日期"
+        "入库日期",
+        "PRESERVEDTIME"
     ],
     "habit": [
         "植物习性",
         "习性",
         "生活型",
-        "Habit"
+        "HABIT"
     ],
     "孢子体": [
         "孢朔",
@@ -220,16 +293,17 @@
         "图片地址",
         "照片编号",
         "IMAGE_URL",
-        "ImageURL"
+        "IMAGEURL",
+        "MEDIAURL",
+        "ASSOCIATEDMEDIA"
     ],
     "country": [
         "国家",
         "国别",
         "采集国家",
         "采集国",
-        "Country",
         "COUNTRY",
-        "Country_label"
+        "COUNTRY_LABEL"
     ],
     "recordNumber": [
         "采集号",
@@ -237,9 +311,10 @@
         "采集编号",
         "记录编号",
         "采集号_y",
-        "CollectNum",
+        "COLLECTNUM",
         "COLLECTOR_NUMBER",
-        "CollectNumber"
+        "COLLECTNUMBER",
+        "RECORDNUMBER"
     ],
     "菌肉": [],
     "disposition": [
@@ -259,19 +334,20 @@
         "海拔（低）",
         "负海拔",
         "海拔",
-        "Alt",
+        "ALT",
         "ELEVATION",
-        "MinAltitude"
+        "MINALTITUDE",
+        "MINIMUMELEVATIONINMETERS"
     ],
     "province": [
         "省",
         "省/自治区",
         "省自治区",
-        "Province",
+        "PROVINCE",
         "STATE_PROVINCE",
-        "StateProvince_label",
+        "STATEPROVINCE_LABEL",
         "产地1",
-        "stateProvince"
+        "STATEPROVINCE"
     ],
     "maximumElevationInMeters": [
         "海拔高",
@@ -279,7 +355,8 @@
         "海拔（高）",
         "海拔(高)",
         "海拔",
-        "MaxAltitude"
+        "MAXALTITUDE",
+        "MAXIMUMELEVATIONINMETERS"
     ],
     "institutionCode": [
         "馆代码",
@@ -287,33 +364,36 @@
         "收藏单位",
         "标本馆",
         "馆藏代码",
-        "MuseumID",
-        "InstitutionCode"
+        "MUSEUMID",
+        "INSTITUTIONCODE"
     ],
     "host": [
-        "寄主"
+        "寄主",
+        "HOST"
     ],
     "dateIdentified": [
         "鉴定日期",
         "鉴定时间",
-        "Date",
-        "IdentDay",
+        "DATE",
+        "IDENTDAY",
         "DATE_IDENTIFIED",
-        "IdentifiedDate"
+        "IDENTIFIEDDATE",
+        "DATEIDENTIFIED"
     ],
     "frequency": [
         "多度",
         "频度",
         "频率",
-        "Frequency"
+        "FREQUENCY"
     ],
     "occurrenceRemarks": [
         "采集备注",
         "其他描述",
         "REMARKS",
         "图片",
-        "Notes",
-        "备注"
+        "NOTES",
+        "备注",
+        "OCCURRENCEREMARKS"
     ],
     "habitat": [
         "生活环境",
@@ -323,8 +403,8 @@
         "环境",
         "基质",
         "生存环境",
-        "Environment",
-        "Habitat"
+        "ENVIRONMENT",
+        "HABITAT"
     ],
     "配子体": [],
     "孢子囊（群）": [
@@ -337,27 +417,28 @@
         "标本属性",
         "鉴定模式",
         "TYPE_STATUS",
-        "TypeStatus"
+        "TYPESTATUS"
     ],
     "rhizoids": [
-        "不定根"
+        "不定根",
+        "RHIZOIDS"
     ],
     "root": [
         "根",
-        "root",
+        "ROOT",
         "根部",
         "不定根",
-        "根（菌根）",
-        "Root"
+        "根（菌根）"
     ],
     "fruit": [
         "果实",
         "果",
         "果（种子）",
-        "Fruit"
+        "FRUIT"
     ],
     "modified": [
-        "录入日期"
+        "录入日期",
+        "MODIFIED"
     ],
     "classification": [
         "大类群",
@@ -365,15 +446,17 @@
         "标本类别",
         "大类别",
         "类群",
-        "科号"
+        "科号",
+        "CLASSIFICATION"
     ],
     "eventDate": [
         "采集时间",
         "采集日期",
-        "CollectDay",
-        "Time",
+        "COLLECTDAY",
+        "TIME",
         "DATE_COLLECTED",
-        "CollectDate_label"
+        "COLLECTDATE_LABEL",
+        "EVENTDATE"
     ],
     "lifeStage": [
         "标本状态",
@@ -385,61 +468,67 @@
         "生命期",
         "生命周期",
         "Status",
-        "幼体"
+        "幼体",
+        "LIFESTAGE"
     ],
     "seed": [
         "种质",
-        "种子"
+        "种子",
+        "SEED"
     ],
     "city": [
         "市",
         "地级市/地区/自治州",
         "地级市",
         "地区",
-        "自治州"
+        "自治州",
+        "CITY"
     ],
     "leaf": [
         "叶片",
         "叶柄",
         "叶（托叶）",
-        "Leaf",
+        "LEAF",
         "叶"
     ],
     "fundedBy": [
         "项目资助",
         "项目来源",
         "项目",
-        "标本来源"
+        "标本来源",
+        "FUNDEDBY"
     ],
     "气味": [
         "味道"
     ],
     "seedMaterialSample": [
         "种子材料",
-        "种质资源"
+        "种质资源",
+        "SEEDMATERIALSAMPLE"
         ],
     "livingMaterialSample": [
         "活体材料",
-        "植株"
+        "植株",
+        "LIVINGMATERIALSAMPLE"
         ],
     "molecularMaterialSample": [
         "分子材料",
-        "DNA是否采集"
+        "DNA是否采集",
+        "MOLECULARMATERIALSAMPLE"
     ],
     "county": [
         "区县",
         "县",
         "区",
-        "County",
         "COUNTY",
-        "County_label",
+        "COUNTY_LABEL",
         "产地2"
     ],
     "height": [
         "植株高度",
         "植株高度(m)",
         "植株高cm",
-        "Height",
+        "HEIGHT",
         "高度",
         "体高"
     ],
@@ -447,11 +536,13 @@
         "标本备注",
         "形态描述",
         "鉴定者联系方式",
-        "备注2"
+        "备注2",
+        "ORGANISMREMARKS"
     ],
     "DBH": [
         "胸径(cm)",
-        "胸径"
+        "胸径",
+        "DBH"
     ],
     "catalogNumber": [
         "条形码",
@@ -460,10 +551,8 @@
         "资源编号",
         "条码",
         "条码号",
-        "Barcode",
-        "barcode",
         "BARCODE",
-        "CatalogNumber",
+        "CATALOGNUMBER",
         "标本号"
     ],
     "孢子叶（球）": [
@@ -475,16 +564,23 @@
         "花",
         "花朵",
         "花部",
-        "flower",
-        "花（孢子）",
-        "Flower"
+        "FLOWER",
+        "花（孢子）"
     ],
     "scientificNameAuthorship": [
+        "命名人",
         "定名人",
         "种下命名人",
         "变种命名人",
         "种下加词命名人",
-        "种下等级定名人"
+        "种下等级定名人",
+        "AUTHOR",
+        "AUTHORITY",
+        "SPECIFICAUTHORSHIP",
+        "SPECIFICEPITHETAUTHORSHIP",
+        "INFRASPECIFICAUTHORITY",
+        "INFRASPECIFICAUTHORSHIP",
+        "SCIENTIFICNAMEAUTHORSHIP"
     ],
     "individualCount": [
         "标本份数",
@@ -492,7 +588,8 @@
         "副份数量",
         "个体数量",
         "标本数量",
-        "份数"
+        "份数",
+        "INDIVIDUALCOUNT"
     ],
     "菌盖": [],
     "子实体": [],
@@ -504,16 +601,19 @@
         "种质库序列号",
         "KUN-L",
         "序列号",
-        "SerialNumber",
-        "玻片号"
+        "SERIALNUMBER",
+        "玻片号",
+        "OTHERCATALOGNUMBERS"
     ],
     "preservedLocation": [
         "馆藏位置",
         "保藏位置",
-        "存放位置"
+        "存放位置",
+        "PRESERVEDLOCATION"
     ],
     "relationshipEstablishedTime": [
-        "录入时间"
+        "录入时间",
+        "RELATIONSHIPESTABLISHEDTIME"
     ],
     "scientificName": [
         "鉴定名称",
@@ -524,12 +624,10 @@
         "种拉丁名",
         "种",
         "种名",
-        "NameLa",
+        "NAMELA",
         "拉丁名",
-        "identifications",
-        "ScientificName",
-        "SCIENTIFICNAME",
-        "scientificname"
+        "IDENTIFICATIONS",
+        "SCIENTIFICNAME"
     ],
     "recordedBy": [
         "采集人",
@@ -540,28 +638,31 @@
         "记录者",
         "采集人1",
         "采集者_y",
-        "Collector",
-        "COLLECTOR"
+        "COLLECTOR",
+        "RECORDEDBY"
     ],
     "identifiedBy": [
         "鉴定者",
         "鉴定人",
-        "IdentMan",
-        "IdentifiedBy",
+        "IDENTMAN",
+        "IDENTIFIEDBY",
         "IDENTIFIED_BY"
     ],
     "identificationRemarks": [
         "鉴定备注",
         "鉴定者单位",
-        "鉴定信息备注"
+        "鉴定信息备注",
+        "IDENTIFICATIONREMARKS"
     ],
     "decimalLatitude": [
         "纬度",
-        "Lat",
-        "Latitude"
+        "LAT",
+        "LATITUDE",
+        "DECIMALlATITUDE"
     ],
     "associatedSequences": [
-        "分子序列"
+        "分子序列",
+        "ASSOCIATEDSEQUENCES"
     ],
     "locality": [
         "小地点",
@@ -571,59 +672,66 @@
         "乡镇/山",
         "地名",
         "采集地点",
-        "Place",
+        "PLACE",
         "地点",
         "LOCALITY",
         "乡镇\\山",
-        "Locality",
         "产地3"
     ],
-    "vernacularName": [
-        "中文名",
-        "中名",
-        "种中文名",
+    "dialectName": [
         "LOCAL_NAME",
-        "当地名称"
+        "当地名称",
+        "地方名",
+        "DIALECTNAME"
     ],
     "vernacularGenusName": [
         "中文属名",
         "属中文名",
         "属名",
         "属",
-        "genusNameZH"
+        "GENUSNAMEZH",
+        "GENUS_C",
+        "VERNACULARGENUSNAME"
     ],
     "vernaculaFamilyName": [
         "中文科名",
         "科中文名",
         "科名",
         "科",
-        "familyNameZH"
+        "FAMILYNAMEZH",
+        "FAMILY_C",
+        "VERNACULAFAMILYNAME"
     ],
     "子实层": [],
     "stem": [
         "树干",
         "树皮",
         "茎（树皮）",
-        "Skin",
-        "Stem",
-        "StemBark",
+        "SKIN",
+        "STEM",
+        "STEMBARK",
         "茎"
     ],
     "taxonRank": [
         "种下等级",
-        "InfraspecificRank"
+        "INFRASPECIFICRANK",
+        "TAXONRANK"
     ],
     "kingdom": [
-        "界"
+        "界",
+        "KINGDOM"
     ],
     "phylum": [
-        "门"
+        "门",
+        "PHYLUM"
     ],
     "class": [
-        "纲"
+        "纲",
+        "CLASS"
     ],
     "order": [
-        "目"
+        "目",
+        "ORDER"
     ],
     "family": [
         "科",
@@ -631,61 +739,70 @@
         "科拉丁名",
         "拉丁科名",
         "FAMILY",
-        "Family",
-        "FamilyName",
-        "familyName"
+        "fAMILYNAME"
     ],
     "subfamily": [
         "亚科名",
-        "亚科"
+        "亚科",
+        "SUBFAMILY"
     ],
     "genus": [
         "属",
         "属名",
         "拉丁属名",
-        "genus",
-        "Genus",
         "GENUS",
-        "genusName"
+        "GENUSNAME"
     ],
     "subgenus": [
         "亚属名",
-        "亚属"
+        "亚属",
+        "SUBGENUS"
     ],
     "specificEpithet": [
         "种加词",
         "种名",
         "种",
-        "Species"
+        "SPECIES",
+        "SPECIFICEPITHET"
     ],
-    "specificEpithetAuthorShip": [
+    "specificAuthorship": [
         "命名人",
         "定名人",
         "种命名人",
         "种加词命名人",
-        "Author"
+        "AUTHOR",
+        "AUTHORITY",
+        "SPECIFICAUTHORSHIP",
+        "SPECIFICEPITHETAUTHORSHIP"
     ],
     "infraspecificEpithet": [
         "种下加词",
         "种下等级",
-        "亚种名"
+        "亚种名",
+        "INFRASPECIFICEPITHET"
     ],
     "acceptedNameUsage": [
         "拉丁接受名",
-        "接受名"
+        "接受名",
+        "ACCEPTEDNAMEUSAGE"
     ],
     "language": [
-        "语言"
+        "语言",
+        "LANGUAGE"
     ],
     "accessRight": [
         "访问权限",
-        "接入限制"
+        "接入限制",
+        "ACCESSRIGHT"
     ],
     "bibliographicCitation": [
-        "书目引用"
+        "书目引用",
+        "BIBLIOGRAPHICCITATION"
     ],
     "references": [
         "参考文献",
-        "出处"
+        "出处",
+        "SOURCE",
+        "REFERENCES"
     ]
 }

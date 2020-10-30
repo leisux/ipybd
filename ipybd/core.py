@@ -10,7 +10,8 @@ import re
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.shortcuts import prompt
-from ipybd.data_cleaner import BioName, GeoCoordinate, DateTime, Number
+from xlrd import XLRDError
+from ipybd.data_cleaner import BioName, GeoCoordinate, DateTime, Number, AdminDiv, RadioInput, HumanName
 
 
 HERE = os.path.dirname(__file__)
@@ -65,8 +66,8 @@ class FormatTable:
     with open(STD_TERMS_ALIAS_PATH, encoding="utf-8") as std_alias:
         std_field_alias = json.load(std_alias)
 
-    def __init__(self, io):
-        self.df = self.read_table(io)
+    def __init__(self, *args, **kwargs):
+        self.df = self.read_table(*args, **kwargs)
         self.columns_mapping = dict.fromkeys(self.df.columns)
         self.raw_columns = tuple(self.df.columns)
         self.size = self.df.size
@@ -99,7 +100,7 @@ class FormatTable:
         split_column: 要分割的列名 str
         splitters: 分割依据的分割符 tuple 或 str
         new_heaers: 分割出的新列列名 list
-        return: 若 new_headers=None，返回list组成的拆分结果，如果游新列名，则
+        return: 若 new_headers=None，返回list组成的拆分结果，如果有新列名，则
                 返回由新列组成的 DataFrame
         """
         frame = map(
@@ -231,7 +232,10 @@ class FormatTable:
             if pd.isnull(next_txt):
                 return ahead_txt
             else:
-                return separator.join([ahead_txt, next_txt])
+                try:
+                    return separator.join([ahead_txt, next_txt])
+                except:
+                    return separator.join([str(ahead_txt), str(next_txt)])
 
     def _prt_items(self, col_num, seq, seq_num=None):
         for n, v in enumerate(seq):
@@ -350,7 +354,7 @@ class FormatTable:
             unmapped_fields.extend(self.__mapping_clean(field2split[0]))
             # 分隔符是空格的，保留一个空格，非空格的分隔符去除两侧空格
             splitters = tuple(
-                spl[2].strip() if set(spl[1]) != {" "} else " "
+                spl[2].strip() if set(spl[2]) != {" "} else " "
                 for spl in elements[1:-1]
                 )
             field2split.append(splitters)
@@ -428,7 +432,7 @@ class FormatTable:
             # 如果列名用的不是标准名子，逐个比较别名库，找到对应的标准名称
             std_options = []
             for k, v in FormatTable.std_field_alias.items():
-                if raw_field in v:
+                if raw_field.upper() in v:
                     std_options.append(k)
             if len(std_options) == 1:
                 self.columns_mapping[raw_field] = std_options[0]
@@ -482,21 +486,24 @@ class FormatTable:
         else:
             raise ValueError("file type must be sql, csv, excel!")
 
-    def read_table(self, io):
-        print(
-            "\n开始载入数据表格...\n\n \
-             如果数据表格太大，此处可能会耗时很长...\n\n \
-             如果长时间无法载入，请将 Excel 表转换为 CSV 格式后重新尝试...\n"
-             )
+    def read_table(self, *args, **kwargs):
+        print("\n开始载入数据表格...\n\n如果数据表格太大，此处可能会耗时很长...\n如果长时间无法载入，请将 Excel 表转换为 CSV 格式后重新尝试...\n")
         try:
-            table = pd.read_excel(io, dtype=str)
-        except BaseException:
-            table = pd.read_csv(io)
+            table = pd.read_excel(*args, dtype=str, **kwargs)
+        except (XLRDError, TypeError):
+            table = self.read_csv(*args, **kwargs)
+        except (ValueError, FileNotFoundError):
+            table = pd.read_sql(*args, **kwargs)
         print("\n数据表载入完毕。\n")
         return table
 
-    def read_csv(self, io):
-        pass
+    def read_csv(self, *args, dtype=str, chunksize=20000, **kwargs):
+        reader = pd.read_csv(*args, dtype=str, chunksize=20000, **kwargs)
+        table = []
+        for chunk in reader:
+            table.append(chunk)
+        table = pd.concat(table, axis=0)
+        return table
 
     def get_name(func):
         def get_func(self, *args, **kwargs):
@@ -557,28 +564,52 @@ class FormatTable:
     def get_col_synonyms(self, *headers, concat=False):
         return 'colSynonyms', headers, concat, ('colSynonyms',)
 
+    def drop_and_concat_columns(func):
+        def format_func(self, *args, **kwargs):
+            new_columns, headers, inplace = func(self, *args, **kwargs)
+            # 将新列的列名修改为原表对应的列名
+            try:
+                new_columns.columns = headers
+            # 如果列数有变，则使用返回的默认列名
+            except ValueError:
+                pass
+            if inplace:
+                self.df.drop(headers, axis=1, inplace=True)
+                self.df = pd.concat([self.df, new_columns], axis=1)
+            else:
+                return new_columns
+        return format_func
+
+    @drop_and_concat_columns
     def format_latlon(self, *headers, inplace=True):
         """ 格式化经纬度
 
         headers: 经纬度列名，可以是多个字段名组成的序列，也可以是单个字段名
         inplace: 是否替换 self.df 中相应的列
         """
+        headers = list(headers)
         if len(headers) > 1:
-            latlon = self.merge_columns(list(headers), ";")
+            latlon = self.merge_columns(headers, ";")
         else:
-            latlon = self.df[headers]
-        if inplace:
-            self.df.drop(list(headers), axis=1, inplace=True)
-            self.df = pd.concat([self.df, GeoCoordinate(latlon)()], axis=1)
-        else:
-            return GeoCoordinate(latlon)()
+            latlon = self.df[headers[0]]
+        return GeoCoordinate(latlon)(), headers, inplace
 
+    @drop_and_concat_columns
     def format_admindiv(self, *headers, inplace=True):
-        pass
+        headers = list(headers)
+        if len(headers) > 1:
+            admindiv = self.merge_columns(headers, ',')
+        else:
+            admindiv = self.df[headers[0]]
+        return AdminDiv(admindiv)(), list(headers), inplace
 
-    def format_datetime(self, header, inplace=True):
-        pass
+    @drop_and_concat_columns
+    def format_datetime(self, header, style='datetime',
+                        timezone='+08:00', mark=False, inplace=True):
+        return DateTime(self.df[header], style, timezone)(
+            mark), [header], inplace
 
+    @drop_and_concat_columns
     def format_number(self, header1, header2=None, typ=float, min_num=0,
                       max_num=8848, inplace=True, mark=False):
         if header2:
@@ -588,19 +619,15 @@ class FormatTable:
         else:
             number = Number(self.df[header1], header2, typ, min_num, max_num)
             headers = [header1]
-        new_columns = number(mark)
-        new_columns.columns = headers
-        if inplace:
-            self.df.drop(headers, axis=1, inplace=True)
-            self.df = pd.concat([self.df, new_columns], axis=1)
-        else:
-            return new_columns
+        return number(mark), headers, inplace
 
-    def fromat_options(self, header, stdheader, inplace=True):
-        pass
+    @drop_and_concat_columns
+    def format_options(self, header, stdheader, inplace=True):
+        return RadioInput(self.df[header], stdheader)(), [header], inplace
 
+    @drop_and_concat_columns
     def format_human_name(self, header, inplace=True):
-        pass
+        return HumanName(self.df[header]), header, inplace
 
 
 class RestructureTableMeta(type):
@@ -615,7 +642,8 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
     # self.__class__.columns_model from std_table_objects
     def __init__(self, io, fcol=False):
         super(RestructureTable, self).__init__(io)
-        self.fill_column = fcol  # 是否要补齐原表中缺失的字段
+        # 设置补充缺失列的数值
+        self.fill_value = fcol
         self.rebuild_table()
 
     def rebuild_table(self):
@@ -721,7 +749,7 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                             column_name
                             )
                 # 如果原表中无法找到相应的列，用 None 填充新列
-                elif self.fill_column:
+                elif self.fill_value is not False:
                     columns = [
                         name for name, obj in
                         self.__class__.columns_model.__members__.items()
@@ -733,7 +761,7 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                         ]
                     for col in new_columns:
                         if col not in self.df.columns:
-                            self.df[col] = None
+                            self.df[col] = self.fill_value
             elif len(field.value) == 2:
                 print("\n标准结构模板 {0} 参数值有误\n".format(field))
                 break
@@ -764,7 +792,7 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                         ]
                     self.df.drop(args_name, axis=1, inplace=True)
                     self.df = pd.concat([self.df, new_cols], axis=1)
-                elif self.fill_column:
+                elif self.fill_value is not False:
                     columns = [
                         name for name, obj in
                         self.__class__.columns_model.__members__.items()
@@ -776,7 +804,7 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                         ]
                     for col in new_columns:
                         if col not in self.df.columns:
-                            self.df[col] = None
+                            self.df[col] = self.fill_value
                 # except:
                     # print("\n标准结构模板 {1} 参数值有误\n".format(field))
                     # break
