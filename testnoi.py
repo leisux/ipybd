@@ -1,42 +1,43 @@
+import os
 from ipybd.noi import Link
-from ipybd import OccurrenceRecord, NoiOccurrence
+from ipybd import NoiOccurrence
+import json
 
-data = [{'Occurrence': {'occurrenceID': 'KUN:1233170',
-                        'catalogNumber': '1233170',
-                        'otherCatalogNumbers': '0969439',
-                        'recordedBy': '陈文允,于文涛,黄永江',
-                        'recordNumber': 'CYH036',
-                        'individualCount': 2,
-                        'lifeStage': '无花有果',
-                        'disposition': '在库',
-                        'associatedMedia': ['http://upyun.kingdonia.org/KUN/img/11/2019_08_09/d5c142da27c2fb41_11_1565324738.jpg'],
-                        'occurrenceRemarks': '{"入库批号": "Z201103", "采集单位": "周浙昆", "伴生": "乌头，钩柱唐松草，尼泊尔蝇子草，狭苞橐吾，穗花荆芥等"}'},
-         'Location': {'country': '中国',
-                      'province': '四川省',
-                      'city': '甘孜藏族自治州',
-                      'county': '巴塘县',
-                      'locality': '德达乡',
-                      'decimalLatitude': 30.266389,
-                      'decimalLongitude': 99.455,
-                      'minimumElevationInMeters': 3963.0,
-                      'maximumElevationInMeters': 3963.0},
-         'Identification': [{'vernacularName': '钩柱唐松草',
-                             'scientificName': 'Thalictrum ',
-                             'identifiedBy': '于文涛',
-                             'dateIdentified': '2010-12-20T00:00:00+08:00'}],
-         'Event': {'eventDate': '2010-09-09T00:00:00+08:00',
-                   'habitat': '山坡，沟谷中'},
-         'Record': {'institutionCode': 'KUN',
-                    'classification': 'Angiospermae',
-                    'basisOfRecord': '馆藏标本',
-                    'rights': 'GBWS',
-                    'rightsHolder': 'KUN',
-                    'licence': 'http://www.cvh.ac.cn'}}]
 
-noi = NoiOccurrence(r'/Users/xuzhoufeng/OneDrive/xmwj/NOI/gbwstest.xlsx')
-noi.save_table(r'/Users/xuzhoufeng/OneDrive/xmwj/NOI/gbws.xlsx')
-datas = noi.df['DictForNoiOccurrence']
+# 这里请自行设置 NOI 账户生成的 API accesskey 和 secretkey
+# 可以登录网页端 NOI 账户，在个人中心 API 栏目获得
+acc = ""
+sec = ""
 
-test = Link(datas, "KUN", 9)
-test.link()
-print(test.unvalid_resps)
+# 这里设置数据路径
+# 可以是 .txt .json .xlsx .xls .csv 文件路径
+# 如果是 JSON 文件，数据结构必须符合 NOI Occurrence 类的规范
+path = r"/Users/Downloads/moss.json"
+path_elements = os.path.splitext(path)
+
+# 如果上面路径是其他格式，程序会引导用户清洗和转换数据
+# 对于达标的数据，程序会生成 ready.json 结尾的json 文件，
+# 对于不达标的数据，会在原文件路径下生成 unvalid.json 和 need_check.json 文件
+# unvalid 文件属于数据结构不达标，无法上传的数据，常见于必要字段的缺失,
+# need_check.json 文件，是指字段值有疑异的数据，
+# 该文件可核查后继续传递给 path 变量，以再次执行注册。
+if path_elements[1] != '.json':
+    datas = NoiOccurrence(path)
+    datas.write_json()
+    path = path_elements[0] + '_ready.json'
+
+try:
+    # 将 json 数据转换为 python 对象
+    with open(path, encoding="utf-8") as json_datas:
+        records = json.load(json_datas)
+    # 执行注册
+    # 注册完毕后，如果有未能成功注册的数据
+    # 程序会在原路径下生成相应的 unpost.json 文件
+    # 这些数据有可能是因为网络原因，也有可能是因为数据
+    # 本身的原因，未能成功注册，可排查后再次提交给 path
+    # 重新执行注册
+    link = Link(records, path_elements[0], acc, sec)
+    link.register()
+except FileNotFoundError:
+    print("\n未能找到达标的数据文件\n")
+

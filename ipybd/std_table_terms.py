@@ -198,7 +198,7 @@ class NoiOccurrenceTerms(Enum):
 
     # Record Object
     institutionCode = RadioInput, 'institutionCode', 'institutionCode', 1
-    classification = RadioInput, 'field', 'field', 1
+    category = RadioInput, 'category', 'category', 1
     basisOfRecord = RadioInput, 'basisOfRecord', 'basisOfRecord', 1
     rights = 'rights', 1
     rightsHolder = 'rightsHolder', 1
@@ -207,8 +207,7 @@ class NoiOccurrenceTerms(Enum):
     thumbnails = 'thumbnails', 1
     licence = 'licence', 1
     modified = DateTime, 'modified', 'utc', 1
-    Record = ('institutionCode', 'classification', 'basisOfRecord', 'rights', 'rightsHolder', 'references', 'dataApi', 'thumbnails', 'licence', 'modified', 'd'), 1
-    # json result
+    Record = ('institutionCode', 'category', 'basisOfRecord', 'rights', 'rightsHolder', 'references', 'dataApi', 'thumbnails', 'licence', 'modified', 'd'), 1
     DictForNoiOccurrence = ('Occurrence', 'Location', 'Identification', 'Event', 'Record', 'd'), 1
 
 
@@ -225,9 +224,9 @@ class KingdoniaPlantTerms(Enum):
     recordNumber = 'recordNumber', 1
     eventDate = DateTime, 'eventDate', 'datetime', 1
     _individualCount = Number, 'individualCount', None, int, 1
-    individualCount = FillNa, 'individualCount', '0', 1
+    individualCount = FillNa, 'individualCount', 0, 1
     country = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
-    province = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
+    stateProvince = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
     city = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
     county = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1
     locality = ('locality', 'mountain', 'waterBody', ','), 1
@@ -272,9 +271,9 @@ class KingdoniaPlantTerms(Enum):
     _molecularMaterialSample = RadioInput, 'molecularMaterialSample', 'molecularMaterialSample', 1
     molecularMaterialSample = FillNa, 'molecularMaterialSample', '无', 1
     _seedMaterialSample = Number, 'seedMaterialSample', None, int, 1
-    seedMaterialSample = FillNa, 'seedMaterialSample', '0', 1
+    seedMaterialSample = FillNa, 'seedMaterialSample', 0, 1
     _livingMaterialSample = Number, 'livingMaterialSample', None, int, 1
-    livingMaterialSample = FillNa, 'livingMaterialSample', '0', 1
+    livingMaterialSample = FillNa, 'livingMaterialSample', 0, 1
     MaterialSample = ('molecularMaterialSample', 'seedMaterialSample', 'livingMaterialSample', 'o'), 1
 
 
@@ -283,16 +282,18 @@ class KingdoniaAvesTerms(Enum):
 
 
 class HerbLabelTerms(Enum):
-    institutionName = 'institutionName', 1
-    institutionCode = 'institutionCode', 1
-    fundedBy = 'fundedBy', 1
+    title = 'institutionName', 1
+    titleNote = 'institutionCode', 1
+    subTitle = 'fundedBy', 1
     family = 'family', 1
+    vernacularName = 'vernacularName', 1
     genus = 'genus', 1
     specificEpithet = 'specificEpithet', 1
     specificAuthorship = 'specificAuthorship', 1
     taxonRank = 'taxonRank', 1
     infraspecificEpithet = 'infraspecificEpithet', 1
     scientificNameAuthorship = 'scientificNameAuthorship', 1
+    scientificName = BioName, 'scientificName', 1
     identifiedBy = HumanName, 'identifiedBy', 1
     dateIdentified = DateTime, 'dateIdentified', 'date', 1
     country = AdminDiv, ('country', 'province', 'city', 'county', '::'), 1

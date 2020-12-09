@@ -6,6 +6,7 @@
 # @Description :https://github.com/leisux/ipybd
 """
 
+from json.decoder import JSONDecodeError
 import urllib.request
 import urllib.parse
 import base64
@@ -16,10 +17,12 @@ import aiohttp
 import asyncio
 from ipybd.core import NpEncoder
 from tqdm import tqdm
+import os
 
-URL = "https://www.noi.link/api/data_add"
-ACCESSKEY = "ao4npk40meft2j612b4h8osh69e3hdbi"
-SECRETKEY = "qk3ps9sot5dbnz8wihf3ruetprovzks1"
+
+URL = "http://139.198.189.90/api/data_add"
+ACCESSKEY = "qqpq4m0vzpteirfrc0gnl6yajc5yomu5"
+SECRETKEY = "eztofeurrrpt8kexe4lptsgp89tnph4s"
 
 
 class Api:
@@ -65,23 +68,31 @@ class Api:
 
 
 class Link:
-    def __init__(self, datas:dict, model_id):
-        self.datas = datas
+    def __init__(self, dict_in_list_datas, unpost_path, accesskey, secretkey, model_id=1):
+        self.datas = dict_in_list_datas
         self.model_id = model_id
+        self.unpost_data_file = unpost_path + '_unpost.json'
+        global ACCESSKEY
+        global SECRETKEY
+        ACCESSKEY = accesskey
+        SECRETKEY = secretkey
 
-    def link(self):
+    def register(self):
         responses = self.add()
-        self.unvalid_resps = []
+        unvalid_resps = []
         for resp, data in zip(responses, self.datas):
             if resp:
                 pass
             else:
-                self.unvalid_resps.append(data)
+                unvalid_resps.append(data)
+        if unvalid_resps:
+            with open(self.unpost_data_file, "w", encoding='utf-8') as f:
+                f.write(json.dumps(unvalid_resps, cls=NpEncoder, sort_keys=False, indent=2, separators=(',', ': '),ensure_ascii=False))
 
     def add(self):
         self.pbar = tqdm(total=len(self.datas), desc="注册数据", ascii=True)
         loop = asyncio.get_event_loop()
-        self.sem = asyncio.Semaphore(50, loop)
+        self.sem = asyncio.Semaphore(100, loop=loop)
         tasks = self.build_tasks()
         resp = loop.run_until_complete(tasks)
         loop.close()
@@ -114,22 +125,46 @@ class Link:
 
     async def fetch(self, data:'json', token, session):
         while True:
-            async with session.post(URL,
-                                    data=data,
-                                    headers={"token": token}
-                                    ) as resp:
-                if resp.status == 429:
-                    await asyncio.sleep(3)
-                    continue
-                elif resp.status == 200:
-                    response = await resp.json(content_type='text')
-                    return self.get_data(response)
+            try:
+                async with session.post(URL,
+                                        data=data,
+                                        headers={"token": token}
+                                        ) as resp:
+                    if resp.status == 429:
+                        await asyncio.sleep(3)
+                        continue
+                    elif resp.status == 200:
+                        try:
+                            response = await resp.json(content_type='text')
+                            return self.get_data(response)
+                        except aiohttp.ClientPayloadError as e:
+                            # 这个错误的具体原因尚未弄清楚
+                            # 据说可能是 aiohttp 库默认无法解码 br，
+                            # 需要安装第三方的依赖库才可解决
+                            # 在遭遇这个错误之后，我们验证了 noi 数据库
+                            # 发现相应的索引其实已经注册
+                            # 但这到目前这只是个例，且原因不明，
+                            # 所以权衡之下，先返回 None 以默认未注册成功
+                            # 同时也不再循环注册，后续是否继续注册，交由用户自行决定
+                            return None
+                        except JSONDecodeError as e:
+                            # 这个错误，目前原因不明
+                            # 数据库端解析请求，提示 401 错误
+                            # 索引数据没有注册成功
+                            await asyncio.sleep(5)
+                            continue
+            except aiohttp.ServerDisconnectedError:
+                # print(">server connect error! May be you are too fast!\n")
+                await asyncio.sleep(3)
+                continue
 
     def get_data(self, response):
         if response['code'] == 200:
             return response['data']
         elif response['code'] == 400:
-            print("\n认证授权失败:错误信息包括密钥信息不正确；数字签名错误；授权已超时\n")
+            print("\n请求报文格式错误 包括上传时，上传表单格式错误")
+        elif response['code'] == 401:
+            print("\n认证授权失败 错误信息包括密钥信息不正确；数字签名错误；授权已超时")
         elif response['code'] == 403:
             print("\n权限不足，拒绝访问\n")
         elif response['code'] == 404:
@@ -139,7 +174,7 @@ class Link:
         elif response['code'] == 503:
             print("\n服务端不可用\n")
         elif response['code'] == 504:
-            print("\n服务端操作超时\n")
+            print("\n服务端tt操作超时\n")
         elif response['code'] == 599:
             print("\n服务端操作失败\n")
         elif response['code'] == 601:

@@ -25,3 +25,5 @@ from ipybd import noi
 from ipybd.label.label_maker import Label
 
 from ipybd.api_terms import Filters
+
+from ipybd.lib.noi_occurrence_schema import schema

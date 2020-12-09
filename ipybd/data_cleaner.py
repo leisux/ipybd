@@ -744,7 +744,11 @@ class BioName:
         return author_team
 
     def __call__(self, mark=True):
-        if input("经处理返回的学名，是否需要携带命名人？(y/n)") == 'y':
+        if input("是否要进行学名处理？（y/n）\n" ) == 'y':
+            pass
+        else:
+            return pd.DataFrame(self.names)
+        if input("\n经处理返回的学名，是否需要携带命名人？(y/n)\n") == 'y':
             choose = input(
                 "\n是否执行拼写检查，在线检查将基于 sp2000.org.cn、ipni.org 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
             if choose.strip() == 'y':
@@ -752,7 +756,7 @@ class BioName:
                     [
                         ' '.join([name[0], name[1]]).strip()
                         if name[1] else name[0]
-                        for name in self.get('stdName', mark)
+                        for name in self.get('stdName', mark=mark)
                         ]
                 )
             else:
@@ -765,7 +769,7 @@ class BioName:
                     [
                         name[0].strip()
                         if name[1] else name[0]
-                        for name in self.get('stdName', mark)
+                        for name in self.get('stdName', mark=mark)
                         ]
                 )
             else:
@@ -785,7 +789,13 @@ class DateTime:
 
     def format_datetime(self, style):
         result = []
-        for date_time in tqdm(self.datetime, desc="日期处理", ascii=True):
+        for n, date_time in enumerate(tqdm(self.datetime, desc="日期处理", ascii=True)):
+            # 兼容 Kingdonia 无日期写法
+            # 遇到无日期的写法,直接将原始数据置为空
+            if date_time in ["0000-01-01 00:00:02", "9999-01-01 00:00:00", "1970-01-01 00:00:00", "0000-01-01 00:00:00"]:
+                self.datetime[n] = None
+                result.append(None)
+                continue
             # 先尝试作为 datetime 处理
             datetime = self.datetime_valid(date_time)
             if datetime:
@@ -1103,22 +1113,36 @@ class HumanName:
         """
         names_mapping = dict.fromkeys(self.names)
         pattern = re.compile(
-            r'[\u4e00-\u9fa5\s]*[\u4e00-\u9fa5][\|\d]*|[A-Za-z][A-Za-z\.\s\-]+[a-z][\|\d]*')
+            r'[\u4e00-\u9fa5\s]*[\u4e00-\u9fa5][\|\d]*|[A-Za-z][A-Za-z\.\s\-]+[A-Za-z\.][\|\d]*')
         for rec_names in tqdm(names_mapping, desc="人名处理", ascii=True):
             try:
+                # 切分人名，并大写首字母
                 names = [name.strip().title()
                          for name in pattern.findall(rec_names)]
+                # 对一条记录里的每个人名的合理性进行判断
                 for i, name in enumerate(names):
+                    # 先判断人名是否来自 Biotracks 网页端导出的带 id 的人名
                     if re.search(r"[a-z\u4e00-\u9fa5]\|\d", name):
                         pass
+                    # 再判断是否是普通的人名记录
                     elif not re.search(r"[\|\d]", name):
                         pass
                     else:
                         raise ValueError
                     if re.search(u"[\u4e00-\u9fa5]", name):
-                        if len(name) < 2:
-                            raise ValueError
+                        if len(name) <= 2:
+                            # 如果人名队列是空值指使词
+                            # 触发 NameError 跳出循环以使其最后被重设为 None
+                            if name in ["无", "缺失", "佚名"] and len(names) == 1:
+                                raise NameError
+                            # 如果是中文人名, 首个人名字符长度不能小于 2
+                            elif len(name) == 1 and i == 0:
+                                raise ValueError
+                            else:
+                                names[i] = name
                         else:
+                            # 对大于 2 个字符的中文人名，替换空格
+                            # 主要解决双字名中，中间有空格的情况
                             names[i] = name.replace(" ", "")
                     else:
                         if len(name) < 3:
@@ -1129,7 +1153,9 @@ class HumanName:
                                 if len(e) == 1 else e
                                 for e in re.split(r"\.\s*", name)]
                             names[i] = " ".join(en_name)
-                names_mapping[rec_names] = "，".join(names)
+                names_mapping[rec_names] = ", ".join(names)
+            except NameError:
+                continue
             except BaseException:
                 if pd.isnull(rec_names):
                     continue
@@ -1232,8 +1258,10 @@ class AdminDiv:
                 score = each_score, len(stdregion)
                 self.region_mapping[raw_region] = stdregion
         if score == (0, 0):
+            if raw_region == "中国":
+                self.region_mapping[raw_region] = "中国"
             # 如果没有匹配到，又是中国的行政区，英文!标识
-            if "中国" in raw_region:
+            elif "中国" in raw_region:
                 self.region_mapping[raw_region] = "!" + raw_region
             else:
                 self.region_mapping[raw_region] = raw_region
@@ -1267,7 +1295,7 @@ class Number:
 
     def format_number(self, mark=False):
         """
-        return: 如果出现 keyerro，返惠列表参数错误, 否则返回处理好的table
+        return: 如果出现 keyerro，返回列表参数错误, 否则返回处理好的table
         care: 对于“-20-30“ 的值，无法准确划分为 -20和30，会被划分为 20和30
         """
         float_pattern = re.compile(r"^[+-]?\d+[\.\d]*|\d+[\.\d]*")
@@ -1317,6 +1345,12 @@ class Number:
                         tqdm(column1, desc="数值区间", ascii=True),
                         tqdm(column2, desc="数值区间", ascii=True)
                         ):
+            # 只要 p + q 最终能获得两个数即可
+            # 因此不需要 p 或 q 一定是单个数
+            # 这对于一些使用非一致分隔符表达的数值区间比较友好
+            # 这保证了即便有些数值区间的值无法被拆分表达式准确的拆分
+            # 但只要能够伴随大值列和小值列值实例化Number类
+            # 最终仍然可以准确获得小值列和大值列
             merge_value = p + q
             if (len(merge_value) == 2
                 and self.min_num <= float(merge_value[0]) <= self.max_num
@@ -1629,6 +1663,7 @@ class UniqueID:
         self.df = pd.concat(columns, axis=1)
 
     def mark_duplicate(self):
+        # 重复的行，将以 ! 标记
         self.duplicated = self.df.duplicated(keep=False)
         marks = [
             "".join(["!", m]) if d and not pd.isnull(m) else m

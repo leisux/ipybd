@@ -3,8 +3,7 @@ Author: M Maher
 
 Date: 20171130
 
-herb_label.py
-Python class to define a herbarium label, to be produced from CSV -> JSON -> Mustache template -> HTML.
+Python class to define a herbarium label, to be produced from Dict -> Mustache template -> HTML.
 
 """
 

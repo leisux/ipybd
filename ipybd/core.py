@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # Based on python 3
-
 import os
 import pandas as pd
 import numpy as np
@@ -11,7 +10,7 @@ from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.shortcuts import prompt
 from xlrd import XLRDError
-from ipybd.data_cleaner import BioName, GeoCoordinate, DateTime, Number, AdminDiv, RadioInput, HumanName
+from ipybd.data_cleaner import BioName, GeoCoordinate, DateTime, Number, AdminDiv, RadioInput, HumanName, UniqueID
 
 
 HERE = os.path.dirname(__file__)
@@ -97,11 +96,13 @@ class FormatTable:
     def split_column(self, split_column, splitters, new_headers=None):
         """ 将一列分割成多列
 
-        split_column: 要分割的列名 str
-        splitters: 分割依据的分割符 tuple 或 str
-        new_heaers: 分割出的新列列名 list
-        return: 若 new_headers=None，返回list组成的拆分结果，如果有新列名，则
-                返回由新列组成的 DataFrame
+            split_column: 要分割的列名 str
+            splitters: 分割依据的分割符 tuple 或 str
+            new_heaers: 分割出的新列列名 list
+            return: 若 new_headers=None，返回list组成的拆分结果，
+                    如果有新列名，则返回由新列组成的 DataFrame,
+                    如果列值无法拆分出足够的列，则用 None 补齐空列
+                    如果数值类型不可拆分，则不作处理
         """
         frame = map(
                     self.__split_txt,
@@ -114,7 +115,7 @@ class FormatTable:
             self.df.drop(split_column, axis=1, inplace=True)
             self.df = pd.concat([self.df, frame], axis=1)
         else:
-            return frame
+            return list(frame)
 
     def __split_txt(self, txt, splitters) -> list:
         result = [txt]
@@ -182,12 +183,12 @@ class FormatTable:
         elif isinstance(separators, tuple):
             mergers = self.df[columns[0]]
             for column, sepa in zip(columns[1:], separators):
-                mergers = map(
+                mergers = list(map(
                               self.__merge_txt2line,
                               mergers,
                               self.df[column],
                               (sepa for _ in range(self.df.shape[0]))
-                              )
+                              ))
         if new_header:
             self.df.drop(columns, axis=1, inplace=True)
             self.df[new_header] = pd.Series(mergers)
@@ -202,8 +203,13 @@ class FormatTable:
         for i, r in enumerate(mergers):
             c = r.copy()
             for title, value in c.items():
-                if not pd.Series(value).any():
-                    del r[title]
+                #if not pd.Series(value).any():
+                try:
+                    if pd.isnull(value):
+                        del r[title]
+                except ValueError:
+                    if pd.isnull(value).all():
+                        del r[title]
             if r == {}:
                 mergers[i] = None
                 continue
@@ -487,13 +493,21 @@ class FormatTable:
             raise ValueError("file type must be sql, csv, excel!")
 
     def read_table(self, *args, **kwargs):
-        print("\n开始载入数据表格...\n\n如果数据表格太大，此处可能会耗时很长...\n如果长时间无法载入，请将 Excel 表转换为 CSV 格式后重新尝试...\n")
-        try:
-            table = pd.read_excel(*args, dtype=str, **kwargs)
-        except (XLRDError, TypeError):
-            table = self.read_csv(*args, **kwargs)
-        except (ValueError, FileNotFoundError):
-            table = pd.read_sql(*args, **kwargs)
+        if isinstance(args[0], pd.DataFrame):
+            return args[0]
+        if isinstance(args[0], str):
+            path_elms = os.path.splitext(args[0])
+            if path_elms[1].lower() in [".xls", ".xlsx"]:
+                print("\n开始载入数据表格...\n\n如果数据表格太大，此处可能会耗时很长...\n如果长时间无法载入，请将 Excel 表转换为 CSV 格式后重新尝试...\n")
+                table = pd.read_excel(*args, dtype=str, **kwargs)
+            elif path_elms[1].lower() == '.csv':
+                table = self.read_csv(*args, **kwargs)
+            elif path_elms[1].lower() == '.txt':
+                table = pd.read_table(*args, **kwargs)
+            elif path_elms[1].lower() == ".json":
+                pass
+            elif path_elms[1].lower() == "":
+                table = pd.read_sql(*args, **kwargs)
         print("\n数据表载入完毕。\n")
         return table
 
@@ -627,7 +641,16 @@ class FormatTable:
 
     @drop_and_concat_columns
     def format_human_name(self, header, inplace=True):
-        return HumanName(self.df[header]), header, inplace
+        return HumanName(self.df[header])(), header, inplace
+
+    @drop_and_concat_columns
+    def mark_repeat(self, *headers, inplace=True):
+        columns = [self.df[header] for header in headers]
+        return UniqueID(*columns)(), list(headers), inplace
+
+
+class ArgumentsParser:
+    pass
 
 
 class RestructureTableMeta(type):
@@ -640,8 +663,8 @@ class RestructureTableMeta(type):
 
 class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
     # self.__class__.columns_model from std_table_objects
-    def __init__(self, io, fcol=False):
-        super(RestructureTable, self).__init__(io)
+    def __init__(self, *args, fcol=False, **kwargs):
+        super(RestructureTable, self).__init__(*args, **kwargs)
         # 设置补充缺失列的数值
         self.fill_value = fcol
         self.rebuild_table()
@@ -679,7 +702,7 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
         # 判断表格字段与之前表格的是否一致
         if set(old_columns) == set(self.raw_columns):
             if input(
-                    "\n 检测发现该表格与您上一次处理的表格字段一致，请问是否直接使用上一次表格转换模板以简化操作 (y/n) :\n\n") == 'y':
+                    "\n检测发现该表格与您上一次处理的表格字段一致，请问是否直接使用上一次表格转换模板以简化操作 (y/n) :\n\n") == 'y':
                 pass
             else:
                 return True
@@ -743,12 +766,15 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                             )
                     else:
                         # 进一步合并已经被映射转换过的列
+                        time_start=time.time()
                         self.merge_columns(
                             std_fields,
                             field.value[-1],
                             column_name
                             )
-                # 如果原表中无法找到相应的列，用 None 填充新列
+                        time_end=time.time()
+                        print('合并列名:',time_end-time_start)
+                # 如果原表中无法找到相应的列，用指定的 self.fill_value 填充新列
                 elif self.fill_value is not False:
                     columns = [
                         name for name, obj in
@@ -765,6 +791,7 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
             elif len(field.value) == 2:
                 print("\n标准结构模板 {0} 参数值有误\n".format(field))
                 break
+            # 需要进一步进行值处理的数据列处理
             else:
                 # try:
                 args_name = self.build_args(
@@ -779,6 +806,7 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                     # 可以在模版中先定义合并多列
                     args = [self.df[arg_name] for arg_name in args_name] + \
                             list(field.value[field.value[-1]+1:-1])
+                    # 通过定义类的__call__函数实现原始列值的处理
                     new_cols = field.value[0](*args)()
                     columns = [
                         name for name, obj in
@@ -908,9 +936,12 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                 param = (param, "")
             for n, clm in enumerate(param[0:-1]):
                 for field in list(self.columns_mapping.values()):
+                    # param 元素能和相应原始字段一一对应
                     if type(field) == str and clm == field:
                         column_names.append(self.__get_key(field))
                         del self.columns_mapping[self.__get_key(field)]
+                    # param 元素是待拆分字段的组成部分
+                    # 则先对原始字段进行拆分
                     elif type(field) == tuple and clm in field:
                         key = self.__get_key(field)
                         self.split_column(key[0], list(key[1]), field)

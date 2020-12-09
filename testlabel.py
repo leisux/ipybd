@@ -10,6 +10,7 @@
 from ipybd import Label
 
 
-printer = Label(r"C:\Users\xu_zh\OneDrive\PDP\testfile\cvh.csv", repeat=0)
-printer.write_html()
+printer = Label(r"/Users/xuzhoufeng/Downloads/record2020-12-08.xlsx", repeat=2)
+printer.write_html(start_code="HITBC004123", page_num=8)
+
 
