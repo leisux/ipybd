@@ -1,6 +1,7 @@
 from ipybd.core import FormatTable, RestructureTable
 
 from ipybd.data_cleaner import (
+    ifunc,
     BioName,
     AdminDiv,
     Number,
@@ -13,11 +14,12 @@ from ipybd.data_cleaner import (
 )
 
 from ipybd.std_table_objects import (
-    record,
+    imodel,
     OccurrenceRecord,
     KingdoniaPlant,
     NoiOccurrence,
-    NSII
+    NSII,
+    CVH
 )
 
 from ipybd import noi

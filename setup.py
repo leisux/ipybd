@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
         name = 'ipybd',
-        version = '1.0.0',
+        version = '1.0.1',
         description = 'Powerful data cleaner for biodiversity',
         license = 'GPL-3.0 License',
         author = 'Xu Zhoufeng',
@@ -31,7 +31,6 @@ setup(
             'arrow>=0.16.0',
             'pystache>=0.5.4',
             'pystrich>=0.8',
-            'jsonschema>=2.6.0',
-            'brotlipy>=0.7.0'
+            'jsonschema>=2.6.0'
         ]
 )

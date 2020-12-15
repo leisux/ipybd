@@ -6,6 +6,7 @@ import numpy as np
 from tqdm import tqdm
 import json
 import re
+from types import FunctionType, MethodType
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.shortcuts import prompt
@@ -66,7 +67,7 @@ class FormatTable:
         std_field_alias = json.load(std_alias)
 
     def __init__(self, *args, **kwargs):
-        self.df = self.read_table(*args, **kwargs)
+        self.df = self.read_data(*args, **kwargs)
         self.columns_mapping = dict.fromkeys(self.df.columns)
         self.raw_columns = tuple(self.df.columns)
         self.size = self.df.size
@@ -480,7 +481,7 @@ class FormatTable:
         with open(PERSONAL_TEMPLATE_PATH, "w", encoding="utf-8") as pt:
             pt.write(json.dumps(json_template, ensure_ascii=False))
 
-    def save_table(self, path):
+    def save_data(self, path):
         if path.endswith('.xlsx'):
             self.df.to_excel(path, index=False)
         elif path.endswith('.xls'):
@@ -492,7 +493,7 @@ class FormatTable:
         else:
             raise ValueError("file type must be sql, csv, excel!")
 
-    def read_table(self, *args, **kwargs):
+    def read_data(self, *args, **kwargs):
         if isinstance(args[0], pd.DataFrame):
             return args[0]
         if isinstance(args[0], str):
@@ -503,7 +504,7 @@ class FormatTable:
             elif path_elms[1].lower() == '.csv':
                 table = self.read_csv(*args, **kwargs)
             elif path_elms[1].lower() == '.txt':
-                table = pd.read_table(*args, **kwargs)
+                table = pd.read_data(*args, **kwargs)
             elif path_elms[1].lower() == ".json":
                 pass
             elif path_elms[1].lower() == "":
@@ -649,10 +650,6 @@ class FormatTable:
         return UniqueID(*columns)(), list(headers), inplace
 
 
-class ArgumentsParser:
-    pass
-
-
 class RestructureTableMeta(type):
     def __new__(cls, name, bases, dct):
         if name != 'RestructureTable' and 'columns_model' not in dct:
@@ -737,43 +734,49 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
         """ 按照 std_table_terms 定义的 key 生成新表格
         """
         for field in self.__class__.columns_model:
-            if not isinstance(field.value, tuple):
-                print("\n标准结构模板 {0} 参数值有误\n".format(field))
-                return None
-            if len(field.value) < 2:
-                print("\n标准结构模板 {0} 参数值有误\n".format(field))
-                return None
-            if not isinstance(field.value[-1], int):
-                print("\n标准结构模板 {0} 参数值有误\n".format(field))
-                return None
-            if isinstance(field.value[0], (str, tuple, list)):
-                if len(field.value) > 2:
-                    print("\n标准结构模板 {0} 参数值有误\n".format(field))
-                    return None
-                std_fields = field.value[:-1]
-                args_name = self.build_args(field.name, std_fields)
+            params = field.value
+            if isinstance(params[0], (type, FunctionType, MethodType)) and isinstance(params[-1], dict):
+                if isinstance(params[1], tuple) and len(params) == 3:
+                    args  = self.get_args(field.name, params[1], params[-1])
+                    if args:
+                        # 通过定义类的__call__函数实现原始列值的处理
+                        new_cols = params[0](*args[0], **args[1])()
+                        columns = [
+                            name for name, obj in
+                            self.__class__.columns_model.__members__.items()
+                            if obj is field
+                            ]
+                        # _ 开头的名称是模板用于临时定义使用，命名时需要去除 _
+                        new_cols.columns = [
+                            column[1:] if column.startswith("_") else column
+                            for column in columns
+                            ]
+                        self.df.drop(args[-1], axis=1, inplace=True)
+                        self.df = pd.concat([self.df, new_cols], axis=1)
+                    elif self.fill_value is not False:
+                        columns = [
+                            name for name, obj in
+                            self.__class__.columns_model.__members__.items()
+                            if obj is field
+                            ]
+                        new_columns = [
+                            column[1:] if column.startswith("_") else column
+                            for column in columns
+                            ]
+                        for col in new_columns:
+                            if col not in self.df.columns:
+                                self.df[col] = self.fill_value
+            else:
+                arg_name = self.column_mapping(field.name, params)
                 # _ 开头的名称是模板用于临时定义使用，命名时需要去除 _
                 column_name = field.name[1:] \
                     if field.name.startswith("_") else field.name
                 # print(column_name)
-                if args_name:
+                if arg_name:
                     # print(args_name)
-                    if len(args_name) == 1:
-                        # 只对原表相应对字段名进行修改，args_name 为 str 类型
-                        self.df.rename(
-                            columns={args_name[0]: column_name},
-                            inplace=True
-                            )
-                    else:
-                        # 进一步合并已经被映射转换过的列
-                        time_start=time.time()
-                        self.merge_columns(
-                            std_fields,
-                            field.value[-1],
-                            column_name
-                            )
-                        time_end=time.time()
-                        print('合并列名:',time_end-time_start)
+                    # 只对原表相应对字段名进行修改，args_name 为 str 类型
+                    self.df.rename(
+                        columns={arg_name: column_name}, inplace=True)
                 # 如果原表中无法找到相应的列，用指定的 self.fill_value 填充新列
                 elif self.fill_value is not False:
                     columns = [
@@ -788,127 +791,150 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                     for col in new_columns:
                         if col not in self.df.columns:
                             self.df[col] = self.fill_value
-            elif len(field.value) == 2:
-                print("\n标准结构模板 {0} 参数值有误\n".format(field))
-                break
-            # 需要进一步进行值处理的数据列处理
-            else:
-                # try:
-                args_name = self.build_args(
-                    field.name,
-                    field.value[1:1+field.value[-1]]
-                    )
-                if args_name:
-                    # 模版中的参数包括数据和相应类的初始化参数
-                    # 数据都是以 Series 形式传递，
-                    # 若需一次处理多列，则传递多个 Series
-                    # 若需要将多列先合并为单列再做传递，
-                    # 可以在模版中先定义合并多列
-                    args = [self.df[arg_name] for arg_name in args_name] + \
-                            list(field.value[field.value[-1]+1:-1])
-                    # 通过定义类的__call__函数实现原始列值的处理
-                    new_cols = field.value[0](*args)()
-                    columns = [
-                        name for name, obj in
-                        self.__class__.columns_model.__members__.items()
-                        if obj is field
-                        ]
-                    # _ 开头的名称是模板用于临时定义使用，命名时需要去除 _
-                    new_cols.columns = [
-                        column[1:] if column.startswith("_") else column
-                        for column in columns
-                        ]
-                    self.df.drop(args_name, axis=1, inplace=True)
-                    self.df = pd.concat([self.df, new_cols], axis=1)
-                elif self.fill_value is not False:
-                    columns = [
-                        name for name, obj in
-                        self.__class__.columns_model.__members__.items()
-                        if obj is field
-                        ]
-                    new_columns = [
-                        column[1:] if column.startswith("_") else column
-                        for column in columns
-                        ]
-                    for col in new_columns:
-                        if col not in self.df.columns:
-                            self.df[col] = self.fill_value
-                # except:
-                    # print("\n标准结构模板 {1} 参数值有误\n".format(field))
-                    # break
 
-    def build_args(self, title, params):
+    def get_args(self, title, args, kwargs):
+        columns = []
+        new_args = []
+        for param in args:
+            if isinstance(param, str) and param.startswith('>'):
+                column = self.build_arg(title, param[1:])
+                if column:
+                    new_args.append(self.df[column])
+                    columns.append(column)
+                else:
+                    return None
+            else:
+                try:
+                    if isinstance(param, tuple) and param[0].startswith('>'):
+                        column = self.column_mapping(title, param)
+                        if column:
+                            new_args.append(self.df[column])
+                            columns.append(column)
+                        else:
+                            return None
+                    elif isinstance(param, list) and param[0][0].startswith('>'):
+                        column = self.column_mapping(title, param)
+                        if column:
+                            new_args.append(self.df[column])
+                            columns.append(column)
+                        else:
+                            return None
+                    else:
+                        new_args.append(param)
+                except AttributeError:
+                    new_args.append(param)
+        for key, value in kwargs:
+            if isinstance(value, str) and param.startswith('>'):
+                column = self.build_arg(title, value[1:])
+                if column:
+                    kwargs[key] = self.df[column]
+                    columns.append(column)
+                else:
+                    return None
+            else:
+                try:
+                    if isinstance(param, tuple) and param[0].startswith('>'):
+                        column = self.build_arg(title, value[1:])
+                        if column:
+                            kwargs[key] = self.df[column]
+                            columns.append(column)
+                        else:
+                            return None
+                    elif isinstance(param, list) and param[0][0].startswith('>'):
+                        column = self.build_arg(title, value[1:])
+                        if column:
+                            kwargs[key] = self.df[column]
+                            columns.append(column)
+                        else:
+                            return None
+                except AttributeError:
+                    pass
+        return new_args, kwargs, columns
+
+    def column_mapping(self, title, param):
+        if isinstance(param, list):
+            # 如果某个参数有多种可能的情况，则发现首个符合条件的就终止
+            # 比如学名既可能是由一个字段存储也可能是由表中多个字段拼接而成
+            # 此时多个潜在的参数会根据权重按序在 [] 中定义好多种可能
+            for choice in param:
+                arg_name = self.column_mapping(title, choice)
+                if arg_name:
+                    return arg_name
+        elif isinstance(param, str):
+            if param.startswith('>'):
+                arg_name = self.build_arg(title, param[1:])
+            else:
+                raise ValueError
+        elif isinstance(param, tuple):
+            try:
+                columns_name = [field[1:] if field.startswith('>') else None for field in param[:-1]]
+                if all(columns_name):
+                    columns_name.append(param[-1])
+                    arg_name = self.build_arg(title, tuple(columns_name))
+                else:
+                    raise ValueError
+            except:
+                raise ValueError
+        else:
+            raise ValueError
+        return arg_name
+
+    def build_arg(self, title, param):
         """ 将列值校验所涉及的数据列拆分或合并为配置文件中定义的标准列名
 
         title: 配置文件中定义的列名 str
-        params: 配置文件中定义的位置参数 tuple
-        return: None 或 list, list 内包含真实可调用的数据表表头名
+        param: 数据模型中定义的数据列表达式
+        return: None 或 str, str  是真实可调用的数据表表头名
         """
-        arguments = []
-        for param in params:
-            # 如果某个位置参数有多种可能的情况，则发现首个符合条件的就终止
-            # 比如学名既可能是由一个字段存储也可能是由表中多个字段拼接而成
-            # 此时在定义std_table_alias的位置参数时，
-            # 需要根据潜在权重按序在 [] 中定义好多种可能
-            if isinstance(param, list):
-                for clm in param:
-                    columns = self.get_arg(clm)
-                    if columns:
-                        param = clm
-                        break
-            else:
-                columns = self.get_arg(param)
-            # 位置参数只要缺失一个，就终止处理
-            if not columns:
-                # print("\n{0} 没有在原表中找到对应表头\n".format(param))
-                return None
-            # 对位置参数的列名映射元素做进一步处理
-            for n, clm in enumerate(columns):
-                # 找到的字段若需进一步分列后再合并为位置参数，
-                # 则保留原字段如 clm = [("GPS", (";"))]
-                # 而枚举定义的数值处理参数为
-                # （"decimalLatitude", "decimalLongitude", ";"）
-                # 则不需要对 "GPS" 再做任何拆分与合并，
-                # 直接可以用作数值处理程序的实际参数。
-                if isinstance(clm, tuple) and len(clm) == 2:
-                    columns[n] = clm[0]
-                # 找到的字段若需进一步合并，先执行合并
-                elif isinstance(clm, tuple) and isinstance(param, tuple):
-                    # 注意 merge_columns 只能接受 list 类型的 columns
-                    self.merge_columns(list(clm[:-1]), clm[-1], param[n])
-                    columns[n] = param[n]
-                elif isinstance(clm, tuple) and isinstance(param, str):
-                    self.merge_columns(list(clm[:-1]), clm[-1], param)
-                    columns[n] = param
-            # 对整个位置参数的列名映射做进一步处理
-            if (len(columns) > 1
-                or isinstance(param, tuple) and
-                    param[-1] in ['d', 'l', 'a', 'o', 'r']):
-                # 相应位置参数需要进一步由多列合并而成比如对于
-                # (country, stateProvince, city, county, ",") 的 param
-                # 返回的 columns 或许就是 ["国", "省"， ”市“, "县"]，
-                # 这个时候需要对 columns 进行进一步的合并才能获得 param
-                fields = []
-                # 合并之前先去除真实数据表中未能找到的列，
-                # 比如 (country, stateProvince, city, county)
-                # 这样的单个位置参数是由多个标准列进一步合并而成，
-                # 真实数据表中可能就不存在 country ,然后将相应原始字段名
-                # 转换为标准字段名以统一合并值中的 key
-                for col, std_col in zip(columns, param):
-                    if col is None:
-                        continue
-                    else:
-                        self.df.rename(columns={col: std_col}, inplace=True)
-                        fields.append(std_col)
-                # 最后再做合并，并将合并成的新列作为真正的位置参数返回
-                self.merge_columns(fields, param[-1], title)
-                arguments.append(title)
-            else:
-                # 列名可与相应位置参数一对一映射，则直接映射
-                arguments.append(columns[0])
-
-        # print(arguments)
-        return arguments
+        columns = self.get_arg(param)
+        # 位置参数只要缺失一个，就终止处理
+        if not columns:
+            # print("\n{0} 没有在原表中找到对应表头\n".format(param))
+            return None
+        # 对位置参数的列名映射元素做进一步处理
+        for n, clm in enumerate(columns):
+            # 找到的字段若需进一步分列后再合并为位置参数，
+            # 则保留原字段如 clm = [("GPS", (";"))]
+            # 而枚举定义的数值处理参数为
+            # （"decimalLatitude", "decimalLongitude", ";"）
+            # 则不需要对 "GPS" 再做任何拆分与合并，
+            # 直接可以用作数值处理程序的实际参数。
+            if isinstance(clm, tuple) and len(clm) == 2:
+                columns[n] = clm[0]
+            # 找到的字段若需进一步合并，先执行合并
+            elif isinstance(clm, tuple) and isinstance(param, tuple):
+                # 注意 merge_columns 只能接受 list 类型的 columns
+                self.merge_columns(list(clm[:-1]), clm[-1], param[n])
+                columns[n] = param[n]
+            elif isinstance(clm, tuple) and isinstance(param, str):
+                self.merge_columns(list(clm[:-1]), clm[-1], param)
+                columns[n] = param
+        # 对整个位置参数的列名映射做进一步处理
+        if (len(columns) > 1
+            or isinstance(param, tuple) and
+                param[-1] in ['d', 'l', 'a', 'o', 'r']):
+            # 相应位置参数需要进一步由多列合并而成比如对于
+            # (country, stateProvince, city, county, ",") 的 param
+            # 返回的 columns 或许就是 ["国", "省"， ”市“, "县"]，
+            # 这个时候需要对 columns 进行进一步的合并才能获得 param
+            fields = []
+            # 合并之前先去除真实数据表中未能找到的列，
+            # 比如 (country, stateProvince, city, county)
+            # 这样的单个位置参数是由多个标准列进一步合并而成，
+            # 真实数据表中可能就不存在 country ,然后将相应原始字段名
+            # 转换为标准字段名以统一合并值中的 key
+            for col, std_col in zip(columns, param):
+                if col is None:
+                    continue
+                else:
+                    self.df.rename(columns={col: std_col}, inplace=True)
+                    fields.append(std_col)
+            # 最后再做合并，并将合并成的新列作为真正的位置参数返回
+            self.merge_columns(fields, param[-1], title)
+            return title
+        else:
+            # 列名可与相应位置参数一对一映射，则直接映射
+            return columns[0]
 
     def get_arg(self, param):
         """ 将位置参数转换为真实可调用的表名

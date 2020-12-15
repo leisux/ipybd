@@ -2,7 +2,7 @@ ipybd 是一款由 `Python` 语言开发的中文生物多样性数据清洗、�
 
 作为一个框架，`ipybd` 不仅定义了一套生物多样性数据处理的流程和语义，还为开发者提供了一些重要的数据处理方法，这包括：
 
-1. **数据装载:** 目前支持从各类 Excel/CSV 以及关系型数据库（比如Mysql）导入数据；
+1. **数据装载:** 目前支持从Excel/CSV/TEXT/Pandas.DataFrame 以及关系型数据库（比如Mysql）导入数据；
 2. **物种学名：**可以在线批量获取 [POWO](http://www.plantsoftheworldonline.org/), [IPNI](https://www.ipni.org/), [中国生物物种名录](http://www.sp2000.org.cn/)上相应物种的最新分类阶元、分类处理、物种图片、发表文献、相关异名等信息；
 3. **日期与时间：**可以对各类手工转录的日期和时间，进行严格的校验和转换，并可根据需要输出不同样式；
 4. **经纬度：**可以对各类手工转录的经纬度，进行严格的校验和转换；
@@ -213,10 +213,10 @@ Out:
 collections.get_ipni_name("属名", "种名", "种下单元", "命名人", concat=True)
 ```
 
-如果需要将整合后的数据表存储为文件，可以调用`collections`的`save_table`方法：
+如果需要将整合后的数据表存储为文件，可以调用`collections`的`save_data`方法：
 
 ```python
-collections.save_table(r"~/Documents/new_record.xlsx")
+collections.save_data(r"~/Documents/new_record.xlsx")
 ```
 
 #### 2.3 中文行政区划清洗和转换

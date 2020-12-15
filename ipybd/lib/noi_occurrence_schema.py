@@ -158,10 +158,7 @@ schema={
           "title_cn": "工作资助",
           "type": "string"
         }
-      },
-      "required": [
-        "eventDate"
-      ]
+      }
     },
     "Location": {
       "title_cn": "位置",
@@ -374,7 +371,7 @@ schema={
           "type": "string"
         },
         "rightsHolder": {
-          "title_cn": "版权代理",
+          "title_cn": "数据来源",
           "type": "string"
         },
         "licence": {
@@ -418,7 +415,6 @@ schema={
   "required": [
     "Occurrence",
     "Location",
-    "Event",
     "Record"
   ]
 }

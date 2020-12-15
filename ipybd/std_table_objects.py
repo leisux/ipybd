@@ -2,13 +2,15 @@ from ipybd.core import RestructureTable
 from ipybd.std_table_terms import *
 import json
 import os
+import re
 import pandas as pd
 from ipybd.core import NpEncoder
 import jsonschema
 from ipybd.lib.noi_occurrence_schema import schema
+from tqdm import trange
 
 
-def record(enum_columns, cut=False):
+def imodel(enum_columns, cut=False):
     def __init__(self, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
         self._re_range_columns(cut)
@@ -126,4 +128,81 @@ class NSII(RestructureTable):
         super(NSII, self).__init__(io)
         # 对重塑结果中的各列进行重新排序
         self._re_range_columns(cut=True)
+
+
+class CVH(RestructureTable):
+    columns_model = CvhTerms
+    def __init__(self, io):
+        super(CVH, self).__init__(io)
+        # 对重塑结果中的各列进行重新排序
+        self._re_range_columns(cut=True)
+
+    def btk_collectors2cvh(self):
+        recordedby = list(self.df["采集人"])
+        btk_userid_pattern = re.compile(r"\|[0-9]+")
+        for num, coll in enumerate(tqdm(recordedby, desc="去除采集人ID", ascii=True)):
+            if coll.startswith("!"):
+                continue
+            else:
+                btk_userid = btk_userid_pattern.findall(coll)
+                if btk_userid == []:
+                    continue
+                else:
+                    for userid in btk_userid:
+                        coll = coll.replace(userid, "")
+                    recordedby[num] = coll
+        self.df["采集人"] = pd.Series(recordedby)
+
+    def split_scientific_name(self):
+        '''
+        函数功能：处理各类手动输入的学名，返回去命名人/分列的学名
+        table：需要处理的pandas.dataframe数据表
+        title：需要处理的字段名称
+        care:尚未解决命名人相关的错误
+        testname:Saxifraga umbellulata Hook. f. et Thoms. var. pectinata (C. Marq. et Airy Shaw) J. T. Pan
+                 Anemone demissa Hook. f. et Thoms. var. yunnanensis Franch.
+                 Schisandra grandiflora (Wall.) Hook. f. et Thoms.
+                 Phaeonychium parryoides (Kurz ex Hook. f. et T. Anderson) O. E. Schulz
+                 Crucihimalaya lasiocarpa (Hook. f. et Thoms.) Al-Shehbaz et al.
+                 Saxifraga rufescens bal f. f.
+                 Saxifraga rufescens Bal f. f. var. uninervata J. T. Pan
+                 Lindera pulcherrima (Nees) Hook. f. var. attenuata C. K. Allen
+                 Polygonum glaciale (Meisn.) Hook. f. var. przewalskii (A. K. Skvortsov et Borodina) A. J. Li
+                 Psilotrichum ferrugineum (Roxb.) Moq. var. ximengense Y. Y. Qian
+                 Houpoëa officinalis (Rehd. et E. H. Wils.) N. H. Xia et C. Y. Wu
+        '''
+        goals = list(self.df["拉丁名"])
+        length = len(self.df)
+        species_pattern = re.compile(r'\b([A-Z][a-zàäçéèêëöôùûüîï-]+)\s?([×X])?\s?([a-zäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s?(.*)')
+        subspecies_pattern = re.compile(r'(.*?)\s?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)\s?([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)\s?([(（A-Z].*)')
+        gen_list = [None]*length
+        spec_list = [None]*length
+        spec_named_person = [None]*length
+        subspec_list = [None]*length
+        subspec_named_person = [None]*length
+        #useless_word = ['ex','et','al','sp','nov','s','l']
+        for i in trange(length, desc="拉丁名分列", ascii=True):
+            try:
+                species_split = species_pattern.findall(goals[i])[0]
+            except:
+                continue
+            gen_list[i] = species_split[0]
+            if species_split[1] == "":  #判定是否有杂交符
+                spec_list[i] = species_split[2]
+            else:
+                spec_list[i] = species_split[1] + " " + species_split[2]
+            subspec_split = subspecies_pattern.findall(species_split[3])
+            if subspec_split == []:
+                spec_named_person[i] = species_split[3]
+            else:
+                spec_named_person[i] = subspec_split[0][0]
+                subspec_list[i] = subspec_split[0][1] + " " + subspec_split[0][2]
+                subspec_named_person[i] = subspec_split[0][3]
+        del self.df['拉丁名']
+        self.df['属名'] = pd.Series(gen_list)
+        self.df['种名'] = pd.Series(spec_list)
+        self.df['命名人'] = pd.Series(spec_named_person)
+        self.df['种下等级'] = pd.Series(subspec_list)
+        self.df['种下命名人'] = pd.Series(subspec_named_person)
+
 

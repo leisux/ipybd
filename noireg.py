@@ -36,8 +36,9 @@ try:
     # 这些数据有可能是因为网络原因，也有可能是因为数据
     # 本身的原因，未能成功注册，可排查后再次提交给 path
     # 重新执行注册
-    link = Link(records, path_elements[0], acc, sec)
-    link.register()
+    if input("是否立即执行 NOI 注册？(y/n):\n") == "y":
+        link = Link(records, path_elements[0], acc, sec)
+        link.register()
 except FileNotFoundError:
     print("\n未能找到达标的数据文件\n")
 

@@ -1,5 +1,6 @@
 import os
 import re
+from types import MethodType, FunctionType
 from datetime import date
 import arrow
 import json
@@ -21,12 +22,33 @@ IPNI_API = 'http://beta.ipni.org/api/1'
 POWO_API = 'http://www.plantsoftheworldonline.org/api/2'
 
 
+def ifunc(obj):
+    if isinstance(obj, (type, FunctionType)):
+        def handler(*args, **kwargs):
+            param = args[0]
+            if isinstance(param, str) and param.startswith('>'):
+                return obj, args, kwargs
+            else:
+                try:
+                    if isinstance(param, tuple) and param[0].startswith('>'):
+                        return obj, args, kwargs
+                    elif isinstance(param, list) and param[0][0].startswith('>'):
+                        return obj, args, kwargs
+                    else:
+                        return obj(*args, **kwargs)
+                except AttributeError:
+                    return obj(*args, **kwargs)
+        return handler
+    elif isinstance(obj, MethodType):
+        pass
+    else:
+        pass
+
+
+@ifunc
 class BioName:
     def __init__(self, names):
-        if isinstance(names, str):
-            self.names = [names]
-        else:
-            self.names = names
+        self.names = names
         self.querys = self.build_querys(self.names)
         self.cache = {'ipni': {}, 'col': {}, 'powo': {}}
 
@@ -776,13 +798,10 @@ class BioName:
                 return pd.DataFrame(self.format(p="simpleName"))
 
 
-
+@ifunc
 class DateTime:
     def __init__(self, date_time, style="num", timezone='+08:00'):
-        if isinstance(date_time, str):
-            self.datetime = [date_time]
-        else:
-            self.datetime = date_time
+        self.datetime = date_time
         self.zone = timezone
         # 兼容 RestructureTable，供 __call__ 调用
         self.style = style
@@ -1101,6 +1120,7 @@ class DateTime:
         return pd.DataFrame({"dateTime": std_datetime})
 
 
+@ifunc
 class HumanName:
     def __init__(self, names):
         self.names = names
@@ -1168,6 +1188,7 @@ class HumanName:
         return pd.DataFrame(pd.Series(self.format_names()))
 
 
+@ifunc
 class AdminDiv:
     """中国省市县行政区匹配
 
@@ -1277,6 +1298,7 @@ class AdminDiv:
                             })
 
 
+@ifunc
 class Number:
     def __init__(self, min_column, max_column=None,
                  typ=float, min_num=0, max_num=8848):
@@ -1417,6 +1439,7 @@ class Number:
             return pd.DataFrame(new_column)
 
 
+@ifunc
 class GeoCoordinate:
     def __init__(self, coordinates):
         # coordinates 为包含经度和纬度的数据列，为可迭代对象
@@ -1593,6 +1616,7 @@ class GeoCoordinate:
                              })
 
 
+@ifunc
 class RadioInput:
     def __init__(self, column, title):
         self.column = column
@@ -1657,6 +1681,7 @@ class RadioInput:
         return pd.DataFrame(pd.Series(self.format_option()))
 
 
+@ifunc
 class UniqueID:
     def __init__(self, *columns):
         # columns 可以包含多个数据列联合判重
@@ -1675,7 +1700,7 @@ class UniqueID:
         self.df[self.df.columns[0]] = self.mark_duplicate()
         return self.df
 
-
+@ifunc
 class FillNa:
     def __init__(self, df: "Series or DataFrame isinstance", fval):
         self.df = df
@@ -1684,7 +1709,7 @@ class FillNa:
     def __call__(self):
         return pd.DataFrame(self.df.fillna(self.fval))
 
-
+@ifunc
 class Url:
     def __init__(self, column):
         self.urls = column
