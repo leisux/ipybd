@@ -18,7 +18,7 @@ from ipybd.data_cleaner import *
     单个位置参数若需要先由多个标准字段合并而成，则使用 () 包裹这些字段，被 () 包裹的字
     段，最后一个值为合并后字段间的连接符，目前只支持使用相同的连接符连接不同字段；若最
     终希望将多列折叠为单列数据结构，则可设连接符为 'd', 'l', 'r', 'o', 'a'， 其分别对
-    应者 ‘dict’，‘list’， ‘rowList’, '>jsonObject', '>jsonArray' 等形式。
+    应者 ‘dict’，‘list’， ‘rowList’, 'jsonObject', 'jsonArray' 等形式。
 
     若某个位置参数可能存在多种形式，所有可能的形式需以 [] 包裹，如下方 scientificName。
 

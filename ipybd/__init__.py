@@ -1,4 +1,4 @@
-from ipybd.core import FormatTable, RestructureTable
+from ipybd.core import FormatDataSet, RestructureTable
 
 from ipybd.data_cleaner import (
     ifunc,

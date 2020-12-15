@@ -17,7 +17,6 @@ import aiohttp
 import asyncio
 from ipybd.core import NpEncoder
 from tqdm import tqdm
-import os
 
 
 URL = "http://139.198.189.90/api/data_add"

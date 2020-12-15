@@ -24,6 +24,7 @@ setup(
             ),
         install_requires=[
             'pandas>=1.1.1',
+            'xlrd>=1.2.0',
             'tqdm>=4.40.2',
             'prompt_toolkit>=3.0.5',
             'requests>=2.21.0',

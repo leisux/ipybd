@@ -10,7 +10,6 @@ from types import FunctionType, MethodType
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.shortcuts import prompt
-from xlrd import XLRDError
 from ipybd.data_cleaner import BioName, GeoCoordinate, DateTime, Number, AdminDiv, RadioInput, HumanName, UniqueID
 
 
