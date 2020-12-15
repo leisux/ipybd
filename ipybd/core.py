@@ -61,7 +61,7 @@ class ExpressionCompleter(Completer):
                 continue
 
 
-class FormatTable:
+class FormatDataSet:
     with open(STD_TERMS_ALIAS_PATH, encoding="utf-8") as std_alias:
         std_field_alias = json.load(std_alias)
 
@@ -295,7 +295,7 @@ class FormatTable:
                             completer=ExpressionCompleter(
                                 self.raw_columns,
                                 self._stdfields,
-                                FormatTable.std_field_alias),
+                                FormatDataSet.std_field_alias),
                             complete_while_typing=False
                             )
         # 如果忽略所有，这些列名将映射到自身
@@ -432,12 +432,12 @@ class FormatTable:
 
     def __auto2std_field(self, raw_field):
         # 首先找出表格列名中使用标准名称的列名
-        if raw_field in FormatTable.std_field_alias:
+        if raw_field in FormatDataSet.std_field_alias:
             self.columns_mapping[raw_field] = raw_field
         else:
             # 如果列名用的不是标准名子，逐个比较别名库，找到对应的标准名称
             std_options = []
-            for k, v in FormatTable.std_field_alias.items():
+            for k, v in FormatDataSet.std_field_alias.items():
                 if raw_field.upper() in v:
                     std_options.append(k)
             if len(std_options) == 1:
@@ -467,7 +467,7 @@ class FormatTable:
         for raw_field in tqdm(self.columns_mapping, desc="列名映射", ascii=True):
             self.__auto2std_field(raw_field)
         invalid_mapping = self.__check_duplicate_mapping()
-        self._stdfields = tuple(FormatTable.std_field_alias.keys())
+        self._stdfields = tuple(FormatDataSet.std_field_alias.keys())
         while invalid_mapping:
             # print("\n下方式是可以映射的标准列名序列表：\n")
             # self._prt_items(2, self._stdfields)
@@ -657,7 +657,7 @@ class RestructureTableMeta(type):
         return super().__new__(cls, name, bases, dct)
 
 
-class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
+class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
     # self.__class__.columns_model from std_table_objects
     def __init__(self, *args, fcol=False, **kwargs):
         super(RestructureTable, self).__init__(*args, **kwargs)
@@ -948,13 +948,13 @@ class RestructureTable(FormatTable, metaclass=RestructureTableMeta):
                 如果找不到对应列名，返回 None
         """
         column_names = []
-        # 如果 ReStructureTable 已经与 FormatTable 一致，
+        # 如果 ReStructureTable 已经与 FormatDataSet 一致，
         # 则直接用原始表中与之对应列
         if (param in self.columns_mapping.values() or
                 param[0:-1] in self.columns_mapping.values()):
             column_names.append(self.__get_key(param))
             del self.columns_mapping[column_names[0]]
-        # 对于ReStructureTable与 FormatTable 不一致的字段转换，
+        # 对于ReStructureTable与 FormatDataSet 不一致的字段转换，
         # 综合比较后以前者为主修改后者，前者未覆盖的则依据后者处理。
         else:
             if isinstance(param, str):
