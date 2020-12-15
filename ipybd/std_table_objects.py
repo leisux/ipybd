@@ -21,10 +21,10 @@ def imodel(enum_columns, cut=False):
     return type(cls_name, (RestructureTable,), cls_attrs)
 
 
-class OccurrenceRecord(RestructureTable):
+class Occurrence(RestructureTable):
     columns_model = OccurrenceTerms
     def __init__(self, io):
-        super(OccurrenceRecord, self).__init__(io)
+        super(Occurrence, self).__init__(io)
         # 对重塑结果中的各列进行重新排序
         self._re_range_columns()
 

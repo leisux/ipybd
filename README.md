@@ -16,6 +16,10 @@ ipybd 是一款由 `Python` 语言开发的中文生物多样性数据清洗、�
 12. **`Pandas`**： Pandas 是整个 `Python` 数据分析生态中的核心库，`ipybd`基底数据结构完全基于 `Pandas.DataFrame` ，因此可以直接使用 `Pandas` 生态完善的数据统计分析功能。
 13. **数据输出**：经过处理的数据，可以输出为Excel/CSV文件或者直接更新至相应的数据库之中。
 
+[toc]
+
+
+
 ## 一、安装方法
 
 通过 pip 在线安装 ipybd：
@@ -997,23 +1001,29 @@ Out:
 
 
 
-### 三、数据模型定义
+### 三、DarwinCore 模型
 
-#### 3.1 OccurrenceRecord
+#### 3.1 Occurrence
 
-#### 3.2 KingdoniaPlant
+#### 3.2 CVH
+
+#### 3.2 NSII
+
+#### 3.3 NOI
+
+#### 3.4 KingdoniaPlant
+
+### 四. 自定义数据模型
 
 
 
-### 四、基于 Pandas 的数据统计与分析生态
+### 五、标签打印
+
+### 六、基于 Pandas 的数据统计与分析生态
 
 
 
-### 五、特别声明
+### 七、特别声明
 
 1. Ipybd 遵从 GNU General Public License v3.0 许可    
 2. 本软件由 NSII 资助，© 徐洲锋，中国科学院昆明植物研究所
-
-
-
-if date_time in ["0000:01:01 00:00:02", "9999-01-01 00:00:00", "1970-01-01 00:00:00", "0000-01-01 00:00:00"]"

@@ -1,3 +1,5 @@
 from ipybd import NoiOccurrence
 
-NoiOccurrence(r"/Users/xuzhoufeng/Downloads/维管束植物临时库.xlsx") 
+test = NoiOccurrence(r"/Users/xuzhoufeng/OneDrive/PDP/testfile/DataCleaningTest.xlsx")
+
+test.write_json()

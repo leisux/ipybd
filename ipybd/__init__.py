@@ -15,7 +15,7 @@ from ipybd.data_cleaner import (
 
 from ipybd.std_table_objects import (
     imodel,
-    OccurrenceRecord,
+    Occurrence,
     KingdoniaPlant,
     NoiOccurrence,
     NSII,
