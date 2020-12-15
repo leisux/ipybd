@@ -12,7 +12,7 @@ ipybd 是一款由 `Python` 语言开发的中文生物多样性数据清洗、�
 8. **拆分与合并**：`ipybd` 不仅可以对数据列进行各种合并和拆分，还可以将单列、多列或整个表格的数据列映射为各类 Python `dict`/`list` 对象或者 JSON `Object` 和 `Array`，从而为各种数据分析和互联网平台的数据交换工作提供灵活的格式转换支持。
 9. **DarwinCore 数据模型**：提供了完善的各类中文字段名到标准的 DarwinCore 字段名的自动映射支持和半自动映射引导，同时 ipybd 还提供了相应的 DarwinCore 数据模型类，能够将绝大多数不同结构不同数值格式的生物多样性数据表重塑为统一规范的数据表，因此可以极大的简化不同数据集的标准化聚合工作。
 10. **自定义数据模型**：除了 DarwinCore， 用户还可以通过 `Enum` 类在 `ipybd` 定义的语义下对上述各种能力进行自由拼接和组合，快速定制出个性化的数据模型，以应对不同需求的众源数据处理。
-11. **标签打印：**能够生成传统标签样式和带有条形码/二维码样式的纸质标签文档以供打印（后续还会提供标签模版自定义功能）。
+11. **标签打印**：能够生成传统标签样式和带有条形码/二维码样式的纸质标签文档以供打印（后续还会提供标签模版自定义功能）。
 12. **`Pandas`**： Pandas 是整个 `Python` 数据分析生态中的核心库，`ipybd`基底数据结构完全基于 `Pandas.DataFrame` ，因此可以直接使用 `Pandas` 生态完善的数据统计分析功能。
 13. **数据输出**：经过处理的数据，可以输出为Excel/CSV文件或者直接更新至相应的数据库之中。
 
@@ -97,32 +97,32 @@ Out:
 
 使用时，只需将上例`get`方法中的相应关键字替换为所需关键字即可。
 
-### 2. FormatTable
+### 2. FormatDataSet
 
-`FormatTable` 类是 ipybd 的核心类。它提供了对生物多样性相关的各类数据表进行各种表结构重构和值格式化处理的基本方法。普通用户也可以直接调用它以更加自主的方式处理个性化的数据集或者开发自己的脚本和程序。
+`FormatDataSet` 类是 ipybd 进行数据处理的核心类。它提供了对生物多样性相关的各类数据表进行各种表结构重构和值格式化处理的基本方法。普通用户也可以直接调用它以更加自主的方式处理个性化的数据集或者开发自己的脚本和程序。
 
 #### 2.1 数据的装载
 
-目前 FormatTable 可接受一个 Excel、CSV、TXT、Pandas.DataFrame、RDBMS 数据库对象进行实例化：基于 Excel 、CSV 、TXT 数据表实例化，可以直接传递相应文件的路径给 `FormatTable`：
+目前 FormatDataSet 可接受一个 Excel、CSV、TXT、Pandas.DataFrame、RDBMS 数据库对象进行实例化：基于 Excel 、CSV 、TXT 数据表实例化，可以直接传递相应文件的路径给 `FormatDataSet`：
 
 ```python
-collections = FormatTable(r"~/Documents/record2019-09-10.xlsx") 
+collections = FormatDataSet(r"~/Documents/record2019-09-10.xlsx") 
 ```
 
-`FormatTable` 默认采用 UTF-8 编码文件，如果传递 CSV 文件出现`UnicodeDecodeError`错误，可以尝试显式指定相应的编码方式，一般都可以得到解决（Python 可选用的标准编码[戳这里](https://docs.python.org/3/library/codecs.html#standard-encodings)）。
+`FormatDataSet` 默认采用 UTF-8 编码文件，如果传递 CSV 文件出现`UnicodeDecodeError`错误，可以尝试显式指定相应的编码方式，一般都可以得到解决（Python 可选用的标准编码[戳这里](https://docs.python.org/3/library/codecs.html#standard-encodings)）。
 
 ```python
 # 这里显式的指定了 csv 文件的编码方式为 gbk
-collections = FormatTable(r"~/Documents/record2019-09-10.cvs", encoding='gbk') 
+collections = FormatDataSet(r"~/Documents/record2019-09-10.cvs", encoding='gbk') 
 ```
 
-如果已经有一个 DataFrame 对象，也可以直接传递给 `FormatTable`：
+如果已经有一个 DataFrame 对象，也可以直接传递给 `FormatDataSet`：
 
 ```pythoon
-collections = FormatTable(DataFrame)
+collections = FormatDataSet(DataFrame)
 ```
 
-基于本地或线上的关系型数据库创建 `FormatTable` 实例，需要先创建数据库连接。在 python 生态中有很多数据库连接器，比如 mysqlclient、pymysql、mysql-connector 等等，下方示例使用的是 sqlalchemy 建立 mysql 数据库连接，个人可以根据喜好自行选择相应的连接库创建连接器。
+基于本地或线上的关系型数据库创建 `FormatDataSet` 实例，需要先创建数据库连接。在 python 生态中有很多数据库连接器，比如 mysqlclient、pymysql、mysql-connector 等等，下方示例使用的是 sqlalchemy 建立 mysql 数据库连接，个人可以根据喜好自行选择相应的连接库创建连接器。
 
 ```python
 # 首先导入相应的连接库
@@ -136,8 +136,8 @@ conn = create_engine('mysql+pymysql://root:mypassward@localhost:3306/ScientificN
 # 这里的sql语句演示了从 ScientificName 数据库中调取 10 条 theplantlist 学名数据
 sql = "select * from theplantlist limit 10;"
 
-# 将 sql 语句和建立好的连接器传递给 ipybd.FormatTable
-tpl = FormatTable(sql, conn)
+# 将 sql 语句和建立好的连接器传递给 ipybd.FormatDataSet
+tpl = FormatDataSet(sql, conn)
 
 # 执行完毕后，数据会以 DataFrame 结构保存 tpl 实例的 df 对象
 # 然后就可以在本地内存中对这些数据进行各种操作了
@@ -160,7 +160,7 @@ Out:
 
 #### 2.2 学名处理
 
-`FormatTable` 类基于 `BioName` 实例封装了一些学名处理方法，以便用户能够更便捷的对数据表中的名称进行处理。比如对于上述 `collections` 实例，若相关数据表中的学名并非单列，而是按照 `"属名"`、`"种名"`、`"种下单元"`、`"命名人"`四列分列存储，单纯使用 `BioName` 类需要用户先自行合并相应数据列才可以执行在线查询。而 `FormatTable` 实例则可以直接进行学名的查询和匹配：
+`FormatDataSet` 类基于 `BioName` 实例封装了一些学名处理方法，以便用户能够更便捷的对数据表中的名称进行处理。比如对于上述 `collections` 实例，若相关数据表中的学名并非单列，而是按照 `"属名"`、`"种名"`、`"种下单元"`、`"命名人"`四列分列存储，单纯使用 `BioName` 类需要用户先自行合并相应数据列才可以执行在线查询。而 `FormatDataSet` 实例则可以直接进行学名的查询和匹配：
 
 ```python
 # 这里以获取 ipni 平台的信息为例
@@ -189,7 +189,7 @@ Out:
  ]
 ```
 
-如上所示，不同数据表的学名表示方式时常会有差异，而通过诸如`get_ipni_name`方法这样的 `FormatTable` 实例方法可以大幅提高数据处理的便捷性和灵活性。目前 `FormatTable` 实例共支持以下几种学名处理方法：
+如上所示，不同数据表的学名表示方式时常会有差异，而通过诸如`get_ipni_name`方法这样的 `FormatDataSet` 实例方法可以大幅提高数据处理的便捷性和灵活性。目前 `FormatDataSet` 实例共支持以下几种学名处理方法：
 
 + `get_powp_name`: 获取 powo 平台相应学名的科属地位、学名简写和命名人信息；
 
@@ -224,7 +224,7 @@ collections.save_data(r"~/Documents/new_record.xlsx")
 同物种学名一样，数据表中的中文行政区划也有可能是多列或单列。`FormatTale`提供了类似的方法对其进行批量清洗和转换。
 
 ```python
-# FormatTable 实例可以通过 df 属性获得数据表的 DataFrame
+# FormatDataSet 实例可以通过 df 属性获得数据表的 DataFrame
 # 下行代码输出了 collections 前 30 行记录的行政区划：
 collections.df[["国别", "行政区"]].head(30)                                                                                                                                                                                           
 
@@ -273,7 +273,7 @@ Out:
 
 类似这样的行政区数据大多转录自手写的纸质标签记录，尤其是那些年代比较久远的生物多样性原始数据集，这样简略的记录其实是广泛存在的，纯粹依靠人工逐条处理这些历史数据，其实是一件极为低效和不可靠的模式。而利用人工和 `ipybd`相结合的方式，可以大幅提高这类工作的效率和品质。
 
-目前 `FormatTable` 实例的`format_admindiv`方法可以自动进行县级及其以上等级的中文行政区名称的清洗和转换：
+目前 `FormatDataSet` 实例的`format_admindiv`方法可以自动进行县级及其以上等级的中文行政区名称的清洗和转换：
 
 ```python
 # 使用方式类似于学名处理方法，将覆盖国省市县行政区名的相关字段按序传递给方法即可
@@ -489,7 +489,7 @@ UTC 世界协调时在处理和分析跨时区生物多样性数据时，具有�
 
 #### 2.5 经纬度清洗和转换
 
-经纬度数据是物种分布信息最为关键的信息，`FormatTable`实例为此提供了严格可靠的数据清洗方法 `format_latlon`，该方法既能最大限度的执行数据的自动清洗和转换，又能实现百分之百的数据纠错：
+经纬度数据是物种分布信息最为关键的信息，`FormatDataSet`实例为此提供了严格可靠的数据清洗方法 `format_latlon`，该方法既能最大限度的执行数据的自动清洗和转换，又能实现百分之百的数据纠错：
 
 ```python
 collections.df['GPS'].head(20)     
@@ -656,7 +656,7 @@ Out:
 
 #### 2.7 重复值标注
 
-`FormatTable` 提供了类似 Excel 的行值判重功能，该功能可以通过 `mark_repeat` 方法实现。
+`FormatDataSet` 提供了类似 Excel 的行值判重功能，该功能可以通过 `mark_repeat` 方法实现。
 
 ```python
 collections.df[["标本号", "国别", "Time"]]
