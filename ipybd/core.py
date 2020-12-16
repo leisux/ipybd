@@ -659,19 +659,25 @@ class RestructureTableMeta(type):
 
 class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
     # self.__class__.columns_model from std_table_objects
-    def __init__(self, *args, fcol=False, **kwargs):
+    def __init__(self, *args, fields_mapping=False, cut=False, fcol=False, **kwargs):
         super(RestructureTable, self).__init__(*args, **kwargs)
         # 设置补充缺失列的数值
         self.fill_value = fcol
+        self.fields_mapping = fields_mapping
+        self.cut = cut
         self.rebuild_table()
 
     def rebuild_table(self):
-        if self.__check_old_mapping():
+        if not self.fields_mapping:
+            for key in self.columns_mapping:
+                self.columns_mapping[key] = key
+        elif self.__check_old_mapping():
             self.build_mapping_template()
         # 对表格按照定义的枚举Terms进行重塑
         self.rebuild_columns()
         # 对枚举中尚未定义的列按照人工给定的映射关系进行重塑
         self.table_mapping(self.columns_mapping)
+        self._re_range_columns(self.cut)
 
     def __check_old_mapping(self):
         """ 确定用户处理的数据表是否之前已经经过处理
@@ -715,7 +721,7 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
         else:
             return True
 
-    def _re_range_columns(self, cut=False):
+    def _re_range_columns(self, cut):
         std_columns = [
           column for column in self.__class__.columns_model.__members__.keys()
           if column in self.df.columns
@@ -851,15 +857,7 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
         return new_args, kwargs, columns
 
     def column_mapping(self, title, param):
-        if isinstance(param, list):
-            # 如果某个参数有多种可能的情况，则发现首个符合条件的就终止
-            # 比如学名既可能是由一个字段存储也可能是由表中多个字段拼接而成
-            # 此时多个潜在的参数会根据权重按序在 [] 中定义好多种可能
-            for choice in param:
-                arg_name = self.column_mapping(title, choice)
-                if arg_name:
-                    return arg_name
-        elif isinstance(param, str):
+        if isinstance(param, str):
             if param.startswith('>'):
                 arg_name = self.build_arg(title, param[1:])
             else:
@@ -874,6 +872,16 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
                     raise ValueError
             except:
                 raise ValueError
+        elif isinstance(param, list):
+            # 如果某个参数有多种可能的情况，则发现首个符合条件的就终止
+            # 比如学名既可能是由一个字段存储也可能是由表中多个字段拼接而成
+            # 此时多个潜在的参数会根据权重按序在 [] 中定义好多种可能
+            for choice in param:
+                arg_name = self.column_mapping(title, choice)
+                if arg_name:
+                    return arg_name
+        elif isinstance(param, dict):
+            pass
         else:
             raise ValueError
         return arg_name
@@ -883,7 +891,7 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
 
         title: 配置文件中定义的列名 str
         param: 数据模型中定义的数据列表达式
-        return: None 或 str, str  是真实可调用的数据表表头名
+        return: None 或 str, str 是真实可调用的数据表表头名
         """
         columns = self.get_arg(param)
         # 位置参数只要缺失一个，就终止处理

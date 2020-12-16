@@ -10,23 +10,20 @@ from ipybd.lib.noi_occurrence_schema import schema
 from tqdm import trange
 
 
-def imodel(enum_columns, cut=False):
-    def __init__(self, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
-        self._re_range_columns(cut)
+def imodel(enum_model):
+    def __init__(self, *args, fields_mapping=False, cut=True, fcol=False, **kwargs):
+        super(self.__class__, self).__init__(*args, fields_mapping=fields_mapping, cut=cut, fcol=fcol, **kwargs)
 
-    cls_name = enum_columns.__name__
-    cls_attrs = dict(columns_model=enum_columns, __init__=__init__)
+    cls_name = enum_model.__name__
+    cls_attrs = dict(columns_model=enum_model, __init__=__init__)
 
     return type(cls_name, (RestructureTable,), cls_attrs)
 
 
 class Occurrence(RestructureTable):
     columns_model = OccurrenceTerms
-    def __init__(self, io):
-        super(Occurrence, self).__init__(io)
-        # 对重塑结果中的各列进行重新排序
-        self._re_range_columns()
+    def __init__(self, *args, **kwargs):
+        super(Occurrence, self).__init__(*args, fields_mapping=True, **kwargs)
 
 
 class NoiOccurrence(RestructureTable):
@@ -42,9 +39,7 @@ class NoiOccurrence(RestructureTable):
                 self.json_file_path = os.getcwd()
             else:
                 self.json_file_path = path_elms[0]
-        super(NoiOccurrence, self).__init__(*args, **kwargs)
-        # 对重塑结果中的各列进行重新排序
-        self._re_range_columns(cut=True)
+        super(NoiOccurrence, self).__init__(*args, field_mapping=True, cut=True, **kwargs)
 
     def write_json(self):
         print("\n开始数据质量检查,此处可能耗时较长，请耐心等待...\n")
@@ -108,10 +103,8 @@ class NoiOccurrence(RestructureTable):
 
 class KingdoniaPlant(RestructureTable):
     columns_model = KingdoniaPlantTerms
-    def __init__(self, io):
-        super(KingdoniaPlant, self).__init__(io, fcol=None)
-        # 对重塑结果中的各列进行重新排序
-        self._re_range_columns(cut=True)
+    def __init__(self, *args, **kwargs):
+        super(KingdoniaPlant, self).__init__(*args, fields_mapping=True, cut=True, fcol=None, **kwargs)
         self.cleaning_null_identifications()
 
     def cleaning_null_identifications(self):
@@ -124,18 +117,14 @@ class KingdoniaPlant(RestructureTable):
 
 class NSII(RestructureTable):
     columns_model = NsiiTerms
-    def __init__(self, io):
-        super(NSII, self).__init__(io)
-        # 对重塑结果中的各列进行重新排序
-        self._re_range_columns(cut=True)
+    def __init__(self, *args, **kwargs):
+        super(NSII, self).__init__(*args, fields_mapping=True, cut=True, **kwargs)
 
 
 class CVH(RestructureTable):
     columns_model = CvhTerms
-    def __init__(self, io):
-        super(CVH, self).__init__(io)
-        # 对重塑结果中的各列进行重新排序
-        self._re_range_columns(cut=True)
+    def __init__(self, *args, **kwargs):
+        super(CVH, self).__init__(*args, fields_mapping=True, cut=True, **kwargs)
 
     def btk_collectors2cvh(self):
         recordedby = list(self.df["采集人"])

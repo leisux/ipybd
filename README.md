@@ -1015,21 +1015,88 @@ Out:
 
 
 
-### 三、DarwinCore 模型
+### 三、数据模型定义
 
-#### 3.1 Occurrence
+#### 3.1 特定数据集的结构重塑
 
-#### 3.2 CVH
+```python
+from ipybd import imodel                                                                                                                                                
+from enum import Enum                                                                                                                                                   
 
-#### 3.2 NSII
+@imodel 
+class MyCollection(Enum): 
+    记录人 = '>采集人' 
+    记录编号 = '>采集号' 
+    记录时间 = '>采集日期' 
+    行政区划 = ('>省市', '>区县', '，') 
+    学名 = ('>属', '>种', '>种下等级', ' ') 
 
-#### 3.3 NOI
-
-#### 3.4 KingdoniaPlant
-
-### 四. 自定义数据模型
+```
 
 
+
+```python
+cvh = MyCollection(r"/Users/.../cvh.xlsx") 
+
+cvh.df.head(5)                                                                                                                                                          
+Out: 
+            记录人                    记录编号      记录时间          行政区划                          学名
+0    王雷,朱雅娟,黄振英  Beijing-huang-dls-0026  20070922   北京,北京市，门头沟区    Ostericum grosseserratum
+1           NaN              YDDXSC-022  20071028   云南省,临沧市，永德县  Boenninghausenia albiflora
+2  欧阳红才,穆勤学,奎文康              YDDXSC-022  20071028           永德县  Boenninghausenia albiflora
+3   吴福川,查学州,余祥洪                     NaN  20070512  湖南省,张家界市，永定区       Broussonetia kazinoki
+4   吴福川,查学州,余祥洪              SCSB-07009  20070512  湖南省,张家界市，永定区       Broussonetia kazinoki
+
+```
+
+#### 3.2 多源数据集的结构重塑
+
+```python
+from enum import Enum
+from ipybd import imodel
+
+@imodel 
+class MyCollection(Enum): 
+    记录人 = '>recordedBy' 
+    记录编号 = '>recordNumber' 
+    记录时间 = '>eventDate' 
+    行政区划 = ('>province', '>city', '>county', '，') 
+    学名 = ['>scientificName',  ('>genus', '>specificEpithet', '>taxonRank', '>infraspecificEpithet', ' ')]
+    
+```
+
+
+
+```python
+cvh = MyCollection(r"/Users/.../cvh.xlsx", fields_mapping=True) 
+
+cvh.df.head(5)
+
+Out:
+            记录人                    记录编号      记录时间          行政区划                          学名
+0    王雷,朱雅娟,黄振英  Beijing-huang-dls-0026  20070922   北京，北京市，门头沟区    Ostericum grosseserratum
+1           NaN              YDDXSC-022  20071028   云南省，临沧市，永德县  Boenninghausenia albiflora
+2  欧阳红才,穆勤学,奎文康              YDDXSC-022  20071028           永德县  Boenninghausenia albiflora
+3   吴福川,查学州,余祥洪                     NaN  20070512  湖南省，张家界市，永定区       Broussonetia kazinoki
+4   吴福川,查学州,余祥洪              SCSB-07009  20070512  湖南省，张家界市，永定区       Broussonetia kazinoki
+
+```
+
+#### 3.2 数据值的清洗与转换
+
+### 四、DarwinCore 模型
+
+#### 4.1 Occurrence
+
+#### 4.2 CVH
+
+#### 4.3 NSII
+
+#### 4.4 NOI
+
+#### 4.5 KingdoniaPlant
+
+###
 
 ### 五、标签打印
 

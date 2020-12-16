@@ -32,8 +32,7 @@ class Label(RestructureTable):
                 the label to be printed, if it is zero, the number of
                 copies is based on individualCount field.
         """
-        super(Label, self).__init__(io, fcol="")
-        self._re_range_columns(cut=True)
+        super(Label, self).__init__(io, cut=True, fcol="")
         self.repeat = repeat
         self.path = os.path.splitext(io)[0]
         self.outfile = self.path + '.html'
