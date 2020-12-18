@@ -1,5 +1,18 @@
-from ipybd import NoiOccurrence
+#from ipybd import NoiOccurrence
+#
+#test = NoiOccurrence(r"/Users/xuzhoufeng/OneDrive/PDP/testfile/DataCleaningTest.xlsx")
+#
+#test.write_json()
 
-test = NoiOccurrence(r"/Users/xuzhoufeng/OneDrive/PDP/testfile/DataCleaningTest.xlsx")
+from enum import Enum 
+from ipybd import imodel
 
-test.write_json()
+@imodel 
+class MyCollection(Enum): 
+    记录人 = '>采集人' 
+    记录编号 = '>采集号' 
+    记录时间 = '>采集日期' 
+    _省_市 = {'>省市':','} 
+    学名 = ('>属', '>种', '>种下等级', ' ') 
+
+cvh = MyCollection(r"/Users/xuzhoufeng/OneDrive/PDP/testfile/cvh.xlsx") 

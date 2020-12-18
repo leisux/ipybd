@@ -791,7 +791,7 @@ Out:
 
 ```
 
-其中`split_column`方法第一个参数为需要拆分的列名。第二个参数为拆分所依据的分隔符，可以是字符（只根据该字符拆分一次），也可以是字符组成的元组（每个字符按序拆分一次）。第三个参数用于设置拆分后新列的列名，如果缺省，则返回 `list` 数据而不改变实例 `df` 属性的数据列；如果给予，则会直接改写`df`属性相应的数据列。上面示例子就是将原 `collections.df` 中 `cite`数据列改为了`author`，`year`, `from`,  'page' 四列。
+其中`split_column`方法第一个参数为需要拆分的列名。第二个参数为拆分所依据的分隔符，可以是字符（只根据该字符拆分一次），也可以是字符组成的元组（每个字符按序拆分一次）。第三个参数用于设置拆分后新列的列名，如果缺省，则返回 `list` 数据而不改变实例 `df` 属性的数据列；如果给予，则会直接改写`df`属性相应的数据列。上面示例子就是将原 `collections.df` 中 `cite`数据列改为了`author`，`year`, `from`,  `page` 四列。
 
 `split_column` 方法同时支持中西文拆分，使用时可以将分隔符设为单个"$"符号或多个该符号组成的元组：
 
@@ -1025,11 +1025,11 @@ from enum import Enum
 
 @imodel 
 class MyCollection(Enum): 
-    记录人 = '>采集人' 
-    记录编号 = '>采集号' 
-    记录时间 = '>采集日期' 
-    行政区划 = ('>省市', '>区县', '，') 
-    学名 = ('>属', '>种', '>种下等级', ' ') 
+    记录人 = '$采集人' 
+    记录编号 = '$采集号' 
+    省_市_ = {'$省市':','}
+    行政区划 = ('$省市', '$区县', '，') 
+    学名 = ('$属', '$种', '$种下等级', ' ') 
 
 ```
 
@@ -1038,14 +1038,14 @@ class MyCollection(Enum):
 ```python
 cvh = MyCollection(r"/Users/.../cvh.xlsx") 
 
-cvh.df.head(5)                                                                                                                                                          
+cvh.df.head()                                                                                                                                                          
 Out: 
-            记录人                    记录编号      记录时间          行政区划                          学名
-0    王雷,朱雅娟,黄振英  Beijing-huang-dls-0026  20070922   北京,北京市，门头沟区    Ostericum grosseserratum
-1           NaN              YDDXSC-022  20071028   云南省,临沧市，永德县  Boenninghausenia albiflora
-2  欧阳红才,穆勤学,奎文康              YDDXSC-022  20071028           永德县  Boenninghausenia albiflora
-3   吴福川,查学州,余祥洪                     NaN  20070512  湖南省,张家界市，永定区       Broussonetia kazinoki
-4   吴福川,查学州,余祥洪              SCSB-07009  20070512  湖南省,张家界市，永定区       Broussonetia kazinoki
+            记录人                    记录编号      记录时间    省     市                          学名
+0    王雷,朱雅娟,黄振英  Beijing-huang-dls-0026  20070922   北京   北京市    Ostericum grosseserratum
+1           NaN              YDDXSC-022  20071028  云南省   临沧市  Boenninghausenia albiflora
+2  欧阳红才,穆勤学,奎文康              YDDXSC-022  20071028  NaN  None  Boenninghausenia albiflora
+3   吴福川,查学州,余祥洪                     NaN  20070512  湖南省  张家界市       Broussonetia kazinoki
+4   吴福川,查学州,余祥洪              SCSB-07009  20070512  湖南省  张家界市       Broussonetia kazinoki
 
 ```
 

@@ -26,13 +26,13 @@ def ifunc(obj):
     if isinstance(obj, (type, FunctionType)):
         def handler(*args, **kwargs):
             param = args[0]
-            if isinstance(param, str) and param.startswith('>'):
+            if isinstance(param, str) and param.startswith('$'):
                 return obj, args, kwargs
             else:
                 try:
-                    if isinstance(param, tuple) and param[0].startswith('>'):
+                    if isinstance(param, tuple) and param[0].startswith('$'):
                         return obj, args, kwargs
-                    elif isinstance(param, list) and param[0][0].startswith('>'):
+                    elif isinstance(param, list) and param[0][0].startswith('$'):
                         return obj, args, kwargs
                     else:
                         return obj(*args, **kwargs)
