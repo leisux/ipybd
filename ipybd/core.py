@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 # Based on python 3
-import os
-import pandas as pd
-import numpy as np
-from tqdm import tqdm
 import json
+import os
 import re
 from types import FunctionType, MethodType
+
+import numpy as np
+import pandas as pd
 from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.shortcuts import prompt
-from ipybd.data_cleaner import BioName, GeoCoordinate, DateTime, Number, AdminDiv, RadioInput, HumanName, UniqueID
+from tqdm import tqdm
 
+from ipybd.data_cleaner import (AdminDiv, BioName, DateTime, GeoCoordinate,
+                                HumanName, Number, RadioInput, UniqueID)
 
 HERE = os.path.dirname(__file__)
 STD_TERMS_ALIAS_PATH = os.path.join(HERE, 'lib', 'std_fields_alias.json')
@@ -56,7 +58,7 @@ class ExpressionCompleter(Completer):
                         str(self._fields_num[i]),
                         start_position=-len(word),
                         display=display,
-                        )
+                    )
             except KeyError:
                 continue
 
@@ -105,10 +107,10 @@ class FormatDataSet:
                     如果数值类型不可拆分，则不作处理
         """
         frame = map(
-                    self.__split_txt,
-                    self.df[split_column],
-                    (splitters for _ in range(self.df.shape[0]))
-                    )
+            self.__split_txt,
+            self.df[split_column],
+            (splitters for _ in range(self.df.shape[0]))
+        )
         if new_headers:
             frame = pd.DataFrame(frame)
             frame.columns = new_headers
@@ -126,22 +128,22 @@ class FormatDataSet:
                     match = re.match(
                         r"[\s\"\']*[\u4e00-\u9fa5][^a-zA-Z]*",
                         result[-1]
-                        )
+                    )
                     if match:
                         result[-1:] = [
                             match.group(0).strip(),
                             result[-1][match.span()[1]:]
-                            ]
+                        ]
                     else:
                         match = re.match(
                             r"[\s\"\']*[a-zA-Z][^\u4e00-\u9fa5]*",
                             result[-1]
-                            )
+                        )
                         if match:
                             result[-1:] = [
                                 match.group(0).strip(),
                                 result[-1][match.span()[1]:]
-                                ]
+                            ]
                 else:
                     result[-1:] = result[-1].split(splitter, 1)
             except (TypeError, AttributeError):
@@ -175,20 +177,20 @@ class FormatDataSet:
             mergers = self.df[columns[0]]
             for column in columns[1:]:
                 mergers = map(
-                              self.__merge_txt2line,
-                              mergers,
-                              self.df[column],
-                              (separators for _ in range(self.df.shape[0]))
-                              )
+                    self.__merge_txt2line,
+                    mergers,
+                    self.df[column],
+                    (separators for _ in range(self.df.shape[0]))
+                )
         elif isinstance(separators, tuple):
             mergers = self.df[columns[0]]
             for column, sepa in zip(columns[1:], separators):
                 mergers = list(map(
-                              self.__merge_txt2line,
-                              mergers,
-                              self.df[column],
-                              (sepa for _ in range(self.df.shape[0]))
-                              ))
+                    self.__merge_txt2line,
+                    mergers,
+                    self.df[column],
+                    (sepa for _ in range(self.df.shape[0]))
+                ))
         if new_header:
             self.df.drop(columns, axis=1, inplace=True)
             self.df[new_header] = pd.Series(mergers)
@@ -203,7 +205,7 @@ class FormatDataSet:
         for i, r in enumerate(mergers):
             c = r.copy()
             for title, value in c.items():
-                #if not pd.Series(value).any():
+                # if not pd.Series(value).any():
                 try:
                     if pd.isnull(value):
                         del r[title]
@@ -225,7 +227,7 @@ class FormatDataSet:
             if typ == 'jsonArray':
                 mergers[i] = json.dumps(
                     list(r.values()), cls=NpEncoder, ensure_ascii=False
-                    )
+                )
         return mergers
 
     def __merge_txt2line(self, ahead_txt, next_txt, separator):
@@ -332,13 +334,15 @@ class FormatDataSet:
                 separators = tuple(
                     sep[2].strip() if set(sep[2]) != {" "} else " "
                     for sep in elements[0:-2]
-                    )
+                )
             if separators == ():
                 # 如果合并的列名只有一个，为一对一映射
-                self.original_fields_mapping.update({fields2merge[0]: std_field})
+                self.original_fields_mapping.update(
+                    {fields2merge[0]: std_field})
             else:
                 fields2merge.append(separators)
-                self.original_fields_mapping.update({tuple(fields2merge): std_field})
+                self.original_fields_mapping.update(
+                    {tuple(fields2merge): std_field})
         # 单个列名分拆为多个标准列名
         elif elements[0][-1].strip() == "=" and elements[-1][-1].strip() == "":
             num2split = elements[0][1]
@@ -362,9 +366,10 @@ class FormatDataSet:
             splitters = tuple(
                 spl[2].strip() if set(spl[2]) != {" "} else " "
                 for spl in elements[1:-1]
-                )
+            )
             field2split.append(splitters)
-            self.original_fields_mapping.update({tuple(field2split): std_fields})
+            self.original_fields_mapping.update(
+                {tuple(field2split): std_fields})
             # print(self.original_fields_mapping)
         else:
             print("\n录入的表达式有误，请重新输入\n")
@@ -449,7 +454,7 @@ class FormatDataSet:
                 print(
                     "\n\n原表中 {0} 列有多个标准字段名与之对应：\
                     \n".format(raw_field)
-                    )
+                )
                 while True:
                     self._prt_items(2, std_options)
                     choice2std = input("\n请从潜在对应中选择一个，都不是录入 0：")
@@ -498,7 +503,8 @@ class FormatDataSet:
         if isinstance(args[0], str):
             path_elms = os.path.splitext(args[0])
             if path_elms[1].lower() in [".xls", ".xlsx"]:
-                print("\n开始载入数据表格...\n\n如果数据表格太大，此处可能会耗时很长...\n如果长时间无法载入，请将 Excel 表转换为 CSV 格式后重新尝试...\n")
+                print(
+                    "\n开始载入数据表格...\n\n如果数据表格太大，此处可能会耗时很长...\n如果长时间无法载入，请将 Excel 表转换为 CSV 格式后重新尝试...\n")
                 table = pd.read_excel(*args, dtype=str, **kwargs)
             elif path_elms[1].lower() == '.csv':
                 table = self.read_csv(*args, **kwargs)
@@ -723,20 +729,21 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
 
     def _re_range_columns(self, cut):
         columns = [
-          column for column in self.__class__.columns_model.__members__.keys()
+            column for column in self.__class__.columns_model.__members__.keys()
         ]
         model_columns = []
         for column in columns:
             if column in self.df.columns:
                 model_columns.append(column)
             elif '_' in column and not column.startswith('_'):
-                split_columns = [clm for clm in column.split("_") if clm in self.df.columns]
+                split_columns = [clm for clm in column.split(
+                    "_") if clm in self.df.columns]
                 model_columns.extend(split_columns)
         if not cut:
             other_columns = [
                 column for column in self.df.columns
                 if column not in model_columns
-                ]
+            ]
             model_columns.extend(other_columns)
 
         self.df = self.df.reindex(columns=model_columns)
@@ -748,17 +755,19 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
             params = field.value
             if not isinstance(params, dict) and isinstance(params[0], (type, FunctionType, MethodType)) and isinstance(params[-1], dict):
                 if isinstance(params[1], tuple) and len(params) == 3:
-                    args  = self.get_args(field.name, params[1], params[-1])
+                    args = self.get_args(field.name, params[1], params[-1])
                     if args:
                         # 通过定义类的__call__函数实现原始列值的处理
                         new_cols = params[0](*args[0], **args[1])()
                         # _ 开头的名称是模板用于临时定义使用，命名时需要去除 _
-                        columns = field.name.split('_')[1:] if field.name.startswith('_') else field.name.split('_')
+                        columns = field.name.split('_')[1:] if field.name.startswith(
+                            '_') else field.name.split('_')
                         new_cols.columns = columns
                         self.df.drop(args[-1], axis=1, inplace=True)
                         self.df = pd.concat([self.df, new_cols], axis=1)
                     elif self.fill_value is not False:
-                        columns = field.name.split('_')[1:] if field.name.startswith('_') else field.name.split('_')
+                        columns = field.name.split('_')[1:] if field.name.startswith(
+                            '_') else field.name.split('_')
                         for col in columns:
                             if col not in self.df.columns:
                                 self.df[col] = self.fill_value
@@ -775,7 +784,8 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
                         columns={arg_name: column_name}, inplace=True)
                 # 如果原表中无法找到相应的列，用指定的 self.fill_value 填充新列
                 elif self.fill_value is not False:
-                    columns = field.name.split('_')[1:] if field.name.startswith('_') else field.name.split('_')
+                    columns = field.name.split('_')[1:] if field.name.startswith(
+                        '_') else field.name.split('_')
                     for col in columns:
                         if col not in self.df.columns:
                             self.df[col] = self.fill_value
@@ -811,7 +821,7 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
                         new_args.append(param)
                 except AttributeError:
                     new_args.append(param)
-        for key, value in kwargs:
+        for key, value in kwargs.items():
             if isinstance(value, str) and value.startswith('$'):
                 column = self.get_param(title, value[1:])
                 if column:
@@ -849,7 +859,8 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
         # title 由多列合并
         elif isinstance(param, tuple):
             try:
-                fields_name = [field[1:] if field.startswith('$') else None for field in param[:-1]]
+                fields_name = [field[1:] if field.startswith(
+                    '$') else None for field in param[:-1]]
                 if all(fields_name):
                     fields_name.append(param[-1])
                     arg_name = self.get_param(title, tuple(fields_name))
@@ -869,7 +880,8 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
                 if isinstance(param, tuple):
                     param = list(param)
                     param.append(" ")
-                    arg_name = self.model_param_parser(new_fields, tuple(param))
+                    arg_name = self.model_param_parser(
+                        new_fields, tuple(param))
                 elif isinstance(param, str):
                     arg_name = self.model_param_parser(new_fields, param)
                 else:
@@ -999,7 +1011,8 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
                         del self.original_fields_mapping[self.__get_key(field)]
                         for header in field:
                             if header != clm:
-                                self.original_fields_mapping.update({header: header})
+                                self.original_fields_mapping.update(
+                                    {header: header})
                         column_names.append(clm)
                 if len(column_names) < n + 1:
                     # 对于需要进行多次映射处理的字段，self.original_fields_mapping

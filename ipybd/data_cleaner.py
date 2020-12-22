@@ -1,17 +1,19 @@
+import asyncio
+import json
 import os
 import re
-from types import MethodType, FunctionType
-from datetime import date
-import arrow
-import json
-import requests
 import urllib
-from ipybd.api_terms import Filters
-import asyncio
+from datetime import date
+from types import FunctionType, MethodType
+from typing import Union
+
 import aiohttp
+import arrow
 import pandas as pd
+import requests
 from tqdm import tqdm
 
+from ipybd.api_terms import Filters
 
 HERE = os.path.dirname(__file__)
 STD_OPTIONS_ALIAS_PATH = os.path.join(HERE, 'lib', 'std_options_alias.json')
@@ -47,10 +49,11 @@ def ifunc(obj):
 
 @ifunc
 class BioName:
-    def __init__(self, names):
+    def __init__(self, names: Union[list, pd.Series, tuple], style='scientificName'):
         self.names = names
         self.querys = self.build_querys(self.names)
         self.cache = {'ipni': {}, 'col': {}, 'powo': {}}
+        self.style = style
 
     def get(self, action, typ=list, mark=False):
         results = self.__build_cache_and_get_results(action)
@@ -140,7 +143,7 @@ class BioName:
                 'powoName': self.powo_name,
                 'powoAccepted': self.powo_accepted,
                 'powoImages': self.powo_images
-                }
+            }
             # 如果存在缓存，则直接从缓存数据中提取结果
             # 如果没有缓存，则先生成缓存，再取数据
             search_terms = {}
@@ -149,7 +152,7 @@ class BioName:
                     results[org_name] = self.get_cache_result(
                         cache[org_name],
                         action_func[action]
-                        )
+                    )
                 except KeyError:
                     # 缓存中不存在 org_name 检索结果时触发
                     if query:
@@ -196,16 +199,16 @@ class BioName:
 
     def web_get(self, action, search_terms):
         get_action = {
-                       'stdName': self.get_name,
-                       'colTaxonTree': self.get_col_name,
-                       'colName': self.get_col_name,
-                       'colSynonyms': self.get_col_name,
-                       'ipniName': self.get_ipni_name,
-                       'ipniReference': self.get_ipni_name,
-                       'powoName': self.get_powo_name,
-                       'powoAccepted': self.get_powo_name,
-                       'powoImages': self.get_powo_name
-                       }
+            'stdName': self.get_name,
+            'colTaxonTree': self.get_col_name,
+            'colName': self.get_col_name,
+            'colSynonyms': self.get_col_name,
+            'ipniName': self.get_ipni_name,
+            'ipniReference': self.get_ipni_name,
+            'powoName': self.get_powo_name,
+            'powoAccepted': self.get_powo_name,
+            'powoImages': self.get_powo_name
+        }
         self.pbar = tqdm(total=len(search_terms), desc=action, ascii=True)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -229,7 +232,7 @@ class BioName:
                     session
                 )
                 for rawname in search_terms if self.querys[rawname]
-                ]
+            ]
             return await asyncio.gather(*tasks)
 
     async def web_get_track(self, func, param, session):
@@ -277,7 +280,7 @@ class BioName:
             synonyms = [
                 synonym['synonym'] for synonym
                 in name['accepted_name_info']['Synonyms']
-                ]
+            ]
             return synonyms
         except KeyError:
             raise ValueError
@@ -394,7 +397,7 @@ class BioName:
                 std_teams = {
                     n: self.code_authors(r['author_team'])
                     for n, r in enumerate(names)
-                    }
+                }
                 # 开始比对原命名人与可选学名的命名人的比对结果
                 scores = self.contrast_code(aut_codes, std_teams)
                 # print(scores)
@@ -615,13 +618,13 @@ class BioName:
                 std_names[name][0]
                 if std_names[name] else None
                 for name in self.names
-                ]
+            ]
         elif p == 'scientificName':
             return [
                 ' '.join([std_names[name][0], std_names[name][2]])
                 if std_names[name] else None
                 for name in self.names
-                ]
+            ]
 
     def build_querys(self, names):
         raw2stdname = dict.fromkeys(names)
@@ -653,7 +656,7 @@ class BioName:
             simple_name = " ".join([species_split[0], species_split[2]]) if \
                 species_split[1] == "" else " ".join(
                 [species_split[0], species_split[1], species_split[2]]
-                )
+            )
             author = species_split[3]
             if species_split[2] != "":
                 rank = Filters.specific
@@ -666,16 +669,19 @@ class BioName:
         else:
             if subspec_split[0][1]:
                 simple_name = " ".join(
-                    [species_split[0], species_split[2], subspec_split[0][1], subspec_split[0][2]]
-                    ) if species_split[1] == "" else " ".join(
-                        [species_split[0], species_split[1], species_split[2], subspec_split[0][1], subspec_split[0][2]]
-                        )
+                    [species_split[0], species_split[2],
+                        subspec_split[0][1], subspec_split[0][2]]
+                ) if species_split[1] == "" else " ".join(
+                    [species_split[0], species_split[1], species_split[2],
+                     subspec_split[0][1], subspec_split[0][2]]
+                )
             else:
                 simple_name = " ".join(
                     [species_split[0], species_split[2], subspec_split[0][2]]
-                    ) if species_split[1] == "" else " ".join(
-                        [species_split[0], species_split[1], species_split[2], subspec_split[0][2]]
-                        )
+                ) if species_split[1] == "" else " ".join(
+                    [species_split[0], species_split[1],
+                     species_split[2], subspec_split[0][2]]
+                )
             author = subspec_split[0][3]
             rank = Filters.infraspecific
         return simple_name.strip(), rank, author, raw_name
@@ -766,11 +772,11 @@ class BioName:
         return author_team
 
     def __call__(self, mark=True):
-        if input("是否要进行学名处理？（y/n）\n" ) == 'y':
+        if input("是否要进行学名处理？（y/n）\n") == 'y':
             pass
         else:
             return pd.DataFrame(self.names)
-        if input("\n经处理返回的学名，是否需要携带命名人？(y/n)\n") == 'y':
+        if self.style == 'scientificName':
             choose = input(
                 "\n是否执行拼写检查，在线检查将基于 sp2000.org.cn、ipni.org 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
             if choose.strip() == 'y':
@@ -779,11 +785,11 @@ class BioName:
                         ' '.join([name[0], name[1]]).strip()
                         if name[1] else name[0]
                         for name in self.get('stdName', mark=mark)
-                        ]
+                    ]
                 )
             else:
                 return pd.DataFrame(self.format(p="scientificName"))
-        else:
+        elif self.style == 'simpleName':
             choose = input(
                 "\n是否执行拼写检查，在线检查将基于 sp2000.org.cn、ipni.org 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
             if choose.strip() == 'y':
@@ -792,7 +798,7 @@ class BioName:
                         name[0].strip()
                         if name[1] else name[0]
                         for name in self.get('stdName', mark=mark)
-                        ]
+                    ]
                 )
             else:
                 return pd.DataFrame(self.format(p="simpleName"))
@@ -800,7 +806,7 @@ class BioName:
 
 @ifunc
 class DateTime:
-    def __init__(self, date_time, style="num", timezone='+08:00'):
+    def __init__(self, date_time: Union[list, pd.Series, tuple], style="num", timezone='+08:00'):
         self.datetime = date_time
         self.zone = timezone
         # 兼容 RestructureTable，供 __call__ 调用
@@ -832,13 +838,13 @@ class DateTime:
                             datetime.month,
                             datetime.day,
                             style
-                            )
                         )
+                    )
             else:
                 # 然后尝试作为 date 进行处理
                 try:
                     date_degree, date_elements = self.get_date_elements(
-                                                                        date_time)
+                        date_time)
                 except TypeError:
                     result.append(None)
                     continue
@@ -849,8 +855,8 @@ class DateTime:
                     # 判断年月日的数值是否符合规范&判断各数值是 年 月 日 中的哪一个
                     try:
                         year, month, day = self.format_date_elements(
-                                                                     date_degree,
-                                                                     date_elements)
+                            date_degree,
+                            date_elements)
                         result.append(
                             self.__format_date_style(
                                 year, month, day, style))
@@ -1122,7 +1128,7 @@ class DateTime:
 
 @ifunc
 class HumanName:
-    def __init__(self, names):
+    def __init__(self, names: Union[list, pd.Series, tuple]):
         self.names = names
 
     def format_names(self):
@@ -1205,7 +1211,7 @@ class AdminDiv:
     “!中国,云南省”
     """
 
-    def __init__(self, address):
+    def __init__(self, address: Union[list, pd.Series, tuple]):
         self.org_address = address
         self.region_mapping = dict.fromkeys(self.org_address)
 
@@ -1222,14 +1228,14 @@ class AdminDiv:
             (
                 self.region_mapping[region].split("::")
                 if self.region_mapping[region] else self.region_mapping[region]
-                ) for region in self.org_address
-            ]
+            ) for region in self.org_address
+        ]
         # 未达县级的标准行政区，用None 补齐，注意浅拷贝陷阱
         [
             (
                 region.extend([None]*(4-len(region)))
                 if region and len(region) < 4 else region
-                ) for region in new_regions
+            ) for region in new_regions
         ]
 
         self.country = [(region[0] if region else None)
@@ -1300,7 +1306,7 @@ class AdminDiv:
 
 @ifunc
 class Number:
-    def __init__(self, min_column, max_column=None,
+    def __init__(self, min_column: Union[list, pd.Series, tuple], max_column: Union[list, pd.Series, tuple] = None,
                  typ=float, min_num=0, max_num=8848):
         """
             min_column: 可迭代对象，数值区间中的小数值数据列
@@ -1332,7 +1338,7 @@ class Number:
             column1 = [
                 pattern.findall(str(value)) if not pd.isnull(value) else []
                 for value in self.min_column
-                ]
+            ]
             if self.max_column is None:
                 new_column = []
                 for i, v in enumerate(tqdm(column1, desc="数值处理", ascii=True)):
@@ -1351,7 +1357,7 @@ class Number:
                 column2 = [
                     pattern.findall(str(value)) if not pd.isnull(value) else []
                     for value in self.max_column
-                    ]
+                ]
                 return self._min_max(column1, column2, self.typ, mark)
         except KeyError:
             raise ValueError("列表参数有误\n")
@@ -1364,9 +1370,9 @@ class Number:
             typ: 数值的类型，如 int, flora
         """
         for p, q in zip(
-                        tqdm(column1, desc="数值区间", ascii=True),
-                        tqdm(column2, desc="数值区间", ascii=True)
-                        ):
+            tqdm(column1, desc="数值区间", ascii=True),
+            tqdm(column2, desc="数值区间", ascii=True)
+        ):
             # 只要 p + q 最终能获得两个数即可
             # 因此不需要 p 或 q 一定是单个数
             # 这对于一些使用非一致分隔符表达的数值区间比较友好
@@ -1411,17 +1417,17 @@ class Number:
                 for i in range(len(column2))]
         else:
             min_column = [
-                    typ(column1[i][0])
-                        if column1[i][0] else None
-                    if not pd.isnull(self.min_column[i]) else None
-                    for i in range(len(column1))
-                    ]
+                typ(column1[i][0])
+                if column1[i][0] else None
+                if not pd.isnull(self.min_column[i]) else None
+                for i in range(len(column1))
+            ]
             max_column = [
-                    typ(column2[i][0])
-                        if column2[i][0] else None
-                    if not pd.isnull(self.max_column[i]) else None
-                    for i in range(len(column2))
-                    ]
+                typ(column2[i][0])
+                if column2[i][0] else None
+                if not pd.isnull(self.max_column[i]) else None
+                for i in range(len(column2))
+            ]
         return [[i, j] for i, j in zip(min_column, max_column)]
 
     def __call__(self, mark=True):
@@ -1441,8 +1447,7 @@ class Number:
 
 @ifunc
 class GeoCoordinate:
-    def __init__(self, coordinates):
-        # coordinates 为包含经度和纬度的数据列，为可迭代对象
+    def __init__(self, coordinates: Union[list, pd.Series, tuple]):
         self.coordinates = coordinates
 
     def format_coordinates(self):
@@ -1512,20 +1517,24 @@ class GeoCoordinate:
                         if direct_fir_seq == 1:
                             new_lat[i] = direct[direct_fir] * round(
                                 int(gps_fir_num[0]) +
-                                float(gps_fir_num[1] + "." + gps_fir_num[2]) / 60,
+                                float(gps_fir_num[1] + "." +
+                                      gps_fir_num[2]) / 60,
                                 6)
                             new_lng[i] = direct[direct_sec] * round(
                                 int(gps_sec_num[0]) +
-                                float(gps_sec_num[1] + "." + gps_sec_num[2]) / 60,
+                                float(gps_sec_num[1] + "." +
+                                      gps_sec_num[2]) / 60,
                                 6)
                         else:
                             new_lng[i] = direct[direct_fir] * round(
                                 int(gps_fir_num[0]) +
-                                float(gps_fir_num[1] + "." + gps_fir_num[2]) / 60,
+                                float(gps_fir_num[1] + "." +
+                                      gps_fir_num[2]) / 60,
                                 6)
                             new_lat[i] = direct[direct_sec] * round(
                                 int(gps_sec_num[0]) +
-                                float(gps_sec_num[1] + "." + gps_sec_num[2]) / 60,
+                                float(gps_sec_num[1] + "." +
+                                      gps_sec_num[2]) / 60,
                                 6)
                     else:  # 度分秒表示法
                         if direct_fir_seq == 1:
@@ -1611,9 +1620,9 @@ class GeoCoordinate:
     def __call__(self):
         self.lat, self.lng = self.format_coordinates()
         return pd.DataFrame({
-                             "decimalLatitude": self.lat,
-                             "decimalLongitude": self.lng
-                             })
+            "decimalLatitude": self.lat,
+            "decimalLongitude": self.lng
+        })
 
 
 @ifunc
@@ -1683,7 +1692,7 @@ class RadioInput:
 
 @ifunc
 class UniqueID:
-    def __init__(self, *columns):
+    def __init__(self, *columns: pd.Series):
         # columns 可以包含多个数据列联合判重
         self.df = pd.concat(columns, axis=1)
 
@@ -1693,25 +1702,27 @@ class UniqueID:
         marks = [
             "".join(["!", m]) if d and not pd.isnull(m) else m
             for m, d in zip(self.df[self.df.columns[0]], self.duplicated)
-            ]
+        ]
         return marks
 
     def __call__(self):
         self.df[self.df.columns[0]] = self.mark_duplicate()
         return self.df
 
+
 @ifunc
 class FillNa:
-    def __init__(self, df: "Series or DataFrame isinstance", fval):
+    def __init__(self, df: Union[pd.DataFrame, pd.Series], fval):
         self.df = df
         self.fval = fval
 
     def __call__(self):
         return pd.DataFrame(self.df.fillna(self.fval))
 
+
 @ifunc
 class Url:
-    def __init__(self, column):
+    def __init__(self, column: Union[list, pd.Series, tuple]):
         self.urls = column
         self.pattern = re.compile(
             r"http://[^,\|\"\']+|https://[^,\|\"\']+|ftp://[^,\|\"\']+")

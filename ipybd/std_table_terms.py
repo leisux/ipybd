@@ -1,24 +1,29 @@
 from enum import Enum
+
 from ipybd.data_cleaner import *
 
-'''定义的枚举将传递给 core.ReStructureTable 重构原始表格
+'''通过枚举定义数据模型传递给 core.ReStructureTable 重构原始表格
 
-    重构的表格，其列名将转换为枚举的 name, 枚举成员的值则定义了相应值的进一步处理方式
+    重构的表格，其列名将转换为枚举定义的 name, 枚举成员的值则定义了相应列值的进一步处理方式
 
-    枚举的 value 按序包含三个组成部分:校验功能、位置参数、数据列的数量；
-    首个元素为值校验类，如果不需要效验，可为空；
-    之后的参数为校值需要传递的一至多个位置参数，若校验类缺省，则值不做校验；位置参数必须
-    由标准列名库中定义的列名作为参数；
-    最后的参数用于标注位置参数中实际传递给校验功能的数据列数量，以让程序从参数中区分出哪
-    些参数是实际的数据，以便在校验之前做必要的预处理。如下方的 individualCount 字段，
-    虽然校值时，需要传递两个位置参数‘individualCount’和'int'，但只有individualCount
-    这个参数是数据表中真实有对应的数据列， 而 'int' 参数只是指示程序按照整型数字处理数
-    据而已，因此其最后一个值设为 1。
+    列值的处理可以调用函数或类，也可以只是做简单的合并、拆分、映射，具体使用方法可参考使用文档；
+    同时，列值的处理也可以开启字段映射功能，开启映射后，即便相应列名有多种写法，也可以自动进行
+    处理。
 
-    单个位置参数若需要先由多个标准字段合并而成，则使用 () 包裹这些字段，被 () 包裹的字
-    段，最后一个值为合并后字段间的连接符，目前只支持使用相同的连接符连接不同字段；若最
-    终希望将多列折叠为单列数据结构，则可设连接符为 'd', 'l', 'r', 'o', 'a'， 其分别对
-    应者 ‘dict’，‘list’， ‘rowList’, 'jsonObject', 'jsonArray' 等形式。
+    枚举定义数据模型时，其需遵守如下书写规则：
+
+    单个列名需要以$修饰进行传递。
+
+    列的拆分是以字典形式进行表达，比如 省_市_县 = {"行政区划":(',', ',')} 字典的 key 是所
+    要拆分的列名，字典的 value 是
+
+    参与数值处理的列可能是由多个列名经过合并、拆分、映射获得：
+    若需要先由多个字段合并而成，则使用 () 包裹这些字段，被 () 包裹的字段，最后一个值
+    为合并后字段间的连接符，目前只支持使用相同的连接符连接不同字段；若最终希望将多列折叠为单列
+    数据结构，则可设连接符为 'd', 'l', 'r', 'o', 'a'， 其分别对应者 ‘dict’，‘list’， 
+    ‘rowList’, 'jsonObject', 'jsonArray' 等形式。
+
+    若需进行列拆分，
 
     若某个位置参数可能存在多种形式，所有可能的形式需以 [] 包裹，如下方 scientificName。
 
@@ -66,7 +71,7 @@ class CvhTerms(Enum):
     种下等级 = '$taxonRank'
     种下加词 = '$infraspecificEpithet'
     种下等级命名人 = '$scientificNameAuthorship'
-    拉丁名 = BioName('$scientificName')
+    拉丁名 = BioName('$scientificName', style='scientificName')
     模式类型 = RadioInput('$typeStatus', 'typeStatus')
     鉴定人 = HumanName('$identifiedBy')
     鉴定日期 = DateTime('$dateIdentified')
@@ -130,7 +135,7 @@ class OccurrenceTerms(Enum):
     family = '$family'
     vernacularName = '$vernacularName'
     # Identification
-    scientificName = BioName(['$scientificName', ('$genus', '$specificEpithet', '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')])
+    scientificName = BioName(['$scientificName', ('$genus', '$specificEpithet', '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='scientificName')
     typeStatus = RadioInput('$typeStatus', 'typeStatus')
     identifiedBy = HumanName('$identifiedBy')
     dateIdentified = DateTime('$dateIdentified')
@@ -254,7 +259,7 @@ class KingdoniaPlantTerms(Enum):
     _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters_maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     occurrenceRemarks = '$occurrenceRemarks'
-    _scientificName = BioName(['$scientificName', ('$genus', '$specificEpithet', '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')])
+    _scientificName = BioName(['$scientificName', ('$genus', '$specificEpithet', '$taxonRank', '$infraspecificEpithet', ' ')], style='simpleName')
     scientificName = FillNa('$scientificName', 'unknown')
     _typeStatus = RadioInput('$typeStatus', 'typeStatus')
     typeStatus = FillNa('$typeStatus', 'not type')

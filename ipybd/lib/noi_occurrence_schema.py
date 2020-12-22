@@ -134,7 +134,7 @@ schema={
       "type": "object",
       "properties": {
         "eventDate": {
-          "title_cn": "事件日期",
+          "title_cn": "发生日期",
           "type": "string",
           "format": "date-time"
         },

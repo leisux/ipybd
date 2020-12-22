@@ -10,21 +10,23 @@ then open .html file in browser; print
 
 #!/usr/bin/python
 
-from ipybd.core import RestructureTable
 import os
-from ipybd.std_table_terms import HerbLabelTerms
-import pandas as pd
-from ipybd.label.herb_label import HerbLabel
-import pystache
-from pystrich.code128 import Code128Encoder
 import re
 
+import pandas as pd
+import pystache
+from ipybd.core import RestructureTable
+from ipybd.label.herb_label import HerbLabel
+from ipybd.std_table_terms import HerbLabelTerms
+from pystrich.code128 import Code128Encoder
 
 HERE = os.path.dirname(__file__)
 CSS_PATH = os.path.join(HERE, 'label_format.css')
 
+
 class Label(RestructureTable):
     columns_model = HerbLabelTerms
+
     def __init__(self, io, repeat=1):
         """
         io: CSV/Excel file path
@@ -32,13 +34,13 @@ class Label(RestructureTable):
                 the label to be printed, if it is zero, the number of
                 copies is based on individualCount field.
         """
-        super(Label, self).__init__(io, cut=True, fcol="")
+        super(Label, self).__init__(io, fields_mapping=True, cut=True, fcol="")
         self.repeat = repeat
         self.path = os.path.splitext(io)[0]
         self.outfile = self.path + '.html'
 
     def to_dict(self):
-        records =  list(self.df.to_dict('record'))
+        records = list(self.df.to_dict('record'))
         for i, record in enumerate(records):
             c = record.copy()
             for key, value in c.items():
@@ -47,7 +49,7 @@ class Label(RestructureTable):
                     record[key] = ""
         return records
 
-    def mustachify(self, start_code):
+    def mustachify(self, start_code=None):
         """
         Converts a Dict object containing herbarium specimen records
         into a list of Mustache-templated HTML articles.
@@ -72,11 +74,15 @@ class Label(RestructureTable):
                 try:
                     if start_code:
                         for _ in range(r['individualCount']):
-                            code = self.code_maker(prefix, str(num), num_length)
+                            code = self.code_maker(
+                                prefix, str(num), num_length)
                             # add code image path to HerbLabel instance properties
                             # then the code image will be linked to the label
-                            r['code_path'] = os.path.join(self.path, code+".png")
+                            r['code_path'] = os.path.join(
+                                self.path, code+".png")
                             labels.append(HerbLabel(r))
+                            del r['code_path']
+                            r['barcode'] = code
                             new_table = new_table.append(r, ignore_index=True)
                             num += 1
                     else:
@@ -87,6 +93,8 @@ class Label(RestructureTable):
                         code = self.code_maker(prefix, str(num), num_length)
                         r['code_path'] = os.path.join(self.path, code+".png")
                         labels.append(HerbLabel(r))
+                        del r['code_path']
+                        r['barcode'] = code
                         new_table = new_table.append(r, ignore_index=True)
                         num += 1
                     else:
@@ -98,13 +106,16 @@ class Label(RestructureTable):
                         code = self.code_maker(prefix, str(num), num_length)
                         r['code_path'] = os.path.join(self.path, code+".png")
                         labels.append(HerbLabel(r))
+                        del r['code_path']
+                        r['barcode'] = code
                         new_table = new_table.append(r, ignore_index=True)
                         num += 1
                 else:
                     labels.extend([HerbLabel(r)]*self.repeat)
         # svae the new records to new table
         # this table can be used to import to other herbarium systems
-        new_table.to_excel(self.path+"_code.xlsx")
+        if start_code:
+            new_table.to_excel(self.path+"_withcode.xlsx", index=False)
         return labels
 
     def write_html(self, start_code=None, page_num=6):
@@ -116,13 +127,14 @@ class Label(RestructureTable):
         labels = self.mustachify(start_code)
         renderer = pystache.Renderer()
         with open(self.outfile, 'w') as fh:
-            fh.write("<!DOCTYPE html><html><head><link rel=\"stylesheet\" href=\"" + CSS_PATH + "\"/></head><body>")
+            fh.write("<!DOCTYPE html><html><head><link rel=\"stylesheet\" href=\"" +
+                     CSS_PATH + "\"/></head><body>")
             fh.write("<div class=\"item-wrapper\">")
             for l in labels:
                 count += 1
                 labeltext = renderer.render(l)
                 fh.write(labeltext)
-                if count%page_num == 0:
+                if count % page_num == 0:
                     fh.write("</div><div class=\"item-wrapper\">")
             fh.write("</div></body></html>")
 
@@ -142,7 +154,3 @@ class Label(RestructureTable):
     def encoder(self, barcode):
         code = Code128Encoder(barcode)
         code.save(os.path.join(self.path, barcode+".png"))
-
-
-
-

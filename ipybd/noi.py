@@ -6,18 +6,19 @@
 # @Description :https://github.com/leisux/ipybd
 """
 
-from json.decoder import JSONDecodeError
-import urllib.request
-import urllib.parse
+import asyncio
 import base64
 import hmac
 import json
+import urllib.parse
+import urllib.request
 from hashlib import sha1
+from json.decoder import JSONDecodeError
+
 import aiohttp
-import asyncio
-from ipybd.core import NpEncoder
 from tqdm import tqdm
 
+from ipybd.core import NpEncoder
 
 URL = "http://139.198.189.90/api/data_add"
 ACCESSKEY = "qqpq4m0vzpteirfrc0gnl6yajc5yomu5"
@@ -49,14 +50,14 @@ class Api:
 
     def build_policy(self):
         json_policy = json.dumps(
-                {
-                    'data_info': self.data,
-                    'data_from': self.rights_holder,
-                    'data_copyright': self.rights,
-                    'data_modelid': self.model_id
-                    },
-                ensure_ascii=False
-                )
+            {
+                'data_info': self.data,
+                'data_from': self.rights_holder,
+                'data_copyright': self.rights,
+                'data_modelid': self.model_id
+            },
+            ensure_ascii=False
+        )
         return base64.b64encode(json_policy.encode('utf-8'))
 
     def get_token(self, policy):
@@ -86,7 +87,8 @@ class Link:
                 unvalid_resps.append(data)
         if unvalid_resps:
             with open(self.unpost_data_file, "w", encoding='utf-8') as f:
-                f.write(json.dumps(unvalid_resps, cls=NpEncoder, sort_keys=False, indent=2, separators=(',', ': '),ensure_ascii=False))
+                f.write(json.dumps(unvalid_resps, cls=NpEncoder, sort_keys=False,
+                                   indent=2, separators=(',', ': '), ensure_ascii=False))
 
     def add(self):
         self.pbar = tqdm(total=len(self.datas), desc="注册数据", ascii=True)
@@ -110,7 +112,7 @@ class Link:
             self.pbar.update(1)
             return result
 
-    def build_post_data(self, data:dict):
+    def build_post_data(self, data: dict):
         rights = data["Record"]["rights"]
         rights_holder = data["Record"]["rightsHolder"]
         json_data = json.dumps(data, cls=NpEncoder, ensure_ascii=False)
@@ -122,7 +124,7 @@ class Link:
             self.model_id)
         return api.build_post_info()
 
-    async def fetch(self, data:'json', token, session):
+    async def fetch(self, data: 'json', token, session):
         while True:
             try:
                 async with session.post(URL,
@@ -154,6 +156,12 @@ class Link:
                             continue
             except aiohttp.ServerDisconnectedError:
                 # print(">server connect error! May be you are too fast!\n")
+                await asyncio.sleep(3)
+                continue
+            except (ConnectionResetError, aiohttp.ClientOSError):
+                await asyncio.sleep(3)
+                continue
+            except asyncio.TimeoutError:
                 await asyncio.sleep(3)
                 continue
 
