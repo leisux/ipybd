@@ -1027,7 +1027,7 @@ from enum import Enum
 class MyCollection(Enum): 
     记录人 = '$采集人' 
     记录编号 = '$采集号' 
-    省_市_ = {'$省市':','}
+    省_市 = {'$省市':','}
     行政区划 = ('$省市', '$区县', '，') 
     学名 = ('$属', '$种', '$种下等级', ' ') 
 
@@ -1055,13 +1055,13 @@ Out:
 from enum import Enum
 from ipybd import imodel
 
-@imodel 
-class MyCollection(Enum): 
-    记录人 = '>recordedBy' 
-    记录编号 = '>recordNumber' 
-    记录时间 = '>eventDate' 
-    行政区划 = ('>province', '>city', '>county', '，') 
-    学名 = ['>scientificName',  ('>genus', '>specificEpithet', '>taxonRank', '>infraspecificEpithet', ' ')]
+@imodel  
+class MyCollection(Enum):  
+    记录人 = '$recordedBy'  
+    记录编号 = '$recordNumber'  
+    采集日期 = '$eventDate' 
+    省_市 = {('$province', '$city'): ','} 
+    学名 = ['$scientificName',  ('$genus', '$specificEpithet', '$taxonRank', '$infraspecificEpithet', ' ')] 
     
 ```
 
@@ -1070,7 +1070,7 @@ class MyCollection(Enum):
 ```python
 cvh = MyCollection(r"/Users/.../cvh.xlsx", fields_mapping=True) 
 
-cvh.df.head(5)
+cvh.df.head()
 
 Out:
             记录人                    记录编号      记录时间          行政区划                          学名
