@@ -57,8 +57,6 @@ class CvhTerms(Enum):
     省市 = ('$province', '$city', ',')
     小地点 = ('$locality', '$mountain', '$waterBody', ',')
     纬度_经度 = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
-    _minimumElevationInMeters = Number('$minimumElevationInMeters')
-    _maximumElevationInMeters = Number('$maximumElevationInMeters')
     海拔_海拔高 = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     生境 = '$habitat'
     习性 = RadioInput('$habit', 'habit')
@@ -117,11 +115,7 @@ class OccurrenceTerms(Enum):
     country_province_city_county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude_decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
-    _minimumElevationInMeters = Number('$minimumElevationInMeters')
-    _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters_maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
-    _minimumDepthInMeters = Number('$minimumDepthInMeters')
-    _maximumDepthInMeters = Number('$maximumDepthInMeters')
     minimumDepthInMeters_maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters')
     associatedMedia = '$associatedMedia'
     associatedReferences = '$associatedReferences'
@@ -200,15 +194,9 @@ class NoiOccurrenceTerms(Enum):
     country_province_city_county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude_decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
-    _minimumElevationInMeters = Number('$minimumElevationInMeters')
-    _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters_maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     geodeticDatum = RadioInput('$geodeticDatum', 'geodeticDatum')
-    _minimumDepthInMeters = Number('$minimumDepthInMeters')
-    _maximumDepthInMeters = Number('$maximumDepthInMeters')
     minimumDepthInMeters_maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters')
-    _minimumDistanceAboveSurfaceInMeters = Number('$minimumDistanceAboveSurfaceInMeters')
-    _maximumDistanceAboveSurfaceInMeters = Number('$maximumDistanceAboveSurfaceInMeters')
     minimumDistanceAboveSurfaceInMeters_maximumDistanceAboveSurfaceInMeters = Number('$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters')
     Location = ('$countryCode', '$country', '$province', '$city', '$county', '$locality', '$decimalLatitude', '$decimalLongitude', '$minimumElevationInMeters', '$maximumElevationInMeters', '$minimumDepthInMeters', '$maximumDepthInMeters', '$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters', 'd')
 
@@ -255,8 +243,6 @@ class KingdoniaPlantTerms(Enum):
     habitat = '$habitat'
     habit = RadioInput('$habit', 'habit')
     decimalLatitude_decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
-    _minimumElevationInMeters = Number('$minimumElevationInMeters')
-    _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters_maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     occurrenceRemarks = '$occurrenceRemarks'
     _scientificName = BioName(['$scientificName', ('$genus', '$specificEpithet', '$taxonRank', '$infraspecificEpithet', ' ')], style='simpleName')
@@ -368,11 +354,7 @@ class NsiiTerms(Enum):
     country_province_city_county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude_decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
-    _minimumElevationInMeters = Number('$minimumElevationInMeters')
-    _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters_maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
-    _minimumDepthInMeters = Number('$minimumDepthInMeters')
-    _maximumDepthInMeters = Number('$maximumDepthInMeters')
     minimumDepthInMeters_maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters')
     associatedMedia = '$associatedMedia'
     associatedReferences = '$associatedReferences'
