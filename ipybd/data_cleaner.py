@@ -348,7 +348,7 @@ class BioName:
             return await self.get_ipni_name(query, session)
 
     # 以下多个方法用于请求相应 API 接口
-    # 以获取api返回，并对返回结果对合理性做必要的判断
+    # 以获取api返回，并对返回结果的合理性做必要的判断
 
     async def get_col_name(self, query, session):
         name = await self.check_col_name(query, session)
@@ -361,6 +361,7 @@ class BioName:
         return: 返回最能满足 query 条件的学名 dict
         """
         results = await self.col_search(query[0], query[1], session)
+        # print(results)
         if results is None or results == []:
             return None
         else:
@@ -373,6 +374,7 @@ class BioName:
                         # 其接受名的 author 字段获得命名人，但接受名可能与
                         # 检索学名不一致，所以此处暂且只能在确保检索学名为
                         # 接受名后，才能添加命名人。
+                        # 因此对于 col 虽有数据，但却是异名的名字，会返回None
                         if res['name_status'] == 'accepted name':
                             results[num]['author_team'] = self.get_author_team(
                                 res['accepted_name_info']['author'])
@@ -511,7 +513,9 @@ class BioName:
     async def col_search(self, query, filters, session):
         params = self._build_col_params(query, filters)
         url = self.build_url(SP2000_API, filters.value['col'], params)
+        # print(url)
         resp = await self.async_request(url, session)
+        # print(resp)
         try:
             if resp['code'] == 200:
                 try:
@@ -552,6 +556,7 @@ class BioName:
                         await asyncio.sleep(3)
                     else:
                         response = await resp.json()
+                        # print(response)
                         break
         except BaseException:  # 如果异步请求出错，改为正常的 Get 请求以尽可能确保有返回结果
             response = await self.normal_request(url)
@@ -645,7 +650,7 @@ class BioName:
         species_pattern = re.compile(
             r"\b([A-Z][a-zàäçéèêëöôùûüîï-]+)\s*([×Xx])?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*(.*)")
         subspecies_pattern = re.compile(
-            r"(.*?)\s*(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)\s*([(（A-Z].*)")
+            r"(.*?)\s*(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)\s*([\(（A-Z]*.*)")
         try:
             species_split = species_pattern.findall(raw_name)[0]
         except BaseException:

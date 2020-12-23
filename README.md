@@ -1019,9 +1019,10 @@ Out:
 
 #### 3.1 特定数据集的结构重塑
 
+
+
 ```python
-from ipybd import imodel                                                                                                                                                
-from enum import Enum                                                                                                                                                   
+from ipybd import imodel                                                                                     from enum import Enum                                                                                                                                                   
 
 @imodel 
 class MyCollection(Enum): 
@@ -1049,7 +1050,7 @@ Out:
 
 ```
 
-#### 3.2 多源数据集的结构重塑
+#### 3.3 众源数据集的结构重塑
 
 ```python
 from enum import Enum
@@ -1082,7 +1083,83 @@ Out:
 
 ```
 
-#### 3.2 数据值的清洗与转换
+#### 3.4 带有值处理的数据模型
+
+```python
+import pandas
+
+dirtydata = pandas.read_excel(r"/Users/.../dirtydata.xlsx")
+dirtydata.head()
+
+Out:
+                              鉴定                       坐标        日期     海拔      国别  产地1   产地2
+0                 Trifolium repens   N:28 34'478E:99 49 129"        1978   1400～1800  中国  HEB  承德市
+1                        Lauraceae  N:27 55'E:99 36'          1982.08.24    1200-1300  中国   HN    吉首
+2                      Glycine max  N:38 34'481"E:099 50'054"   19830500  大概400-600   中国   YN  勐腊县
+3                     Glycine  N:24°35'51.22"; E:100°04 '52.96" 1983.6.31  1000-1100m  中国   YN    大理
+4  Rubia cordifolia var. sylvatica  N 31°04′206″, E 96°58′476″    19820824     3800米  中国   SC  德格县
+
+```
+
+
+
+```python
+
+from ipybd import imodel
+from enum import Enum
+
+@imodel
+class AbstractDataClean(Enum):  
+    拉丁名 = BioName('$鉴定', style='scientificName') 
+    经度_纬度 = GeoCoordinate('$坐标') 
+    采集日期 = DateTime('$日期') 
+    海拔1_海拔2 = {'$海拔':'-'} 
+    海拔_海拔高 = Number('$海拔1', '$海拔2', int) 
+    国_省_市_县 = AdminDiv(('$国别', '$产地1', '$产地2', ','))                                                                                                                                                               
+```
+
+
+
+```python
+cleandata = AbstractDataClean(r"/Users/.../dirtydata.xlsx")
+cleandata.df.head()                                                                                                                                                       
+Out: 
+             拉丁名           经度       纬度    采集日期    海拔  海拔高   国     省                 市      县
+0 Trifolium repens L.      28.5746  99.8188    19780000  1400  1800  中国  河北省              承德市   None
+1 Lauraceae                27.9167     99.6    19820824  1200  1300  中国  湖南省  湘西土家族苗族自治州   吉首市
+2 Glycine max (L.) Merr.   38.5747  99.8342    19830500   400   600  中国  云南省    西双版纳傣族自治州   勐腊县
+3 Glycine                  24.5976  100.081  !1983.6.31  1000  1100  中国  云南省       大理白族自治州   None
+4 !Rubia cordifolia var. sylvatica 31.0701  96.9746 19820824  3800  3800  中国  四川省  甘孜藏族自治州   德格县
+```
+
+
+
+```python
+@imodel  
+class DataClean(Enum):  
+    拉丁名 = BioName(['$scientificName', ('$genus', '$specificEpithet', '$taxonRank', '$infraspecificEpithet', ' ')], style='scientificName') 
+    经度_纬度 = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';')) 
+    采集日期 = DateTime('$eventDate') 
+    海拔_海拔高 = Number('$minimumElevationInMeters', '$maximumElevationInMeters', int) 
+    国_省_市_县 = AdminDiv(('$country', '$province', '$city', '$county', ',')) 
+
+```
+
+
+
+```python
+cleandata = DataClean(r"/Users/.../dirtydata.xlsx", fields_mapping=True)
+cleandata.df.head()                                                                                                                                                       
+Out: 
+             拉丁名           经度       纬度    采集日期    海拔  海拔高   国     省                 市      县
+0 Trifolium repens L.      28.5746  99.8188    19780000  1400  1800  中国  河北省              承德市   None
+1 Lauraceae                27.9167     99.6    19820824  1200  1300  中国  湖南省  湘西土家族苗族自治州   吉首市
+2 Glycine max (L.) Merr.   38.5747  99.8342    19830500   400   600  中国  云南省    西双版纳傣族自治州   勐腊县
+3 Glycine                  24.5976  100.081  !1983.6.31  1000  1100  中国  云南省       大理白族自治州   None
+4 !Rubia cordifolia var. sylvatica 31.0701  96.9746 19820824  3800  3800  中国  四川省  甘孜藏族自治州   德格县
+```
+
+
 
 ### 四、DarwinCore 模型
 
@@ -1096,9 +1173,17 @@ Out:
 
 #### 4.5 KingdoniaPlant
 
-###
-
 ### 五、标签打印
+
+```python
+from ipybd import Label
+
+
+printer = Label(r"/Users/.../record20201001.xlsx', repeat=2)
+printer.write_html(start_code="KUN004123", page_num=8)
+```
+
+
 
 ### 六、基于 Pandas 的数据统计与分析生态
 
