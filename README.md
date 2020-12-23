@@ -29,9 +29,31 @@ ipybd 是一款由 `Python` 语言开发的中文生物多样性数据清洗、�
 13. **数据输出**：经过处理的数据，可以输出为Excel/CSV文件或者直接更新至相应的数据库之中。
 
     
-
-[toc]
-
+- [一、安装方法](#一安装方法)
+  - [1. BioName](#1-bioname)
+  - [2. FormatDataSet](#2-formatdataset)
+    - [2.1 数据的装载](#21-数据的装载)
+    - [2.2 学名处理](#22-学名处理)
+    - [2.3 中文行政区划清洗和转换](#23-中文行政区划清洗和转换)
+    - [2.4 日期、时间的清洗和转换](#24-日期时间的清洗和转换)
+    - [2.5 经纬度清洗和转换](#25-经纬度清洗和转换)
+    - [2.6 数值及数值区间的清洗和转换](#26-数值及数值区间的清洗和转换)
+    - [2.7 重复值标注](#27-重复值标注)
+    - [2.8 数据列的分割](#28-数据列的分割)
+    - [2.9 数据列的合并](#29-数据列的合并)
+- [三、自定义数据模型](#三自定义数据模型)
+  - [3.1 特定数据集的结构重塑](#31-特定数据集的结构重塑)
+  - [3.2 众源数据集的结构重塑](#32-众源数据集的结构重塑)
+  - [3.3 带有值处理的数据模型定义](#33-带有值处理的数据模型定义)
+- [四、DarwinCore 模型](#四darwincore-模型)
+  - [4.1 Occurrence](#41-occurrence)
+  - [4.2 CVH](#42-cvh)
+  - [4.3 NSII](#43-nsii)
+  - [4.4 NOI](#44-noi)
+  - [4.5 KingdoniaPlant](#45-kingdoniaplant)
+- [五、标签打印](#五标签打印)
+- [六、基于 Pandas 的数据统计与分析](#六基于-pandas-的数据统计与分析)
+- [七、特别声明](#七特别声明)
 
 
 ## 一、安装方法
@@ -900,7 +922,7 @@ Name: cite, dtype: object
 
 ```
 
-`merge_columns` 方法不仅可以对数据列进行按序拼接，还可以将不同数据列组合为带 title 的换行文本，或者组装为 Python 的 `Dict` 和 `list`， JSON 的 `Object` 和 `Array` 对象。使用方法也很简单，只需在传递参数时，将分隔符参数按需设置为 "r"、"d"、"l"、"o"、"a" 中的某一个，即可将拼接结果转换为相应的形式。这里仍以上述已分列的引文数据为例：
+`merge_columns` 方法不仅可以对数据列进行按序拼接，还可以将不同数据列组合为带 title 的换行文本，或者组装为 Python 的 `Dict` 和 `list`， JSON 的 `Object` 和 `Array` 对象。如果需要这样做，可以在传递参数时，将分隔符参数按需设置为 "r"、"d"、"l"、"o"、"a" 中的某一个，即可将拼接结果转换为相应的形式。这里仍以上述已分列的引文数据为例：
 
 ```python
 # 合并为带title的换行文本
@@ -918,7 +940,6 @@ Out:
  'author：Hartert\nyear：1917\nfrom： Nov. Zool. 24\npage：272',
  'author：Swinhoe\nyear：1871\nfrom：Proc. Zool. Soc. London\npage：401',
  None]
-
 
 
 # 将每一组合并为 python 的 dict 对象 
@@ -961,7 +982,6 @@ Out:
  None]
 
 
-
 # 合并为 Python 的 list 对象
 collections.merge_columns(["author", "year", "from", "page"], "l")
 
@@ -978,7 +998,6 @@ Out:
  None]
 
 
-
 # 合并为 Json 的 Object 对象
 collections.merge_columns(["author", "year", "from", "page"], "o")
 
@@ -993,7 +1012,6 @@ Out:
  '{"author": "Hartert", "year": "1917", "from": " Nov. Zool. 24", "page": "272"}',
  '{"author": "Swinhoe", "year": "1871", "from": "Proc. Zool. Soc. London", "page": "401"}',
  None]
-
 
 
 # 合并为 JSON 的 Array 对象
@@ -1015,49 +1033,62 @@ Out:
 
 
 
-### 三、数据模型定义
+## 三、自定义数据模型
 
-#### 3.1 特定数据集的结构重塑
+### 3.1 特定数据集的结构重塑
 
-
+将某一特定结构的数据集转换为另一种具有特定字段和结构的数据集，通常会涉及一系列的数据拆分、合并和字段更名。`ipybd` 将不同的数据集结构视为不同的数据模型，通过自定义数据模型，可以实现数据集结构的自动转换。这里以国内植物标本数据集中广泛使用的 CVH 数据表为例，CVH 的数据表包含了："采集人"、"采集号"、"采集日期"、"国家"、"省市"、“区县”、"属"、"种"、“命名人”、"种下等级"、“种下等级命名人” 等一系列字段。如果我们只想从 CVH 的数据表中提取一个包含"记录入"、"记录编号"、"记录时间"、"省"、"市"、"学名" （不含命名人）六个概要性字段的数据表，就可以通过 `ipybd` 自定义模型实现 CVH 数据表的自动转换：
 
 ```python
 from ipybd import imodel                                                                                     from enum import Enum                                                                                                                                                   
-
 @imodel 
-class MyCollection(Enum): 
-    记录人 = '$采集人' 
+class MyModel(Enum): 
+ 	 	# 字段名映射：通过$前缀，将 cvh 中的"采集人"、"采集号"、"采集日期"
+    # 字段对应到新数据表的"记录人"、"记录编号"、"记录时间"字段。
+    # $ 前缀在 ipybd 模型中修饰一个数据列，带有该前缀的字符串会被认为是一个数据列参数
+    记录人 = '$采集人'   
     记录编号 = '$采集号' 
-    省_市 = {'$省市':','}
-    行政区划 = ('$省市', '$区县', '，') 
-    学名 = ('$属', '$种', '$种下等级', ' ') 
+    记录时间 = '$采集日期'
+    # 字段拆分：将 CVH 表格中的"省市" 字段通过 "," 拆分为新数据表的"省", "市" 两个字段
+    # 字段拆分表达式为字典样式，字典的 key 是以$修饰的待拆分列名字符串，value 为拆分所依据的分隔符
+    # 每个分隔符只参与一次拆分，如果需要拆分出多列，则可以元组传递多个分隔符，
+    # 比如：{"行政区划":(";", ";",";")} 就可以将"行政区划"按照";"拆分为三列。
+    # 拆分出的新列名需要以"_"按序相连，如果实际值无法拆分出足够数量的字段值，程序会以 None 填充
+    省_市 = {'$省市':','}  
+    # 字段合并：将 CVH 数据表中的三个字段通过空格合并为新的"学名"字段，
+    # 字段合并表达式为元组样式，元组的最后一个元素为各个字段间的合并连接符
+    学名 = ('$属', '$种', '$种下等级', ' ')  
 
 ```
 
-
+上面代码通过 `ipybd` 的 `imodel` 修饰符，修饰了一个符合 `ipybd` 模型语义规范的枚举类。这样就可以生成一个自定义的 `MyModel` 数据模型，该模型可以从 CVH 数据表中自动提取特定字段内容，组成一个新的数据表：
 
 ```python
-cvh = MyCollection(r"/Users/.../cvh.xlsx") 
+cvh = MyModel(r"/Users/.../cvh.xlsx") 
 
 cvh.df.head()                                                                                                                                                          
 Out: 
             记录人                    记录编号      记录时间    省     市                          学名
-0    王雷,朱雅娟,黄振英  Beijing-huang-dls-0026  20070922   北京   北京市    Ostericum grosseserratum
-1           NaN              YDDXSC-022  20071028  云南省   临沧市  Boenninghausenia albiflora
-2  欧阳红才,穆勤学,奎文康              YDDXSC-022  20071028  NaN  None  Boenninghausenia albiflora
-3   吴福川,查学州,余祥洪                     NaN  20070512  湖南省  张家界市       Broussonetia kazinoki
-4   吴福川,查学州,余祥洪              SCSB-07009  20070512  湖南省  张家界市       Broussonetia kazinoki
+0    王雷,朱雅娟,黄振英    Beijing-huang-dls-0026  20070922   北京   北京市     Ostericum grosseserratum
+1           NaN                     YDDXSC-022  20071028  云南省   临沧市   Boenninghausenia albiflora
+2  欧阳红才,穆勤学,奎文康               YDDXSC-022  20071028  NaN     None   Boenninghausenia albiflora
+3   吴福川,查学州,余祥洪                      NaN   20070512  湖南省  张家界市       Broussonetia kazinoki
+4   吴福川,查学州,余祥洪               SCSB-07009   20070512  湖南省  张家界市       Broussonetia kazinoki
 
 ```
 
-#### 3.3 众源数据集的结构重塑
+当用一个 CVH Excel 数据表实例化 `MyModel` 对象， 它就会在内存中自动完成数据表结构的转换，生成一个符合模型定义的新的数据表。我们可以使用 `MyModel`模型执行各种 CVH 数据表的转换，从而大幅减少重复性工作，提高数据转换效率。
+
+### 3.2 众源数据集的结构重塑
+
+除了针对特定数据集进行数据集结构的转换，`ipybd` 还支持众源数据集到特定数据集结构的转换。相应的数据转换模型的定义与上述数据转换模型的定义稍有不同：
 
 ```python
 from enum import Enum
 from ipybd import imodel
 
 @imodel  
-class MyCollection(Enum):  
+class MySmartModel(Enum):  
     记录人 = '$recordedBy'  
     记录编号 = '$recordNumber'  
     采集日期 = '$eventDate' 
@@ -1069,21 +1100,22 @@ class MyCollection(Enum):
 
 
 ```python
-cvh = MyCollection(r"/Users/.../cvh.xlsx", fields_mapping=True) 
-
+cvh = MySmartModel(r"/Users/.../cvh.xlsx", fields_mapping=True) 
 cvh.df.head()
 
-Out:
-            记录人                    记录编号      记录时间          行政区划                          学名
-0    王雷,朱雅娟,黄振英  Beijing-huang-dls-0026  20070922   北京，北京市，门头沟区    Ostericum grosseserratum
-1           NaN              YDDXSC-022  20071028   云南省，临沧市，永德县  Boenninghausenia albiflora
-2  欧阳红才,穆勤学,奎文康              YDDXSC-022  20071028           永德县  Boenninghausenia albiflora
-3   吴福川,查学州,余祥洪                     NaN  20070512  湖南省，张家界市，永定区       Broussonetia kazinoki
-4   吴福川,查学州,余祥洪              SCSB-07009  20070512  湖南省，张家界市，永定区       Broussonetia kazinoki
+Out: 
+            记录人                    记录编号      记录时间    省     市                          学名
+0    王雷,朱雅娟,黄振英    Beijing-huang-dls-0026  20070922   北京   北京市      Ostericum grosseserratum
+1           NaN                     YDDXSC-022  20071028  云南省   临沧市   Boenninghausenia albiflora
+2  欧阳红才,穆勤学,奎文康               YDDXSC-022  20071028  NaN     None    Boenninghausenia albiflora
+3   吴福川,查学州,余祥洪                      NaN   20070512  湖南省  张家界市       Broussonetia kazinoki
+4   吴福川,查学州,余祥洪               SCSB-07009   20070512  湖南省  张家界市       Broussonetia kazinoki
 
 ```
 
-#### 3.4 带有值处理的数据模型
+### 3.3 带有值处理的数据模型定义
+
+单纯的字段名映射、数据拆分与合并可以应对简单规范的数据集结构重塑的需求，但是在应对
 
 ```python
 import pandas
@@ -1109,7 +1141,7 @@ from ipybd import imodel
 from enum import Enum
 
 @imodel
-class AbstractDataClean(Enum):  
+class DataCleaner(Enum):  
     拉丁名 = BioName('$鉴定', style='scientificName') 
     经度_纬度 = GeoCoordinate('$坐标') 
     采集日期 = DateTime('$日期') 
@@ -1121,7 +1153,7 @@ class AbstractDataClean(Enum):
 
 
 ```python
-cleandata = AbstractDataClean(r"/Users/.../dirtydata.xlsx")
+cleandata = DataCleaner(r"/Users/.../dirtydata.xlsx")
 cleandata.df.head()                                                                                                                                                       
 Out: 
              拉丁名           经度       纬度    采集日期    海拔  海拔高   国     省                 市      县
@@ -1136,7 +1168,7 @@ Out:
 
 ```python
 @imodel  
-class DataClean(Enum):  
+class SmartCleaner(Enum):  
     拉丁名 = BioName(['$scientificName', ('$genus', '$specificEpithet', '$taxonRank', '$infraspecificEpithet', ' ')], style='scientificName') 
     经度_纬度 = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';')) 
     采集日期 = DateTime('$eventDate') 
@@ -1148,7 +1180,7 @@ class DataClean(Enum):
 
 
 ```python
-cleandata = DataClean(r"/Users/.../dirtydata.xlsx", fields_mapping=True)
+cleandata = SmartCleaner(r"/Users/.../dirtydata.xlsx", fields_mapping=True)
 cleandata.df.head()                                                                                                                                                       
 Out: 
              拉丁名           经度       纬度    采集日期    海拔  海拔高   国     省                 市      县
@@ -1161,19 +1193,19 @@ Out:
 
 
 
-### 四、DarwinCore 模型
+## 四、DarwinCore 模型
 
-#### 4.1 Occurrence
+### 4.1 Occurrence
 
-#### 4.2 CVH
+### 4.2 CVH
 
-#### 4.3 NSII
+### 4.3 NSII
 
-#### 4.4 NOI
+### 4.4 NOI
 
-#### 4.5 KingdoniaPlant
+### 4.5 KingdoniaPlant
 
-### 五、标签打印
+## 五、标签打印
 
 ```python
 from ipybd import Label
@@ -1185,11 +1217,11 @@ printer.write_html(start_code="KUN004123", page_num=8)
 
 
 
-### 六、基于 Pandas 的数据统计与分析生态
+## 六、基于 Pandas 的数据统计与分析
 
 
 
-### 七、特别声明
+## 七、特别声明
 
 1. Ipybd 遵从 GNU General Public License v3.0 许可    
 2. 本软件由 NSII 资助，© 徐洲锋，中国科学院昆明植物研究所
