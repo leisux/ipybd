@@ -933,7 +933,15 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
                     columns.remove(None)
                     return None
                 except ValueError:
-                    title = "_".join(title)
+                    # 如果要拆分出的列数和已有的列数一致，则不再进行拆分
+                    if len(columns) == len(title):
+                        rename_columns = {}
+                        for k,v in zip(columns, title):
+                            rename_columns[k] = v
+                        self.df.rename(columns=rename_columns,inplace=True)
+                        return None
+                    else:
+                        title = "_".join(title)
         # 对单个参数基本元素做进一步处理
         for n, clm in enumerate(columns):
             # 找到的如果是一个待拆分字段如 [("GPS", (";"))]

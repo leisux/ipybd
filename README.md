@@ -1128,7 +1128,7 @@ class MySmartModel(Enum):
 学名 = ['$scientificName',  ('$genus', '$specificEpithet', '$taxonRank', '$infraspecificEpithet', ' ')]
 ```
 
-代码 `list` 中第二个元素，也是表示学名也可能是由 “genus”、“specificEpithet”、“taxonRank”、“infraspecificEpithet” 四个字段以空格相间组合而成。相对于 `dict` 表示元素拆分，`tuple` 表示元素的合并，`list` 则表示按需优先选择，因此上面这行代码在 `ipybd` 数据模型定义中表示：“学名”优先采用与 `scientificName` 相对应的字段数据，其次使用由多个字段组合而成的数据。
+代码 `list` 中第二个元素，是表示学名也可能是由 “genus”、“specificEpithet”、“taxonRank”、“infraspecificEpithet” 四个字段以空格相间组合而成。相对于 `dict` 表示元素拆分，`tuple` 表示元素的合并，`list` 则表示按需优先选择，因此上面这行代码在 `ipybd` 数据模型定义中表示：“学名”优先采用与 `scientificName` 相对应的字段数据，其次使用由多个字段组合而成的数据。
 
 通过这种形式，`ipybd` 数据模型不仅可以很好的处理同一对象不同名称的映射，还可以实现同一对象不同结构的映射，从而获得更加通用的数据处理能力。
 
