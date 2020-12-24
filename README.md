@@ -1049,7 +1049,8 @@ Out:
 将某一特定结构的数据集转换为另一种具有特定字段和结构的数据集，通常会涉及一系列的数据拆分、合并和字段更名。`ipybd` 将不同的数据集结构视为不同的数据模型，通过自定义数据模型，可以实现数据集结构的自动转换。这里以国内植物标本数据集中广泛使用的 CVH 数据表为例，CVH 的数据表包含了："采集人"、"采集号"、"采集日期"、"国家"、"省市"、“区县”、"属"、"种"、“命名人”、"种下等级"、“种下等级命名人” 等一系列字段。如果我们只想从 CVH 的数据表中提取一个包含"记录入"、"记录编号"、"记录时间"、"省"、"市"、"学名" （不含命名人）六个概要性字段的数据表，就可以通过 `ipybd` 自定义模型实现 CVH 数据表的自动转换：
 
 ```python
-from ipybd import imodel                                                                                     from enum import Enum                                                                                                                                                   
+from ipybd import imodel    
+from enum import Enum                                                                                                                                                   
 @imodel 
 class MyModel(Enum):
     # 字段名映射：通过$前缀，将 cvh 中的"采集人"、"采集号"、"采集日期"
@@ -1079,8 +1080,8 @@ cvh.df.head()
 Out: 
             记录人                    记录编号      记录时间    省     市                          学名
 0    王雷,朱雅娟,黄振英    Beijing-huang-dls-0026  20070922   北京   北京市     Ostericum grosseserratum
-1           NaN                     YDDXSC-022  20071028  云南省   临沧市   Boenninghausenia albiflora
-2  欧阳红才,穆勤学,奎文康               YDDXSC-022  20071028  NaN     None   Boenninghausenia albiflora
+1           NaN                      YDDXSC-022  20071028  云南省   临沧市   Boenninghausenia albiflora
+2  欧阳红才,穆勤学,奎文康                YDDXSC-022  20071028  NaN     None   Boenninghausenia albiflora
 3   吴福川,查学州,余祥洪                      NaN   20070512  湖南省  张家界市       Broussonetia kazinoki
 4   吴福川,查学州,余祥洪               SCSB-07009   20070512  湖南省  张家界市       Broussonetia kazinoki
 
@@ -1143,8 +1144,8 @@ cvh.df.head()
 Out: 
             记录人                    记录编号      记录时间    省     市                          学名
 0    王雷,朱雅娟,黄振英    Beijing-huang-dls-0026  20070922   北京   北京市      Ostericum grosseserratum
-1           NaN                     YDDXSC-022  20071028  云南省   临沧市   Boenninghausenia albiflora
-2  欧阳红才,穆勤学,奎文康               YDDXSC-022  20071028  NaN     None    Boenninghausenia albiflora
+1           NaN                      YDDXSC-022  20071028  云南省   临沧市   Boenninghausenia albiflora
+2  欧阳红才,穆勤学,奎文康                YDDXSC-022  20071028  NaN     None    Boenninghausenia albiflora
 3   吴福川,查学州,余祥洪                      NaN   20070512  湖南省  张家界市       Broussonetia kazinoki
 4   吴福川,查学州,余祥洪               SCSB-07009   20070512  湖南省  张家界市       Broussonetia kazinoki
 
