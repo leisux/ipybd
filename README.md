@@ -1150,12 +1150,8 @@ Out:
 
 ```
 
-还可以实现大多数同类数据不同数据源的数据结构转换：
-
+还可以实现大多数同类数据不同数据源的数据结构转换，比如不同于 CVH 的数据表，biotracks.cn 导出的数据集中省、市是分列的，同时学名也不是分开的，而是聚合的。这种差异明显的数据集，仍然可以通过 `MySmartModel` 实现结构的转换。
 ```python
-# 这里以 Biotracks.cn 平台导出的数据集为例
-# Biotracks 数据集中省、市是分列的，同时学名也不是分开的，而是聚合的
-# 通过 MySmartModel 仍然可以实现数据集的结构转换
 bio = MySmartModel(r'/Users/.../biotracks.xlsx', fields_mapping=True)
 bio.df.head()
 
@@ -1169,11 +1165,9 @@ Out:
 
 ```
 
-
-
 ### 3.3 带有值处理的数据模型定义
 
-单纯的字段名映射、数据拆分与合并可以应对简单规范的数据集结构重塑的需求，但是在应对
+单纯的字段名映射、数据拆分与合并可以应付简单规范的数据集结构重塑，但在面对各种来源的人工数据集时，单纯的数据集结构重塑还是无法满足数据的强一致性需求。事实上对于众源数据，尤其是人工梳理的数据，其数据结构和值的规范其实很难保证强一致性。比如下方所示的物种分布数据集：
 
 ```python
 import pandas
@@ -1191,24 +1185,25 @@ Out:
 
 ```
 
-
+该数据集所用字段采用的都是文本格式，同时经纬度、日期、海拔的写法也不统一，学名没有命名人，省份使用的是拼音简写...这样的人工数据集虽然表意明确，但对于数据库归档、数据分析等真正的应用而言，仍然是无法直接利用的。`ipybd` 可以定义具备严格数据类型校验和转换功能的数据模型，以自动化的处理这类脏数据梳理的问题：
 
 ```python
 
 from ipybd import imodel
+from ipybd import BioName, GeoCoordinate, DateTime, Nmber, AdminDiv
 from enum import Enum
 
 @imodel
 class DataCleaner(Enum):  
-    拉丁名 = BioName('$鉴定', style='scientificName') 
+    拉丁名 = BioName('$鉴定', style='scientificName')  # style 关键字参数指名返回带有完整命名人的学名
     经度_纬度 = GeoCoordinate('$坐标') 
     采集日期 = DateTime('$日期') 
     海拔1_海拔2 = {'$海拔':'-'} 
-    海拔_海拔高 = Number('$海拔1', '$海拔2', int) 
-    国_省_市_县 = AdminDiv(('$国别', '$产地1', '$产地2', ','))                                                                                                                                                               
+    海拔_海拔高 = Number('$海拔1', '$海拔2', int)   # int 位置参数指明返回 int 类型的数值
+    国_省_市_县 = AdminDiv(('$国别', '$产地1', '$产地2', ','))  # ipybd 定义的元组等表达式都可以作为单个参数进行传递                                                                                                                                                             
 ```
 
-
+相对于之前定义的数据模型，`DataCleaner` 的枚举值中不仅定义了$修饰的数据对象，还将这些对象传递给了诸如 `BioName` 这样的 `ipybd` 数据类。这些类会自动清洗相应的数据，并返回符合预期的结果：
 
 ```python
 cleandata = DataCleaner(r"/Users/.../dirtydata.xlsx")
@@ -1222,7 +1217,9 @@ Out:
 4 !Rubia cordifolia var. sylvatica 31.0701  96.9746 19820824  3800  3800  中国  四川省  甘孜藏族自治州   德格县
 ```
 
+相比于原始的数据集，经过 `DataClean` 清洗的数据，值的格式更加规范统一，其中经纬度、海拔采用的是可以直接参与计算的十进制数值格式，行政区划也被拆分为标准的四级行政区，学名附带有完整的命名人。而对于可能存在错误的数据，`ipybd` 会使用 “!” 标识原始数据以便于核实（其中 Rubia cordifolia var. sylvatica 被标注主要是因为该名称是一个异名）。
 
+如同单纯的结构重塑模型，带有值校验和转换功能的数据模型也可以被定义为具备字段映射功能的数据模型，从而实现更广泛通用的数据处理能力：
 
 ```python
 @imodel  
@@ -1235,7 +1232,7 @@ class SmartCleaner(Enum):
 
 ```
 
-
+输出：
 
 ```python
 cleandata = SmartCleaner(r"/Users/.../dirtydata.xlsx", fields_mapping=True)
