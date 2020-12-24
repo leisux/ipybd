@@ -1,47 +1,5 @@
 from enum import Enum
-
 from ipybd.data_cleaner import *
-
-'''通过枚举定义数据模型传递给 core.ReStructureTable 重构原始表格
-
-    重构的表格，其列名将转换为枚举定义的 name, 枚举成员的值则定义了相应列值的进一步处理方式
-
-    列值的处理可以调用函数或类，也可以只是做简单的合并、拆分、映射，具体使用方法可参考使用文档；
-    同时，列值的处理也可以开启字段映射功能，开启映射后，即便相应列名有多种写法，也可以自动进行
-    处理。
-
-    枚举定义数据模型时，其需遵守如下书写规则：
-
-    单个列名需要以$修饰进行传递。
-
-    列的拆分是以字典形式进行表达，比如 省_市_县 = {"行政区划":(',', ',')} 字典的 key 是所
-    要拆分的列名，字典的 value 是
-
-    参与数值处理的列可能是由多个列名经过合并、拆分、映射获得：
-    若需要先由多个字段合并而成，则使用 () 包裹这些字段，被 () 包裹的字段，最后一个值
-    为合并后字段间的连接符，目前只支持使用相同的连接符连接不同字段；若最终希望将多列折叠为单列
-    数据结构，则可设连接符为 'd', 'l', 'r', 'o', 'a'， 其分别对应者 ‘dict’，‘list’， 
-    ‘rowList’, 'jsonObject', 'jsonArray' 等形式。
-
-    若需进行列拆分，
-
-    若某个位置参数可能存在多种形式，所有可能的形式需以 [] 包裹，如下方 scientificName。
-
-    某些参数需要先由多个标准字段先进一步合并组成，而参与合并的字段在实际表中可能有多种处
-    理方式，比如植物学名可能是（属名 种加词 种下 命名人）
-    也能是（属名 种加词 种下等级 种下 命名人）学名中的 taxonRank 字段有可能就不是一个
-    独立的字段，而是被归并到了 specificEpithet 内，类似这种多字段组合而成的位置参数，
-    在定义时，应尽可能使用要素更全的表达式，程序会自动排除表达式中无法找到的字段，并利
-    用找到的字段进行组装。
-
-    以 _ 开头的枚举 name 属于临时列名，有些列可能需要多次处理，比如海拔，实际列可能是
-    个区间，也可能只是个单值，定义 Enum 时可以先对海拔列尝试进行单值校验，并以 _ 列名
-    临时性的标注列，然后再尝试对两列进行值区间判断。如果实际表格只是个单值，程序不会继
-    续执行区间判断代码，此时被 _ 标注的相应列名会被去除 _ 作为转换后的正式列名，因此如
-    果一列是否可拆具有不确定性，相关数值又需要分多步进行校验，则可以采用 _ + 正式列名的
-    方式进行临时性的标注，这样即便后续处理实际不存在，也可以将正式列名赋予相应列。
-
-'''
 
 class CvhTerms(Enum):
     条形码 = UniqueID('$catalogNumber')
@@ -57,6 +15,8 @@ class CvhTerms(Enum):
     省市 = ('$province', '$city', ',')
     小地点 = ('$locality', '$mountain', '$waterBody', ',')
     纬度_经度 = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
+    _minimumElevationInMeters = Number('$minimumElevationInMeters')
+    _maximumElevationInMeters = Number('$maximumElevationInMeters')
     海拔_海拔高 = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     生境 = '$habitat'
     习性 = RadioInput('$habit', 'habit')
@@ -115,7 +75,11 @@ class OccurrenceTerms(Enum):
     country_province_city_county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude_decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
+    _minimumElevationInMeters = Number('$minimumElevationInMeters')
+    _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters_maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
+    _minimumDepthInMeters = Number('$minimumDepthInMeters')
+    _maximumDepthInMeters = Number('$maximumDepthInMeters')
     minimumDepthInMeters_maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters')
     associatedMedia = '$associatedMedia'
     associatedReferences = '$associatedReferences'
@@ -194,9 +158,15 @@ class NoiOccurrenceTerms(Enum):
     country_province_city_county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude_decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
+    _minimumElevationInMeters = Number('$minimumElevationInMeters')
+    _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters_maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     geodeticDatum = RadioInput('$geodeticDatum', 'geodeticDatum')
+    _minimumDepthInMeters = Number('$minimumDepthInMeters')
+    _maximumDepthInMeters = Number('$maximumDepthInMeters')
     minimumDepthInMeters_maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters')
+    _minimumDistanceAboveSurfaceInMeters = Number('$minimumDistanceAboveSurfaceInMeters')
+    _maximumDistanceAboveSurfaceInMeters = Number('$maximumDistanceAboveSurfaceInMeters')
     minimumDistanceAboveSurfaceInMeters_maximumDistanceAboveSurfaceInMeters = Number('$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters')
     Location = ('$countryCode', '$country', '$province', '$city', '$county', '$locality', '$decimalLatitude', '$decimalLongitude', '$minimumElevationInMeters', '$maximumElevationInMeters', '$minimumDepthInMeters', '$maximumDepthInMeters', '$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters', 'd')
 
@@ -243,6 +213,8 @@ class KingdoniaPlantTerms(Enum):
     habitat = '$habitat'
     habit = RadioInput('$habit', 'habit')
     decimalLatitude_decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
+    _minimumElevationInMeters = Number('$minimumElevationInMeters')
+    _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters_maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     occurrenceRemarks = '$occurrenceRemarks'
     _scientificName = BioName(['$scientificName', ('$genus', '$specificEpithet', '$taxonRank', '$infraspecificEpithet', ' ')], style='simpleName')
@@ -354,7 +326,11 @@ class NsiiTerms(Enum):
     country_province_city_county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude_decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
+    _minimumElevationInMeters = Number('$minimumElevationInMeters')
+    _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters_maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
+    _minimumDepthInMeters = Number('$minimumDepthInMeters')
+    _maximumDepthInMeters = Number('$maximumDepthInMeters')
     minimumDepthInMeters_maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters')
     associatedMedia = '$associatedMedia'
     associatedReferences = '$associatedReferences'

@@ -106,6 +106,8 @@ class FormatDataSet:
                     如果列值无法拆分出足够的列，则用 None 补齐空列
                     如果数值类型不可拆分，则不作处理
         """
+        if isinstance(splitters, str):
+            splitters = (splitters,)
         frame = map(
             self.__split_txt,
             self.df[split_column],
