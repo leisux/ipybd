@@ -117,7 +117,7 @@ Out:
 ]
 
 ```
-默认返回的结果是以元组为元素的 `list` 对象，`list`对象中的各检索结果与检索词的位置一一对应，对于没有检索结果的值，则以`None`值补充并与其他各检索结果对齐，以方便直接将返回结果转换成表格的行列；若希望以 `dict`对象返回，在请求时则可以通过`typ`参数指定：
+默认返回的结果是以 `tuple` 为元素的 `list` 对象，`list`对象中的各检索结果与检索词的位置一一对应，对于没有检索结果的值，则以`None`值补充并与其他各检索结果对齐，以方便直接将返回结果转换成表格的行列；若希望以 `dict`对象返回，在请求时则可以通过`typ`参数指定：
 
 ```python
 poa.get('powoName', typ=dict)  
@@ -132,7 +132,7 @@ Out:
 }
 ```
 
-除了上述示例中的`powoName`参数，目前`BioName`的`get`关键字总共有 9 个，以适应不同需求：
+除了上述示例中的`powoName`参数，目前`BioName`的`get`关键字总共有 9 个，它们的作用分别是：
 
 + `'powoName'`: 获取 powo 平台相应学名的科属地位、学名简写和命名人信息；
 
@@ -156,7 +156,7 @@ Out:
 
 ### 3.2 FormatDataSet
 
-`FormatDataSet` 类是 ipybd 进行数据处理的核心类。它提供了对生物多样性相关的各类数据表进行各种表结构重构和值格式化处理的基本方法。普通用户也可以直接调用它以更加自主的方式处理个性化的数据集或者开发自己的脚本和程序。
+`FormatDataSet` 类是 `ipybd` 进行数据处理的核心类。它提供了对生物多样性相关的各类数据集进行各种结构重构和值格式化处理的基本方法。普通用户也可以直接调用它以更加自主的方式处理个性化的数据集或者开发自己的脚本和程序。
 
 #### 3.2.1 数据的装载
 
@@ -166,7 +166,7 @@ Out:
 collections = FormatDataSet(r"~/Documents/record2019-09-10.xlsx") 
 ```
 
-`FormatDataSet` 默认采用 UTF-8 编码文件，如果传递 CSV 文件出现`UnicodeDecodeError`错误，可以尝试显式指定相应的编码方式，一般都可以得到解决（Python 可选用的标准编码[戳这里](https://docs.python.org/3/library/codecs.html#standard-encodings)）。
+`FormatDataSet` 默认采用 UTF-8 编码文件，如果传递 CSV 文件出现`UnicodeDecodeError`错误，可以尝试显式指定相应的编码方式，一般都可以得到解决（Python 支持的标准编码[戳这里](https://docs.python.org/3/library/codecs.html#standard-encodings)）。
 
 ```python
 # 这里显式的指定了 csv 文件的编码方式为 gbk
@@ -179,7 +179,7 @@ collections = FormatDataSet(r"~/Documents/record2019-09-10.cvs", encoding='gbk')
 collections = FormatDataSet(DataFrame)
 ```
 
-基于本地或线上的关系型数据库创建 `FormatDataSet` 实例，需要先创建数据库连接。在 python 生态中有很多数据库连接器，比如 mysqlclient、pymysql、mysql-connector 等等，下方示例使用的是 sqlalchemy 建立 mysql 数据库连接，个人可以根据喜好自行选择相应的连接库创建连接器。
+基于本地或线上的关系型数据库创建 `FormatDataSet` 实例，需要先创建数据库连接。在 python 生态中有诸如 mysqlclient、pymysql、mysql-connector 等多种连接库可以使用，下方示例使用的是 sqlalchemy 建立 mysql 数据库连接，个人可以根据喜好自行选择相应的连接库创建连接器。
 
 ```python
 # 首先导入相应的连接库
