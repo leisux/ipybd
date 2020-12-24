@@ -92,7 +92,7 @@ pip install .
 
 ### 3.1 BioName
 
-BioName 类可接受单个学名字符串、`tuple`、`list`或`Pandas.Series` 类型的学名字符串序列实例化对象：
+BioName 类可接受 `tuple`、`list`或`Pandas.Series` 类型的学名字符串序列实例化对象：
 
 ```python
 from ipybd import BioName
