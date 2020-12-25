@@ -1331,14 +1331,7 @@ class Number:
         return: 如果出现 keyerro，返回列表参数错误, 否则返回处理好的table
         care: 对于“-20-30“ 的值，无法准确划分为 -20和30，会被划分为 20和30
         """
-        float_pattern = re.compile(r"^[+-]?\d+[\.\d]*|\d+[\.\d]*")
-        int_pattern = re.compile(r"^[+-]?\d+|\d+")
-        if self.typ == float:
-            pattern = float_pattern
-        elif self.typ == int:
-            pattern = int_pattern
-        else:
-            raise ValueError
+        pattern = re.compile(r"^[+-]?\d+[\.\d]*|\d+[\.\d]*")
         try:
             column1 = [
                 pattern.findall(str(value)) if not pd.isnull(value) else []
@@ -1349,7 +1342,7 @@ class Number:
                 for i, v in enumerate(tqdm(column1, desc="数值处理", ascii=True)):
                     if (len(v) == 1
                             and self.min_num <= float(v[0]) <= self.max_num):
-                        new_column.append([self.typ(v[0])])
+                        new_column.append([self.typ(float(v[0]))])
                     elif pd.isnull(self.min_column[i]):
                         new_column.append([None])
                     # 如果拆分出多个值，作为错误值标记
@@ -1409,26 +1402,26 @@ class Number:
                 q.insert(0, None)
         if mark:
             min_column = [
-                typ(column1[i][0])
+                typ(float(column1[i][0]))
                 if column1[i][0] else "".join(
                     ["!", str(self.min_column[i])])
                 if not pd.isnull(self.min_column[i]) else None
                 for i in range(len(column1))]
             max_column = [
-                typ(column2[i][0])
+                typ(float(column2[i][0]))
                 if column2[i][0] else "".join(
                     ["!", str(self.min_column[i])])
                 if not pd.isnull(self.max_column[i]) else None
                 for i in range(len(column2))]
         else:
             min_column = [
-                typ(column1[i][0])
+                typ(float(column1[i][0]))
                 if column1[i][0] else None
                 if not pd.isnull(self.min_column[i]) else None
                 for i in range(len(column1))
             ]
             max_column = [
-                typ(column2[i][0])
+                typ(float(column2[i][0]))
                 if column2[i][0] else None
                 if not pd.isnull(self.max_column[i]) else None
                 for i in range(len(column2))

@@ -737,10 +737,13 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
         for column in columns:
             if column in self.df.columns:
                 model_columns.append(column)
-            elif '_' in column and not column.startswith('_'):
-                split_columns = [clm for clm in column.split(
-                    "_") if clm in self.df.columns]
-                model_columns.extend(split_columns)
+            elif '_' in column:
+                if column.startswith('_') and column[1] in self.df.columns:
+                    model_columns.append(column[1:])
+                else:
+                    split_columns = [clm for clm in column.split("_") if clm in self.df.columns]
+                    if not any(clm in model_columns for clm in split_columns):
+                        model_columns.extend(split_columns)
         if not cut:
             other_columns = [
                 column for column in self.df.columns
