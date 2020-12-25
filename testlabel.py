@@ -10,7 +10,7 @@
 from ipybd import Label
 
 
-printer = Label(r"C:\Users\xu_zh\OneDrive\PDP\testfile\cvh.xlsx", repeat=2)
+printer = Label(r"/Users/xuzhoufeng/OneDrive/PDP/testfile/cvh.xlsx", repeat=2)
 printer.write_html(start_code="KUN004123", page_num=8)
 
 

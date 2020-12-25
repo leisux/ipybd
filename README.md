@@ -1192,9 +1192,7 @@ Out:
 
 其中 `1` 是上述海拔的序号，`64` 和  `66` 分别表示标准字段名称库中的`minimumElevationInMeters` 和 `maximumElevationInMeters`，`-` 表示原始数据集中两个值之间的实际连接符。因此`1 = 64 - 66 ` 就表示将 `海拔` 以`-`为分隔符拆分为 `minimumElevationInMeters` 和 `MaximumElevationInMeters` 两个标准字段。其中 `minimumElevationInMeters` 和 `ma ximumElevationInMeters` 的编号可以通过输入'min/max/海拔' 等关键字后再按 `Tab` 键呼出下拉，用上下键选择获得：
 
-![image-20201225155932221](../../../Library/Application Support/typora-user-images/image-20201225155932221.png)
-
-除了拆分，也会遇到需要合并的字段名，比如希望将上述 `2` `3` `4` 三个字段合并为学名字段，其逻辑也类似：
+![image](image.png)除了拆分，也会遇到需要合并的字段名，比如希望将上述 `2` `3` `4` 三个字段合并为学名字段，其逻辑也类似：
 
 ```python
 2 3 4 = 106
@@ -1364,7 +1362,7 @@ printer = Label(r"/Users/.../record20201001.xlsx', repeat=2)
 printer.write_html(start_code="KUN004123", page_num=8)
 ```
 
-
+![label](label.png)
 
 ## 七、数据统计与分析
 
