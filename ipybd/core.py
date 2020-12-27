@@ -644,8 +644,8 @@ class FormatDataSet:
         return number(mark), headers, inplace
 
     @drop_and_concat_columns
-    def format_options(self, header, stdheader, inplace=True):
-        return RadioInput(self.df[header], stdheader)(), [header], inplace
+    def format_options(self, header, stdheader, lib=None, inplace=True):
+        return RadioInput(self.df[header], stdheader, lib)(), [header], inplace
 
     @drop_and_concat_columns
     def format_human_name(self, header, inplace=True):
@@ -670,7 +670,7 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
     def __init__(self, *args, fields_mapping=False, cut=False, fcol=False, **kwargs):
         super(RestructureTable, self).__init__(*args, **kwargs)
         # 设置补充缺失列的数值
-        self.fill_value = fcol
+        self.fcol = fcol
         self.fields_mapping = fields_mapping
         self.cut = cut
         self.rebuild_table()
@@ -735,10 +735,10 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
         ]
         model_columns = []
         for column in columns:
-            if column in self.df.columns:
+            if column in self.df.columns and column not in model_columns:
                 model_columns.append(column)
             elif '_' in column:
-                if column.startswith('_') and column[1] in self.df.columns:
+                if column.startswith('_') and column[1] in self.df.columns and column[1] not in model_columns:
                     model_columns.append(column[1:])
                 else:
                     split_columns = [clm for clm in column.split("_") if clm in self.df.columns]
@@ -753,47 +753,67 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
 
         self.df = self.df.reindex(columns=model_columns)
 
+    def custom_func_desc(self, series):
+        try:
+            return pd.concat(series, axis=1)
+        except TypeError:
+            return pd.DataFrame(series)
+        except Exception as e:
+            raise e
+
     def rebuild_columns(self):
-        """ 按照 std_table_terms 定义的 key 生成新表格
+        """ 按照 std_table_terms 定义的 key 生成新表格的各列
         """
         for field in self.__class__.columns_model:
-            params = field.value
-            if not isinstance(params, dict) and isinstance(params[0], (type, FunctionType, MethodType)) and isinstance(params[-1], dict):
-                if isinstance(params[1], tuple) and len(params) == 3:
-                    args = self.get_args(field.name, params[1], params[-1])
-                    if args:
-                        # 通过定义类的__call__函数实现原始列值的处理
-                        new_cols = params[0](*args[0], **args[1])()
-                        # _ 开头的名称是模板用于临时定义使用，命名时需要去除 _
-                        columns = field.name.split('_')[1:] if field.name.startswith(
-                            '_') else field.name.split('_')
-                        new_cols.columns = columns
-                        self.df.drop(args[-1], axis=1, inplace=True)
-                        self.df = pd.concat([self.df, new_cols], axis=1)
-                    elif self.fill_value is not False:
+            try:
+                params = field.value
+                if not isinstance(params, dict) and isinstance(params[0], (type, FunctionType, MethodType)) and isinstance(params[-1], dict):
+                    if isinstance(params[1], tuple) and len(params) == 3:
+                        args = self.get_args(field.name, params[1], params[-1])
+                        if args:
+                            # 通过定义类的__call__函数实现原始列值的处理
+                            if isinstance(params[0], type):
+                                # 通过 ipybd 内置类处理数据
+                                new_cols = params[0](*args[0], **args[1])()
+                            else:
+                                # 通过自定义的函数处理数据
+                                new_cols = self.custom_func_desc(params[0](*args[0], **args[1]))
+                            # _ 开头的名称是模板用于临时定义使用，命名时需要去除 _
+                            columns = field.name.split('_')[1:] if field.name.startswith(
+                                '_') else field.name.split('_')
+                            new_cols.columns = columns
+                            self.df.drop(args[-1], axis=1, inplace=True)
+                            self.df = pd.concat([self.df, new_cols], axis=1)
+                        elif self.fcol is not False:
+                            columns = field.name.split('_')[1:] if field.name.startswith(
+                                '_') else field.name.split('_')
+                            for col in columns:
+                                if col not in self.df.columns:
+                                    self.df[col] = self.fcol
+                    else:
+                        raise ValueError("model value error: {}".format(field.name))
+                elif isinstance(params, (str, tuple, dict, list)):
+                    arg_name = self.model_param_parser(field.name, params)
+                    # _ 开头的名称是模板用于临时定义使用，命名时需要去除 _
+                    column_name = field.name[1:] \
+                        if field.name.startswith("_") else field.name
+                    # print(column_name)
+                    if arg_name:
+                        # print(args_name)
+                        # 只对原表相应对字段名进行修改，args_name 为 str 类型
+                        self.df.rename(
+                            columns={arg_name: column_name}, inplace=True)
+                    # 如果原表中无法找到相应的列，用指定的 self.fcol 填充新列
+                    elif self.fcol is not False:
                         columns = field.name.split('_')[1:] if field.name.startswith(
                             '_') else field.name.split('_')
                         for col in columns:
                             if col not in self.df.columns:
-                                self.df[col] = self.fill_value
-            else:
-                arg_name = self.model_param_parser(field.name, params)
-                # _ 开头的名称是模板用于临时定义使用，命名时需要去除 _
-                column_name = field.name[1:] \
-                    if field.name.startswith("_") else field.name
-                # print(column_name)
-                if arg_name:
-                    # print(args_name)
-                    # 只对原表相应对字段名进行修改，args_name 为 str 类型
-                    self.df.rename(
-                        columns={arg_name: column_name}, inplace=True)
-                # 如果原表中无法找到相应的列，用指定的 self.fill_value 填充新列
-                elif self.fill_value is not False:
-                    columns = field.name.split('_')[1:] if field.name.startswith(
-                        '_') else field.name.split('_')
-                    for col in columns:
-                        if col not in self.df.columns:
-                            self.df[col] = self.fill_value
+                                self.df[col] = self.fcol
+                else:
+                    raise ValueError("model value error: {}".format(field.name))
+            except Exception as e:
+                raise e
 
     def get_args(self, title, args, kwargs):
         columns = []

@@ -37,14 +37,14 @@ def ifunc(obj):
                     elif isinstance(param, list) and param[0][0].startswith('$'):
                         return obj, args, kwargs
                     else:
-                        return obj(*args, **kwargs)
+                        raise ValueError('model value error: {}'.format(param))
                 except AttributeError:
-                    return obj(*args, **kwargs)
+                    raise ValueError('model value error: {}'.format(param))
         return handler
     elif isinstance(obj, MethodType):
         pass
     else:
-        pass
+        raise ValueError('model value error: {}'.format(obj))
 
 
 @ifunc
@@ -1625,21 +1625,29 @@ class GeoCoordinate:
 
 @ifunc
 class RadioInput:
-    def __init__(self, column, title):
+    def __init__(self, column, lib=None):
         self.column = column
-        self.title = title
+        if isinstance(lib, dict):
+            self.rewritelib = 0
+            self.std2alias = lib
+        elif isinstance(lib, str):
+            with open(STD_OPTIONS_ALIAS_PATH, "r", encoding="utf-8") as o:
+                self.lib = json.load(o)
+                self.rewritelib = 1
+                self.std2alias = self.lib[lib]
+        else:
+            raise ValueError('unvalid lib!')
 
-    def format_option(self):
+
+    def format_option(self, std2alias):
         options_mapping = dict.fromkeys(self.column)
-        with open(STD_OPTIONS_ALIAS_PATH, "r", encoding="utf-8") as o:
-            std2alias = json.load(o)
-        std_titles = sorted(list(std2alias[self.title].keys()))
+        std_titles = sorted(list(std2alias.keys()))
         mana2std = []
-        for option in tqdm(options_mapping, desc=self.title, ascii=True):
+        for option in tqdm(options_mapping, desc="选值处理", ascii=True):
             if option in std_titles:
                 options_mapping[option] = option
             else:
-                for k, v in std2alias[self.title].items():
+                for k, v in std2alias.items():
                     if option in v:
                         options_mapping[option] = k
                         break
@@ -1652,8 +1660,8 @@ class RadioInput:
         if mana2std:
             if int(
                 input(
-                    "\n{0} 内有 {1} 个值需要逐个手动指定，手动指定请输入 1 ，全部忽略请输入 0：\n".format(
-                        self.title, len(mana2std)))):
+                    "\n选值中有 {} 个值需要逐个手动指定，手动指定请输入 1 ，全部忽略请输入 0：\n".format(
+                        len(mana2std)))):
                 for option in mana2std:
                     print(
                         "".join(
@@ -1672,20 +1680,20 @@ class RadioInput:
                             break
                         else:
                             try:
-                                std2alias[self.title][std_titles[int(
+                                std2alias[std_titles[int(
                                     n)-1]].append(option)
                                 options_mapping[option] = std_titles[int(n)-1]
                                 break
                             except BaseException:
                                 print("\n输入的字符有误...\n")
-
-                with open(STD_OPTIONS_ALIAS_PATH, "w", encoding="utf-8") as f:
-                    f.write(json.dumps(std2alias, ensure_ascii=False))
+                if self.rewritelib:
+                    with open(STD_OPTIONS_ALIAS_PATH, "w", encoding="utf-8") as f:
+                        f.write(json.dumps(self.lib, ensure_ascii=False))
 
         return [options_mapping[w] for w in self.column]
 
     def __call__(self):
-        return pd.DataFrame(pd.Series(self.format_option()))
+        return pd.DataFrame(pd.Series(self.format_option(self.std2alias)))
 
 
 @ifunc

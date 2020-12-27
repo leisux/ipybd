@@ -1254,23 +1254,23 @@ Out:
 
 + `BioName(names: Union[list, pd.Series, tuple], style='scientificName')`
 
-  清洗学名，其中 `style` 关键字参数表示返回后的学名样式，默认返回带有命名人的完整学名，也可以设置为 `simpleName` 返回去命名人的拉丁名。
+  清洗学名，其中 `style` 关键字参数表示返回后的学名样式，默认返回带有命名人的完整学名，也可以设置为 `'simpleName'` 返回去命名人的拉丁名。
 
 + `AdminDiv(address: Union[list, pd.Series, tuple])`
 
-  清洗中文行政区划，最终返回由`country` `province` `city` `country` 组成的`DataFrame` 对象；对于非中文书写的地址会忽略。
+  清洗`address`中的中文行政区划，最终返回由`country` `province` `city` `country` 组成的`DataFrame` 对象；对于非中文书写的地址会忽略。
 
 + `Number(min_column: Union[list, pd.Series, tuple], max_column: Union[list, pd.Series, tuple] = None, typ=float, min_num=0, max_num=8848)`
 
-  清洗数值或数值区间，其`min_column`和`max_column`分别指定待处理数据的可迭代对象，`typ` 用于指定处理后返回的对象类型，支持 `int` 和 `float`，`min_num`和`max_num` 分别设置参与处理的数字大小下限和上限。
+  清洗数值或数值区间，其`min_column`和`max_column`为需要处理的数值对象，`typ` 用于指定处理后返回的对象类型，支持 `int` 和 `float`，`min_num`和`max_num` 分别设置参与处理的数字大小下限和上限。
 
 + `GeoCoordinate(coordinates: Union[list, pd.Series, tuple])`
 
-  严格的校验、清洗和转换经纬度，接收一个由经度和纬度组成的可迭代对象。
+  严格的校验、清洗和转换经纬度，接收一个由经纬度文本组成的 `coordinates` 可迭代对象。
 
 + `DateTime(date_time: Union[list, pd.Series, tuple], style="num", timezone='+08:00')`
 
-  清洗日期或带日期的时间，其中 `style` 指代最终返回的数据样式，默认输出文本纯数字日期，可重设为 `'utc'` `'date'` `'datetime'` 样式；`timezone` 为日期或时间所处的时区。
+  清洗日期或带日期的时间，其中 `style` 指代最终返回的数据样式，默认输出纯数字文本日期，可重设为 `'utc'` `'date'` `'datetime'` 样式；`timezone` 为日期或时间所处的时区。
 
 + `HumanName(names: Union[list, pd.Series, tuple])`
 
@@ -1278,19 +1278,19 @@ Out:
 
 + `UniqueID(*columns: pd.Series)`
 
-  标注重复值。
+  标注重复值，可根据一列或多列 `pandas.Series` 的数值判断重复项。
 
 + `FillNa(df: Union[pd.DataFrame, pd.Series], fval)`
 
-  填充数据对象中的空值，`fval` 可设置要填充的值。
+  填充 `df` 数据对象中的空值，`fval` 可设置要填充的值。
 
 + `Url(column: Union[list, pd.Series, tuple])`
 
-  标注是否上一个 url 链接。
+  检查 `column` 中的元素是否是一个 url 链接。
 
-+ `RadioInput(column, title)`
++ `RadioInput(column, lib)`
 
-  选值匹配，根据`ipybd` 内置的标准选值库检查数据对象的值是否标准，并尽力转换为标准值，无法自动转换的默认会执行手动对应引导。
+  选值匹配，根据 `lib` 中的标准选值及其别名对应关系检查 `column` 对象中的值是否标准，并尽力将其转换为标准值，无法自动转换的会执行手动对应引导。
 
 ### 4.5 具有值处理功能的映射模型定义
 
@@ -1325,7 +1325,72 @@ Out:
 
 ### 4.6 自定义数据处理功能
 
+`ipybd` 数据模型除了可以使用内置的值处理功能类，还同样支持将自定义的函数应用到 `ipybd` 模型之中。这里以上文清洗获得的 `cleandata` 数据集为例，`cleandata` 数据集中的海拔属性有两列数据，如果我们想在此基础上获得一个相对准确可用的物种空间位置数据集，就需要对 `cleandata` 的海拔区间进行处理，使其变成一个单值。最简单的方式就是获得每个物种记录的海拔区间平均值，那么我们就可以定义一个求平均数的函数：
 
+```python
+from ipybd import imodel, ifunc                                                                               from enum import Enum                                                                                                                                              
+@ifunc 
+def avg(min_alt, max_alt): 
+    return (min_alt+max_alt)/2                                                                                                                                                                   
+```
+
+`ipybd` 提供了一个 `ifunc` 修饰符，它可以将用户自定义的函数转换为能够解析`ipybd` 模型参数语义的功能函数。如此，被修饰的函数不仅可以传递和使用普通的参数，还可以接收`$`修饰的数据对象（`pandas.Series`类型）。上方的 `avg` 函数经 `ifunc`修饰后，我们便可以向下方一样，在 `MyFuncModel` 模型中通过`$海拔低` `$海拔高` 这样的表达形式将原始数据集中与之对应的两列`pandas.Series` 对象传递给 `avg` 函数。
+
+```python
+@imodel 
+class MyFuncModel(Enum): 
+    拉丁名 = '$拉丁名' 
+    经度 = '$经度' 
+    纬度 = '$纬度' 
+    海拔1 = '$海拔' 
+    海拔2 = '$海拔高' 
+    海拔 = avg('$海拔1', '$海拔2')   
+    
+    
+mydata = MyFuncModel(cleandata.copy())  
+
+mydata.df.head()
+
+Out: 
+                          拉丁名         经度          纬度      海拔
+0               Trifolium repens L.  28.574633   99.818817  1600.0
+1                         Lauraceae  27.916667   99.600000  1250.0
+2            Glycine max (L.) Merr.  38.574683   99.834233   500.0
+3                           Glycine  24.597561  100.081378  1050.0
+4  !Rubia cordifolia var. sylvatica  31.070100   96.974600  3800.0
+
+```
+
+最终 `avg` 函数会返回求得的平均数，需要特别注意的是 `ipybd` 对于数据对象的接收和传递都是基于 `pandas.Series` 对象，因此用户自定义的函数处理数据的方式必须要能够适用于 `pandans.Series`对象，同时返回的数据对象也需要是`pd.Series` 类型（如果只是需要返回单个`pd.Series`对象，那也可以是`list` `dict` `ndarray`等可以生成`DataFrame`的类型）。`ipybd` 会自动将返回的结果拼接到新的数据集中，同时还会一并删除之前参与运算的数据对象以简化数据集。而如果函数最终需要返回多个数据对象，或者不想删除已参与运算的数据对象，那么在自定义函数时，就需要返回多个`pandas.Series` 对象以供`ipybd`将其重新整合到数据集中。比如对于上述 `avg` 函数，如果我们不仅想求得每个物种记录的平均海拔高度，还想保留原始海拔信息，就需要：
+
+```python
+@ifunc 
+def avg(min_alt, max_alt): 
+  	#将参与运算的 Series 对象一并返回，以避免其被删除
+    return min_alt, max_alt, (min_alt+max_alt)/2 
+                                                          
+@imodel 
+class MyFuncModel(Enum): 
+    拉丁名 = '$拉丁名' 
+    经度 = '$经度' 
+    纬度 = '$纬度' 
+    海拔1 = '$海拔' 
+    海拔2 = '$海拔高' 
+    #枚举元素的key也要写成多个字段名，以匹配 avg 的返回结果
+    海拔低_海拔高_海拔 = avg('$海拔1', '$海拔2')
+                                                                                                                                               
+mydata = MyFuncModel(cleandata.copy())                                                                                                                 
+mydata.df.head()                                                                                                                                                         
+Out: 
+                       拉丁名         经度          纬度     海拔低  海拔高    海拔
+0               Trifolium repens L.  28.574633   99.818817  1400  1800  1600.0
+1                         Lauraceae  27.916667   99.600000  1200  1300  1250.0
+2            Glycine max (L.) Merr.  38.574683   99.834233   400   600   500.0
+3                           Glycine  24.597561  100.081378  1000  1100  1050.0
+4  !Rubia cordifolia var. sylvatica  31.070100   96.974600  3800  3800  3800.0
+```
+
+此外，`pandas.Series` 本身已经有很多成熟强大的[功能](https://pandas.pydata.org/pandas-docs/stable/search.html?q=pandas.Series#)可供直接调用，熟练掌握它也可以大幅简化自定义函数的功能实现难度。
 
 ## 五、DarwinCore 模型
 
