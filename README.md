@@ -1260,7 +1260,7 @@ Out:
 
 其中 `1` 是上述`海拔`字段的序号，`64` 和  `66` 分别表示标准字段名称库中的`minimumElevationInMeters` 和 `maximumElevationInMeters` 编号，`-` 表示原始数据集中两个数值之间的实际连接符。因此`1 = 64 - 66 ` 就是表示将 `海拔` 以`-`为分隔符拆分为 `minimumElevationInMeters` 和 `MaximumElevationInMeters` 两个标准字段。其中 `minimumElevationInMeters` 和 `ma ximumElevationInMeters` 的编号可以通过输入'min/max/海拔' 等关键字后再按 `Tab` 键呼出下拉，用上下键选择获得：
 
-![image](./img.png)
+![image](https://ftp.bmp.ovh/imgs/2020/12/16afd0e46666e6c2.png)
 
 除了拆分，也会遇到需要合并的字段名，比如希望将上述 `2` `3` `4` 三个字段合并为学名，其表达式逻辑也是类似的：
 
@@ -1506,7 +1506,7 @@ printer.write_html(start_code="KUN004123", page_num=8)
 
 `printer` 实例会自动完成数据的清洗和转换，对于一些只是单纯格式有问题的数据，程序会自动纠正，另外一些可能有错误的数据，程序会以英文 `!` 标注，如果想检查一下清洗和转换结果，可以先输处为表格`printer.save_data(r"/User/.../check.xlsx")`进行查看，再重新以新表格实例化 `Label` 即可 。如果想直接输出标签查看，执行`write_html` 方法：`ipybd` 会在原文件路径下生成一个同名的 html 文件，使用浏览器打开该文件，按 `ctrl+p` 或 `command+p` 即可生成打印预览： 
 
-![label](./labelsample.png)
+![label](https://ftp.bmp.ovh/imgs/2020/12/b13a38fbb4f090b2.png)
 
 与传统纸质标签不同的是，`ipybd` 标签可以直接附有条形码，条形码会按序自动编排，每个标签的条形码都是唯一的。同时，`ipybd` 还会在数据文件路径下生成一个`withcode.xlsx` 文件，这个文件不仅包含了原始的数据，还写入了每条数据对应的条形码，这意味着对于有多份同号标本的数据，该文件就会生成多条带有条形码的标本记录，这个措施保证了条形码和标本数据的强对应关系，避免了后期数字化工作中人工处理数据造成的匹配错误。
 
@@ -1584,7 +1584,7 @@ import matplotlib.pyplot as plt
 plot.show()
 ```
 
-![pie](pie.png)
+![pie](https://ftp.bmp.ovh/imgs/2020/12/10b76b8d60de270d.png)
 
 这张图充分说明了家大业大的科，到哪都受欢迎...
 
