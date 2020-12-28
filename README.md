@@ -1,7 +1,7 @@
 - [一、概述](#一概述)
     - [1.1 数据处理的能力](#11-数据处理的能力)
     - [1.2 生成工具的能力](#12-生成工具的能力)
-    - [1.3 数据统计分析能力](#13-数据统计分析能力)
+    - [1.3 数据统计分析的能力](#13-数据统计分析的能力)
 - [二、安装方法](#二安装方法)
 - [三、主要的数据处理方法](#三主要的数据处理方法)
   - [3.1 BioName](#31-bioname)
@@ -12,22 +12,22 @@
     - [3.2.4 日期、时间的清洗和转换](#324-日期时间的清洗和转换)
     - [3.2.5 经纬度清洗和转换](#325-经纬度清洗和转换)
     - [3.2.6 数值及数值区间的清洗和转换](#326-数值及数值区间的清洗和转换)
-    - [3.2.7 重复值标注](#327-重复值标注)
-    - [3.2.8 数据列的分割](#328-数据列的分割)
-    - [3.2.9 数据列的合并](#329-数据列的合并)
+    - [3.2.7 选值转换](#327-选值转换)
+    - [3.2.8 重复值标注](#328-重复值标注)
+    - [3.2.9 数据列的分割](#329-数据列的分割)
+    - [3.2.10 数据列的合并](#3210-数据列的合并)
 - [四、自定义数据模型](#四自定义数据模型)
   - [4.1 特定数据集的结构重塑](#41-特定数据集的结构重塑)
   - [4.2 众源数据集的结构重塑](#42-众源数据集的结构重塑)
   - [4.3 标准字段名映射引导](#43-标准字段名映射引导)
   - [4.4 具有值处理功能的数据模型定义](#44-具有值处理功能的数据模型定义)
-  - [4.5 具有值处理功能的映射模型定义](#45-具有值处理功能的映射模型的定义)
+  - [4.5 具有值处理功能的映射模型定义](#45-具有值处理功能的映射模型定义)
   - [4.6 自定义数据处理功能](#46-自定义数据处理功能)
 - [五、DarwinCore 模型](#五darwincore-模型)
 - [六、标签打印](#六标签打印)
 - [七、数据统计与分析](#七数据统计与分析)
 - [八、特别声明](#八特别声明)
-
-    
+  
 
 ## 一、概述
 
@@ -701,7 +701,77 @@ Out:
 
 
 
-#### 3.2.7 重复值标注
+#### 3.2.7 选值转换
+
+`format_options` 函数可以将一些选值项自动或半自动的转换为标准值。这里以一个脏数据为例：
+
+```python
+from ipybd import FormatDataSet as fd
+
+dirtydata = fd(r"/Users/.../dirtydata.xlsx")
+dirtydata.df.head()
+
+Out:
+                              鉴定                       坐标        日期     海拔      国别  产地1   产地2
+0                 Trifolium repens   N:28 34'478E:99 49 129"        1978   1400～1800  中国  HEB  承德市
+1                        Lauraceae  N:27 55'E:99 36'          1982.08.24    1200-1300  中国   HN    吉首
+2                      Glycine max  N:38 34'481"E:099 50'054"   19830500  大概400-600   中国   YN  勐腊县
+3                     Glycine  N:24°35'51.22"; E:100°04 '52.96" 1983.6.31  1000-1100m  中国   YN    大理
+4  Rubia cordifolia var. sylvatica  N 31°04′206″, E 96°58′476″    19820824     3800米  中国   SC  德格县
+```
+
+该数据集中省份（产地1）使用的是拼音大写首字母，如果我们想将其转换为规范的文本，就可以定义一个转换字典：
+
+```python
+lib = {"河北省":["HEB"], "云南省":["YN"], "四川省":["SC"], "贵州省":["GZ"], "广西壮族自治区":["GX"], "河南省":[]} 
+```
+
+字典的 `key` 为规范值，`value` 为规范值别名组成的 `list` ，其中 `list` 元素可为多个也可留空。然后将字段名和 `lib` 传递给 `format_options` ：
+
+```python
+dirtydata.format_options("产地1", lib)
+```
+
+程序会自动按照定义的规范值和别名对应关系清洗相应字段内容，如果遇到无法自动转换的，程序会弹出手动对应提示：
+
+```
+选值中有 1 个值需要逐个手动指定，手动指定请输入 1 ，全部忽略请输入 0：
+>>1
+
+HN=>请将该值对应至以下可选值中的某一个:
+
+1. 河北省    2. 云南省    3. 四川省    4.贵州省    5.广西壮族自治区    6.河南省
+
+请输入对应的阿拉伯数字，无法对应请输入 0 :
+>>6
+
+```
+
+按照提示操作，执行完毕后即可获得清洗后的数据：
+
+```python
+dirtydata.df.head()
+
+Out:
+                              鉴定                       坐标        日期     海拔      国别  产地1   产地2
+0                 Trifolium repens   N:28 34'478E:99 49 129"        1978   1400～1800  中国  河北省  承德市
+1                        Lauraceae  N:27 55'E:99 36'          1982.08.24    1200-1300  中国  河南省    吉首
+2                      Glycine max  N:38 34'481"E:099 50'054"   19830500  大概400-600   中国 云南省  勐腊县
+3                     Glycine  N:24°35'51.22"; E:100°04 '52.96" 1983.6.31  1000-1100m  中国  云南省    大理
+4  Rubia cordifolia var. sylvatica  N 31°04′206″, E 96°58′476″    19820824     3800米  中国  四川省  德格县
+```
+
+除了自定义 `lib` , `ipybd` 也内置了部分常用的转换 `lib`，使用时只需传递相应 `lib` 的名字字符串即可：
+
+```python
+collections.format_options("植物习性", "habit")
+```
+
+`ipybd` 内置选值转换关系主要基于 `DarinCore` 定义，目前可以在 `ipybd/lib/std_options_alias.json` 查看。
+
+
+
+#### 3.2.8 重复值标注
 
 `FormatDataSet` 提供了类似 Excel 的行值判重功能，该功能可以通过 `mark_repeat` 方法实现。
 
@@ -778,7 +848,9 @@ Out:
 
 通过多个列名进行重复值标记，程序只会标注那些相应字段均重复的数据。
 
-#### 3.2.8 数据列的分割
+
+
+#### 3.2.9 数据列的分割
 
 `split_column`方法可以对文本数据列进行分拆操作，该方法与常用的文本列分割方法有些不同：`split_column` 的方法一次性可以接受多个不同分隔符进行分拆操作，但每个分隔符只能作用于一次拆分，比如 下方 `collections` 的`cite1` 字段是一个引文内容，各引文成分之间分别使用了","和":"进行了分割。
 
@@ -864,7 +936,7 @@ Out:
 
 
 
-#### 3.2.9 数据列的合并
+#### 3.2.10 数据列的合并
 
 `merge_columns` 方法支持多列按序拼接合并，合并分隔符可以是同样的字符：
 
@@ -1188,7 +1260,7 @@ Out:
 
 其中 `1` 是上述`海拔`字段的序号，`64` 和  `66` 分别表示标准字段名称库中的`minimumElevationInMeters` 和 `maximumElevationInMeters` 编号，`-` 表示原始数据集中两个数值之间的实际连接符。因此`1 = 64 - 66 ` 就是表示将 `海拔` 以`-`为分隔符拆分为 `minimumElevationInMeters` 和 `MaximumElevationInMeters` 两个标准字段。其中 `minimumElevationInMeters` 和 `ma ximumElevationInMeters` 的编号可以通过输入'min/max/海拔' 等关键字后再按 `Tab` 键呼出下拉，用上下键选择获得：
 
-![image](./image.png)
+![image](./img.png)
 
 除了拆分，也会遇到需要合并的字段名，比如希望将上述 `2` `3` `4` 三个字段合并为学名，其表达式逻辑也是类似的：
 
@@ -1434,7 +1506,7 @@ printer.write_html(start_code="KUN004123", page_num=8)
 
 `printer` 实例会自动完成数据的清洗和转换，对于一些只是单纯格式有问题的数据，程序会自动纠正，另外一些可能有错误的数据，程序会以英文 `!` 标注，如果想检查一下清洗和转换结果，可以先输处为表格`printer.save_data(r"/User/.../check.xlsx")`进行查看，再重新以新表格实例化 `Label` 即可 。如果想直接输出标签查看，执行`write_html` 方法：`ipybd` 会在原文件路径下生成一个同名的 html 文件，使用浏览器打开该文件，按 `ctrl+p` 或 `command+p` 即可生成打印预览： 
 
-![label](./label.png)
+![label](./labelsample.png)
 
 与传统纸质标签不同的是，`ipybd` 标签可以直接附有条形码，条形码会按序自动编排，每个标签的条形码都是唯一的。同时，`ipybd` 还会在数据文件路径下生成一个`withcode.xlsx` 文件，这个文件不仅包含了原始的数据，还写入了每条数据对应的条形码，这意味着对于有多份同号标本的数据，该文件就会生成多条带有条形码的标本记录，这个措施保证了条形码和标本数据的强对应关系，避免了后期数字化工作中人工处理数据造成的匹配错误。
 
@@ -1445,6 +1517,76 @@ printer.write_html(start_code="KUN004123", page_num=8)
 
 
 ## 七、数据统计与分析
+
+`ipybd` 的基础数据结构完全基于 `pandas.DataFrame` ，因此可以直接使用 `pandas` 生态完整的数据统计分功能。在 `ipybd` 中用户可以通过 `df` 属性获得 `Pandas.DataFrame`，并开展相应的操作。这里以输出一份中国西南野生种质资源库凭证标本科级类群占比为例演示使用方式，详细的统计分析功能请查看`pandas` [官网](https://pandas.pydata.org/)。
+
+第一步：装载和概览数据：
+
+```python
+from ipybd import FormatDataSet as fd
+
+gbows = fd(r"/User/.../GBOWS20200918fromKingdonia.xlsx"")
+
+# 查看该数据表具有的字段属性
+# 发现科名在该表中叫做 familyName
+gbows.df.columns                                                                                                                                                  
+Out: 
+Index(['catalogNumber', 'institutionCode', 'otherCatalogNumbers',
+       'classification', 'lifeStage', 'disposition', 'preservedLocation',
+       'preservedTime', 'recordedBy', 'recordNumber', 'eventDate', 'country',
+       'stateProvince', 'city', 'county', 'locality', 'decimalLatitude',
+       'decimalLongitude', 'minimumElevationInMeters',
+       'maximumElevationInMeters', 'habitat', 'habit', '体高', '果实', '野外鉴定',
+       '种子', '花', '叶', '频度', '茎', '当地名称', '根', '胸径', 'organismRemarks',
+       'occurrenceRemarks', 'identificationID', 'scientificName',
+       'vernacularName', 'genusName', 'genusNameZH', 'familyName',
+       'familyNameZH', 'identifiedBy', 'dateIdentified',
+       'relationshipEstablishedTime', 'associatedMedia', 'individualCount',
+       'molecularMaterialSample', 'seedMaterialSample',
+       'livingMaterialSample'],
+      dtype='object')
+```
+
+第二部：按照 `familyName` 归并和统计标本份数
+
+```python
+familyCount = gbows.df.groupby('familyName').size().sort_values(ascending=False) 
+
+# 预览统计结果
+familyCount
+
+Out:
+familyName
+Rosaceae           6650
+Poaceae            5445
+Lamiaceae          4048
+Leguminosae        3429
+Polygonaceae       2303
+                   ... 
+Isoetaceae            1
+Hydroleaceae          1
+Elatinaceae           1
+Goodeniaceae          1
+Sciadopityaceae       1
+Length: 326, dtype: int64
+
+```
+
+第三部：绘制 `familyCount` 中前 15 位的饼状图：
+
+```python
+# 绘制饼状统计图
+familyCount[:15].plot(kind='pie') 
+
+import matplotlib.pyplot as plt
+
+#显示统计图
+plot.show()
+```
+
+![pie](pie.png)
+
+这张图充分说明了家大业大的科，到哪都受欢迎...
 
 
 

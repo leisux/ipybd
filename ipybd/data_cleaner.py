@@ -37,6 +37,7 @@ def ifunc(obj):
                     elif isinstance(param, list) and param[0][0].startswith('$'):
                         return obj, args, kwargs
                     else:
+                        # 如果数据对象不是通过$修饰，则返回正常调用
                         return obj(*args, **kwargs)
                 except AttributeError:
                     return obj(*args, **kwargs)
