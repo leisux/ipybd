@@ -1286,7 +1286,7 @@ Out:
 
 + `Url(column: Union[list, pd.Series, tuple])`
 
-  检查 `column` 中的元素是否是一个 url 链接。
+  检查 `column` 中的元素是否是一个 url 链接.
 
 + `RadioInput(column, lib)`
 

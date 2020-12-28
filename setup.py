@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
         name = 'ipybd',
-        version = '1.0.5',
+        version = '1.0.6',
         description = 'Powerful data cleaner for biodiversity',
         license = 'GPL-3.0 License',
         author = 'Xu Zhoufeng',

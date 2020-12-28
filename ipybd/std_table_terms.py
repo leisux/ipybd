@@ -4,7 +4,7 @@ from ipybd.data_cleaner import *
 class CvhTerms(Enum):
     条形码 = UniqueID('$catalogNumber')
     馆代码 = RadioInput('$institutionCode', 'institutionCode')
-    流水号 = '$otherCatalogNumbers'
+    流水号 = UniqueID('$otherCatalogNumbers')
     标本状态 = RadioInput('$lifeStage', 'lifeStage')
     库存 = RadioInput('$disposition', 'disposition')
     采集人 = HumanName('$recordedBy')
