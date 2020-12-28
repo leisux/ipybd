@@ -37,9 +37,9 @@ def ifunc(obj):
                     elif isinstance(param, list) and param[0][0].startswith('$'):
                         return obj, args, kwargs
                     else:
-                        raise ValueError('model value error: {}'.format(param))
+                        return obj(*args, **kwargs)
                 except AttributeError:
-                    raise ValueError('model value error: {}'.format(param))
+                    return obj(*args, **kwargs)
         return handler
     elif isinstance(obj, MethodType):
         pass

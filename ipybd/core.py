@@ -644,8 +644,8 @@ class FormatDataSet:
         return number(mark), headers, inplace
 
     @drop_and_concat_columns
-    def format_options(self, header, stdheader, lib=None, inplace=True):
-        return RadioInput(self.df[header], stdheader, lib)(), [header], inplace
+    def format_options(self, header, lib=None, inplace=True):
+        return RadioInput(self.df[header], lib)(), [header], inplace
 
     @drop_and_concat_columns
     def format_human_name(self, header, inplace=True):
