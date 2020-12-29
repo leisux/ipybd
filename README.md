@@ -152,15 +152,15 @@ Out:
 
 `FormatDataSet` 类是 `ipybd` 执行数据处理的核心类，也是 `ipybd` 数据模型类的父类。它提供了对生物多样性相关的各类数据集进行各种结构重构和值格式化处理的基本方法。普通用户也可以直接调用它以更加自主的方式处理个性化的数据集或者开发自己的脚本和程序。
 
-#### 3.2.1 数据的装载
+#### 3.2.1 数据的载入
 
-目前 FormatDataSet 可接受一个 Excel、CSV、TXT、`Pandas.DataFrame`、RDBMS 数据库对象进行实例化：基于 Excel 、CSV 、TXT 数据表实例化，可以直接传递相应文件的路径给 `FormatDataSet`：
+目前 FormatDataSet 可接受一个 Excel、CSV、TXT、JSON、`Pandas.DataFrame`、RDBMS 数据库对象进行实例化：基于 Excel 、CSV 、TXT、JSON 实例化，可以直接传递相应文件的路径给 `FormatDataSet`：
 
 ```python
 collections = FormatDataSet(r"~/Documents/record2019-09-10.xlsx") 
 ```
 
-`FormatDataSet` 默认采用 `UTF-8` 编码文件，如果传递 CSV 文件出现`UnicodeDecodeError`错误，可以尝试显式指定相应的编码方式，一般都可以得到解决（Python 支持的标准编码[戳这里](https://docs.python.org/3/library/codecs.html#standard-encodings)）。
+`FormatDataSet` 默认采用 `UTF-8` 编码文件，如果传递 CSV 文件出现`UnicodeDecodeError`错误，可以尝试显式指定相应的编码方式，一般都可以得到解决（Python 支持的标准编码[戳这里](https://docs.python.org/3/library/codecs.html#standard-encodings)。此外，`ipybd` 的数据载入方式主要基于 `pandas.read_*`等方法封装，支持这些方法中绝大部分的参数传入，因此若遭遇一些特殊问题，也可以直接查看[`pandas`官网]((https://pandas.pydata.org/) )相应方法的说明。
 
 ```python
 # 这里显式的指定了 csv 文件的编码方式为 gbk
@@ -1508,9 +1508,11 @@ printer.write_html(start_code="KUN004123", page_num=8)
 
 ![label](https://ftp.bmp.ovh/imgs/2020/12/b13a38fbb4f090b2.png)
 
-与传统纸质标签不同的是，`ipybd` 标签可以直接附有条形码，条形码会按序自动编排，每个标签的条形码都是唯一的。同时，`ipybd` 还会在数据文件路径下生成一个`withcode.xlsx` 文件，这个文件不仅包含了原始的数据，还写入了每条数据对应的条形码，这意味着对于有多份同号标本的数据，该文件就会生成多条带有条形码的标本记录，这个措施保证了条形码和标本数据的强对应关系，避免了后期数字化工作中人工处理数据造成的匹配错误。
+与传统纸质标签不同的是，`ipybd` 标签可以附有条形码，条形码会按照设定的标本数量按序自动编排。同时，`ipybd` 还会在数据文件路径下生成一个`withcode.xlsx` 文件，这个文件不仅包含了原有的数据，还写入了每条数据对应的条形码，这个措施保证了条形码和标本数据的强对应关系，可以避免后期数字化工作中人工处理数据造成的匹配错误。
 
-生成的打印预览，也可以根据需要设置一下页边距（建议设置为0）、纸张方向等参数。通常对于维管植物的标签，采用竖排打印会更好，对于隐花植物，可改为横排。 标签与标签之间有淡灰色的切分线，裁剪时可以以此为依据进行裁切，但需要注意的是打印时打印机里的纸张需要尽可能摆放周正，以避免标签歪斜。
+此外，为了标签表头可以正常生成，表格中需要包含 `institutionName` `institutionCode` `fundedBy` 三个字段内容，以生成标签头。这些字段内其实也可以根据具体情况写入特定内容（比如有些标签顶部并不会使用机构全称和代码，而是会写入类似 Flora Of Yunnan 这样的地区标题，那就可以将这种标题写入 `institutionName` ）。 
+
+生成的打印预览，也可以根据需要设置一下页边距（建议设置为0）、纸张方向等参数。通常对于维管植物的标签，采用竖排打印会更好，对于隐花植物，建议改为横排。 标签与标签之间具有淡灰色的切分线，裁剪时可以以此为依据进行裁切，但需要注意的是打印时打印机里的纸张需要尽可能摆放周正，以避免标签歪斜。
 
 除此之外，`ipybd` 会自动检测学名是否被拆分成各个组分，对于原始数据集中学名各单元都是分开罗列的数据，`ipybd` 会分别对其应用斜体\正体等样式，如果学名是单个字段存储，则不会应用斜体。
 
