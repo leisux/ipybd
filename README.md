@@ -160,7 +160,7 @@ Out:
 collections = FormatDataSet(r"~/Documents/record2019-09-10.xlsx") 
 ```
 
-`FormatDataSet` 默认采用 `UTF-8` 编码文件，如果传递 CSV 文件出现`UnicodeDecodeError`错误，可以尝试显式指定相应的编码方式，一般都可以得到解决（Python 支持的标准编码[戳这里](https://docs.python.org/3/library/codecs.html#standard-encodings)。此外，`ipybd` 的数据载入方式主要基于 `pandas.read_*`等方法封装，支持这些方法中绝大部分的参数传入，因此若遭遇一些特殊问题，也可以直接查看[`pandas`官网]((https://pandas.pydata.org/) )相应方法的说明。
+`FormatDataSet` 默认采用 `UTF-8` 编码文件，如果传递 CSV 文件出现`UnicodeDecodeError`错误，可以尝试显式指定相应的编码方式，一般都可以得到解决（Python 支持的标准编码[戳这里](https://docs.python.org/3/library/codecs.html#standard-encodings)。此外，`ipybd` 的数据载入方式主要基于 `pandas.read_*`等方法封装，支持这些方法中绝大部分的参数传入，因此若遭遇一些特殊问题，也可以直接查看[`pandas`](https://pandas.pydata.org/)相应方法的说明。
 
 ```python
 # 这里显式的指定了 csv 文件的编码方式为 gbk
@@ -1504,7 +1504,7 @@ printer = Label(r"/Users/.../record20201001.xlsx', repeat=2)
 printer.write_html(start_code="KUN004123", page_num=8)
 ```
 
-`printer` 实例会自动完成数据的清洗和转换，对于一些只是单纯格式有问题的数据，程序会自动纠正，另外一些可能有错误的数据，程序会以英文 `!` 标注，如果想检查一下清洗和转换结果，可以先输处为表格`printer.save_data(r"/User/.../check.xlsx")`进行查看，再重新以新表格实例化 `Label` 即可 。如果想直接输出标签查看，执行`write_html` 方法：`ipybd` 会在原文件路径下生成一个同名的 html 文件，使用浏览器打开该文件，按 `ctrl+p` 或 `command+p` 即可生成打印预览： 
+`printer` 实例会自动完成数据的清洗和转换，对于一些只是单纯格式有问题的数据，程序会自动纠正，另外一些可能有错误的数据，程序会以英文 `!` 标注，如果想检查一下清洗和转换结果，可以先输出为表格`printer.save_data(r"/User/.../check.xlsx")`进行查看，再重新以新表格实例化 `Label` 即可（对于怕麻烦的用户，其实也可以在输出标签之后直接在 html 文件上检查和修改） 。执行`write_html` 方法可以直接输出标签：`ipybd` 会在原文件路径下生成一个同名的 html 文件，使用浏览器打开该文件，按 `ctrl+p` 或 `command+p` 即可生成打印预览： 
 
 ![label](https://ftp.bmp.ovh/imgs/2020/12/b13a38fbb4f090b2.png)
 
@@ -1577,13 +1577,13 @@ Length: 326, dtype: int64
 第三部：绘制 `familyCount` 中前 15 位的饼状图：
 
 ```python
+import matplotlib.pyplot as plt
+
 # 绘制饼状统计图
 familyCount[:15].plot(kind='pie') 
 
-import matplotlib.pyplot as plt
-
 #显示统计图
-plot.show()
+plt.show()
 ```
 
 ![pie](https://ftp.bmp.ovh/imgs/2020/12/10b76b8d60de270d.png)
