@@ -1,11 +1,11 @@
 from setuptools import setup, find_packages
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding='utf-8') as fh:
     long_description= fh.read()
 
 setup(
         name = 'ipybd',
-        version = '1.0.6',
+        version = '1.0.7',
         description = 'Powerful data cleaner for biodiversity',
         license = 'GPL-3.0 License',
         author = 'Xu Zhoufeng',
