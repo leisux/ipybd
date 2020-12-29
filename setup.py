@@ -1,5 +1,8 @@
 from setuptools import setup, find_packages
 
+with open("README.md", "r") as fh:
+    long_description= fh.read()
+
 setup(
         name = 'ipybd',
         version = '1.0.6',
