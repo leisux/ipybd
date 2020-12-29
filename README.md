@@ -35,9 +35,9 @@
 
 ####  1.1 数据处理的能力
 
-+ **数据装载**： 目前支持从Excel/CSV/TEXT/Pandas.DataFrame 以及各类关系型数据库（比如Mysql）导入数据；
++ **数据装载**：目前支持从Excel/CSV/TEXT/JSON/Pandas.DataFrame 以及各类关系型数据库（比如Mysql）导入数据；
 
-+ **物种学名**：可以在线批量获取 [POWO](http://www.plantsoftheworldonline.org/), [IPNI](https://www.ipni.org/), [中国生物物种名录](http://www.sp2000.org.cn/)上相应物种的最新分类阶元、分类处理、物种图片、发表文献、相关异名等信息；
++ **物种学名**：能够将各种手写的拉丁名转化为规范的学名格式，并可以在线批量获取 [POWO](http://www.plantsoftheworldonline.org/), [IPNI](https://www.ipni.org/), [中国生物物种名录](http://www.sp2000.org.cn/)上相应物种的最新分类阶元、分类处理、物种图片、发表文献、相关异名等信息；
 
 + **日期与时间**：可以对各类手工转录的日期和时间，进行严格的校验、清洗和转换，并可根据需要输出不同样式；
 

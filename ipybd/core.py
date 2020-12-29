@@ -513,7 +513,7 @@ class FormatDataSet:
             elif path_elms[1].lower() == '.txt':
                 table = pd.read_data(*args, **kwargs)
             elif path_elms[1].lower() == ".json":
-                pass
+                table = pd.read_json(*args, **kwargs)
             elif path_elms[1].lower() == "":
                 table = pd.read_sql(*args, **kwargs)
         print("\n数据表载入完毕。\n")

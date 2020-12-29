@@ -9,6 +9,8 @@ setup(
         author_email = 'xu_zhoufeng@hotmail.com',
         url = 'https://github.com/leisux/ipybd',
         packages = find_packages(),
+        long_description=long_description,
+        long_description_content_type="text/markdown",
         package_data = {
             '':['lib/*.py', 'lib/*.json', 'lib/*.xlsx', 'label/*.py', 'label/*.mustache', 'label/*.css']
             },
