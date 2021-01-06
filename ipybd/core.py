@@ -914,8 +914,17 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
             else:
                 raise ValueError
             if arg_name:
-                columns_name = self.build_basic_param(new_fields)
-                if columns_name:
+                # 执行拆分前，先检查原有数据列是否已存在与要拆分出的列同名的列
+                find_columns = self.build_basic_param(tuple(new_fields))
+                # 如果同名列存在，再检查待拆分的列是否属于同名列
+                # 如果属于，删除除此列之外的同名列再拆分此列
+                # 如果不属于，先删除所有同名列再进行拆分
+                if find_columns:
+                    columns_name = [column for column in find_columns if column]
+                    try:
+                        columns_name.remove(arg_name)
+                    except ValueError:
+                        pass
                     self.df.drop(columns_name, axis=1, inplace=True)
                 self.split_column(arg_name, separators, new_fields)
                 return None
@@ -942,6 +951,8 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
             columns = self.build_basic_param(param)
         elif isinstance(param, tuple):
             columns = self.build_basic_param(param[:-1])
+        else:
+            raise ValueError('model params error!')
         # 位置参数只要缺失一个，就终止处理
         if not columns:
             # print("\n{0} 没有在原表中找到对应表头\n".format(param))
@@ -952,9 +963,9 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
             if columns == title:
                 return None
             # 否则：检查找到的列是否能够完整构成要拆分的列
-            # 如果找到的列无法构成完整的待拆分列，则放弃拆分
             elif isinstance(param, tuple):
                 try:
+                    # 如果找到的列无法构成完整的待拆分列，则放弃拆分
                     columns.remove(None)
                     return None
                 except ValueError:
