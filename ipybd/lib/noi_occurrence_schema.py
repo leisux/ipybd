@@ -214,9 +214,9 @@ schema={
             "Beijing 1954",
             "Xian 1980",
             "EPSG:4326",
-            "NAD27", 
-            "Campo Inchauspe", 
-            "European 1950", 
+            "NAD27",
+            "Campo Inchauspe",
+            "European 1950",
             "Clarke 1866",
             "Unknown"
           ]
@@ -352,12 +352,16 @@ schema={
             "病毒"
           ]
         },
+        "datasetName": {
+          "title_cn": "所属数据集",
+          "type": "string"
+        },
         "basisOfRecord": {
           "title_cn": "记录依据",
           "type": "string",
           "enum": [
             "生物痕迹",
-            "人为观察",
+            "人类观察",
             "机器记录",
             "馆藏标本",
             "活体标本",
@@ -406,7 +410,6 @@ schema={
       },
       "required": [
         "basisOfRecord",
-        "rights",
         "rightsHolder",
         "licence"
       ]
