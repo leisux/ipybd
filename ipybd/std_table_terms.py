@@ -180,6 +180,7 @@ class NoiOccurrenceTerms(Enum):
     Identification = ('$Identification', 'l')
 
     # Record Object
+    datasetName = '$datasetName'
     institutionCode = RadioInput('$institutionCode', 'institutionCode')
     category = RadioInput('$category', 'category')
     basisOfRecord = RadioInput('$basisOfRecord', 'basisOfRecord')
@@ -190,7 +191,7 @@ class NoiOccurrenceTerms(Enum):
     thumbnails = '$thumbnails'
     licence = '$licence'
     modified = DateTime('$modified', 'utc')
-    Record = ('$institutionCode', '$category', '$basisOfRecord', '$rights', '$rightsHolder', '$references', '$dataApi', '$thumbnails', '$licence', '$modified', 'd')
+    Record = ('datasetName', '$institutionCode', '$category', '$basisOfRecord', '$rights', '$rightsHolder', '$references', '$dataApi', '$thumbnails', '$licence', '$modified', 'd')
     DictForNoiOccurrence = ('$Occurrence', '$Location', '$Identification', '$Event', '$Record', 'd')
 
 

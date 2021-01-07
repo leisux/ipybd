@@ -10,6 +10,7 @@ from ipybd.data_cleaner import (
     HumanName,
     RadioInput,
     UniqueID,
+    Url,
     FillNa
 )
 
