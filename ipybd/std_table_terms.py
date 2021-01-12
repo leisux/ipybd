@@ -1,6 +1,7 @@
 from enum import Enum
 from ipybd.data_cleaner import *
 
+
 class CvhTerms(Enum):
     条形码 = UniqueID('$catalogNumber')
     馆代码 = RadioInput('$institutionCode', 'institutionCode')
@@ -15,12 +16,10 @@ class CvhTerms(Enum):
     省市 = ('$province', '$city', ',')
     小地点 = ('$locality', '$mountain', '$waterBody', ',')
     纬度_经度 = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
-    _minimumElevationInMeters = Number('$minimumElevationInMeters')
-    _maximumElevationInMeters = Number('$maximumElevationInMeters')
+    _海拔 = Number('$minimumElevationInMeters')
+    _海拔高 = Number('$maximumElevationInMeters')
     海拔_海拔高 = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     生境 = '$habitat'
-    习性 = RadioInput('$habit', 'habit')
-    备注 = '$occurrenceRemarks'
     中文名 = '$vernacularName'
     科 = '$family'
     属 = '$genus'
@@ -33,6 +32,18 @@ class CvhTerms(Enum):
     模式类型 = RadioInput('$typeStatus', 'typeStatus')
     鉴定人 = HumanName('$identifiedBy')
     鉴定日期 = DateTime('$dateIdentified')
+    习性 = RadioInput('$habit', 'habit')
+    体高 = '$height'
+    胸径 = '$DBH'
+    频度 = '$frequency'
+    花 = '$flower'
+    果 = '$fruit'
+    叶 = '$leaf'
+    茎 = '$stem'
+    根 = '$root'
+    种子 = '$seed'
+    当地名称 = '$temporaryIdentification'
+    备注 = '$occurrenceRemarks'
 
 
 
