@@ -410,6 +410,7 @@ schema={
       },
       "required": [
         "basisOfRecord",
+        "rights",
         "rightsHolder",
         "licence"
       ]

@@ -155,7 +155,12 @@ class NoiOccurrenceTerms(Enum):
 
     # Location Object
     countryCode = '$countryCode'
-    country_province_city_county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
+    country = '$country'
+    province = '$province'
+    city = '$city'
+    county = '$county'
+    if input('\n本次 NoiOccurrence 模型是否需要进行行政区划的自动整理：(y/n)\n') == 'y':
+        country_province_city_county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude_decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
     _minimumElevationInMeters = Number('$minimumElevationInMeters')
@@ -191,7 +196,7 @@ class NoiOccurrenceTerms(Enum):
     thumbnails = '$thumbnails'
     licence = '$licence'
     modified = DateTime('$modified', 'utc')
-    Record = ('datasetName', '$institutionCode', '$category', '$basisOfRecord', '$rights', '$rightsHolder', '$references', '$dataApi', '$thumbnails', '$licence', '$modified', 'd')
+    Record = ('$datasetName', '$institutionCode', '$category', '$basisOfRecord', '$rights', '$rightsHolder', '$references', '$dataApi', '$thumbnails', '$licence', '$modified', 'd')
     DictForNoiOccurrence = ('$Occurrence', '$Location', '$Identification', '$Event', '$Record', 'd')
 
 

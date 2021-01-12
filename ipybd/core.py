@@ -753,13 +753,16 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
 
         self.df = self.df.reindex(columns=model_columns)
 
-    def custom_func_desc(self, series):
-        try:
-            return pd.concat(series, axis=1)
-        except TypeError:
-            return pd.DataFrame(series)
-        except Exception as e:
-            raise e
+
+    def __skip_columns(self, field):
+        if field in self.skip:
+            pass
+        elif field.startswith("_"):
+            pass
+        elif '__' in field:
+            pass
+        else:
+            return False
 
     def rebuild_columns(self):
         """ 按照 std_table_terms 定义的 key 生成新表格的各列
@@ -880,7 +883,7 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
             if param.startswith('$'):
                 arg_name = self.get_param(title, param[1:])
             else:
-                raise ValueError
+                raise ValueError('model param of {} error'.format(title))
         # title 由多列合并
         elif isinstance(param, tuple):
             try:
@@ -890,9 +893,9 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
                     fields_name.append(param[-1])
                     arg_name = self.get_param(title, tuple(fields_name))
                 else:
-                    raise ValueError
+                    raise ValueError('model param of {} error'.format(title))
             except AttributeError:
-                raise ValueError
+                raise ValueError('model param of {} error'.format(title))
         # title 是由单列分割而成
         elif isinstance(param, dict):
             # 首先检查数据中是否存在要分割单列
@@ -910,9 +913,9 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
                 elif isinstance(param, str):
                     arg_name = self.model_param_parser(new_fields, param)
                 else:
-                    raise ValueError
+                    raise ValueError('model param of {} error'.format(title))
             else:
-                raise ValueError
+                raise ValueError('model param of {} error'.format(title))
             if arg_name:
                 # 执行拆分前，先检查原有数据列是否已存在与要拆分出的列同名的列
                 find_columns = self.build_basic_param(tuple(new_fields))
@@ -936,7 +939,7 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
                 if arg_name:
                     return arg_name
         else:
-            raise ValueError
+            raise ValueError('model param of {} error'.format(title))
         return arg_name
 
     def get_param(self, title, param):

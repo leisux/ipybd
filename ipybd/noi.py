@@ -68,10 +68,10 @@ class Api:
 
 
 class Link:
-    def __init__(self, dict_in_list_datas, unpost_path, accesskey, secretkey, model_id=1):
+    def __init__(self, dict_in_list_datas, file_path, accesskey, secretkey, model_id=1):
         self.datas = dict_in_list_datas
         self.model_id = model_id
-        self.unpost_data_file = unpost_path + '_unpost.json'
+        self.file_path = file_path
         global ACCESSKEY
         global SECRETKEY
         ACCESSKEY = accesskey
@@ -79,16 +79,21 @@ class Link:
 
     def register(self):
         responses = self.add()
+        valid_resps = {}
         unvalid_resps = []
         for resp, data in zip(responses, self.datas):
             if resp:
-                pass
+                valid_resps[data['Occurrence']['occurrenceID']] = resp
             else:
                 unvalid_resps.append(data)
+        if valid_resps:
+            with open(self.file_path+'_valid_resps.json', "w", encoding='utf-8') as f:
+                json.dump(valid_resps, f, cls=NpEncoder, sort_keys=False,
+                          indent=2, separators=(',', ': '), ensure_ascii=False)
         if unvalid_resps:
-            with open(self.unpost_data_file, "w", encoding='utf-8') as f:
-                f.write(json.dumps(unvalid_resps, cls=NpEncoder, sort_keys=False,
-                                   indent=2, separators=(',', ': '), ensure_ascii=False))
+            with open(self.file_path+'_unpost.json', "w", encoding='utf-8') as f:
+                json.dumps(unvalid_resps, f, cls=NpEncoder, sort_keys=False,
+                           indent=2, separators=(',', ': '), ensure_ascii=False)
 
     def add(self):
         self.pbar = tqdm(total=len(self.datas), desc="注册数据", ascii=True)
