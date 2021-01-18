@@ -12,8 +12,12 @@ class CvhTerms(Enum):
     采集号 = '$recordNumber'
     份数 = Number('$individualCount', None, int)
     采集日期 = DateTime('$eventDate')
-    国家_province_city_区县 = AdminDiv(('$country', '$province', '$city', '$county', '::'))
+    国家 = '$country'
+    province = '$province'
+    city = '$city'
+    #国家_province_city_区县 = AdminDiv(('$country', '$province', '$city', '$county', '::'))
     省市 = ('$province', '$city', ',')
+    区县 = '$county'
     小地点 = ('$locality', '$mountain', '$waterBody', ',')
     纬度_经度 = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
     _海拔 = Number('$minimumElevationInMeters')
@@ -42,7 +46,8 @@ class CvhTerms(Enum):
     茎 = '$stem'
     根 = '$root'
     种子 = '$seed'
-    当地名称 = '$temporaryIdentification'
+    野外鉴定 = '$temporaryIdentification'
+    当地名称 = '$dialectName'
     备注 = '$occurrenceRemarks'
 
 
@@ -170,8 +175,7 @@ class NoiOccurrenceTerms(Enum):
     province = '$province'
     city = '$city'
     county = '$county'
-    if input('\n本次 NoiOccurrence 模型是否需要进行行政区划的自动整理：(y/n)\n') == 'y':
-        country_province_city_county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
+    #country_province_city_county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude_decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
     _minimumElevationInMeters = Number('$minimumElevationInMeters')

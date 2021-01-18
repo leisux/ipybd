@@ -1,5 +1,6 @@
 import os
 from ipybd.noi import Link
+from ipybd import NoiOccurrence
 import json
 
 
@@ -11,7 +12,7 @@ sec = "pmz52qpzk0lwx56jhd610w8dkdd7u8cm"
 # 这里设置数据路径
 # 可以是 .txt .json .xlsx .xls .csv 文件路径
 # 如果是 JSON 文件，数据结构必须符合 NOI Occurrence 类的规范
-path = r"/Users/xuzhoufeng/Downloads/Biotracks 物种记录20210105_ready.json"
+path = r"/Users/xuzhoufeng/Downloads/Biotracks 物种记录20210105_needcheck.json"
 path_elements = os.path.splitext(path)
 
 # 如果上面路径是其他格式，程序会引导用户清洗和转换数据
@@ -21,7 +22,6 @@ path_elements = os.path.splitext(path)
 # need_check.json 文件，是指字段值有疑异的数据，
 # 该文件可核查后继续传递给 path 变量，以再次执行注册。
 if path_elements[1] != '.json':
-    from ipybd import NoiOccurrence
     datas = NoiOccurrence(path)
     datas.write_json()
     path = path_elements[0] + '_ready.json'

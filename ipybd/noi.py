@@ -92,7 +92,7 @@ class Link:
                           indent=2, separators=(',', ': '), ensure_ascii=False)
         if unvalid_resps:
             with open(self.file_path+'_unpost.json', "w", encoding='utf-8') as f:
-                json.dumps(unvalid_resps, f, cls=NpEncoder, sort_keys=False,
+                json.dump(unvalid_resps, f, cls=NpEncoder, sort_keys=False,
                            indent=2, separators=(',', ': '), ensure_ascii=False)
 
     def add(self):

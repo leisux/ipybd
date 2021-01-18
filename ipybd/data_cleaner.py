@@ -369,17 +369,21 @@ class BioName:
             names = []
             for num, res in enumerate(results):
                 if query[1] is Filters.specific or query[1] is Filters.infraspecific:
-                    if res['scientific_name'] == query[0] and res['accepted_name_info']['author'] != "":
-                        # col 返回的结果中，没有 author team，需额外自行添加
-                        # 由于 COL 返回但结果中无学名的命名人，因此只能通过
-                        # 其接受名的 author 字段获得命名人，但接受名可能与
-                        # 检索学名不一致，所以此处暂且只能在确保检索学名为
-                        # 接受名后，才能添加命名人。
-                        # 因此对于 col 虽有数据，但却是异名的名字，会返回None
-                        if res['name_status'] == 'accepted name':
-                            results[num]['author_team'] = self.get_author_team(
-                                res['accepted_name_info']['author'])
-                            names.append(res)
+                    try:
+                        if res['scientific_name'] == query[0] and res['accepted_name_info']['author'] != "":
+                            # col 返回的结果中，没有 author team，需额外自行添加
+                            # 由于 COL 返回但结果中无学名的命名人，因此只能通过
+                            # 其接受名的 author 字段获得命名人，但接受名可能与
+                            # 检索学名不一致，所以此处暂且只能在确保检索学名为
+                            # 接受名后，才能添加命名人。
+                            # 因此对于 col 虽有数据，但却是异名的名字，会返回None
+                            if res['name_status'] == 'accepted name':
+                                results[num]['author_team'] = self.get_author_team(
+                                    res['accepted_name_info']['author'])
+                                names.append(res)
+                    # COL 可能 'accepted_name_info' 属性为None
+                    except TypeError:
+                        return None
                 elif query[1] is Filters.generic and res['accepted_name_info']['taxonTree']['genus'] == query[0]:
                     # col 接口目前尚无属一级的内容返回，这里先取属下种及种
                     # 下一级的分类阶元返回。
