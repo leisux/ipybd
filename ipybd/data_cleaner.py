@@ -818,7 +818,7 @@ class BioName:
                         ]
                     )
                 else:
-                    return pd.Series([None] * len(self.names))
+                    return pd.DataFrame([None] * len(self.names))
             else:
                 return pd.DataFrame(self.format(p="scientificName"))
         elif self.style == 'simpleName':
@@ -835,7 +835,7 @@ class BioName:
                         ]
                     )
                 else:
-                    return pd.Series([None]*len(self.names))
+                    return pd.DataFrame([None]*len(self.names))
             else:
                 return pd.DataFrame(self.format(p="simpleName"))
 
