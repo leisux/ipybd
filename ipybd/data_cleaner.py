@@ -39,7 +39,7 @@ def ifunc(obj):
                     else:
                         # 如果数据对象不是通过$修饰，则返回正常调用
                         return obj(*args, **kwargs)
-                except AttributeError:
+                except (AttributeError, TypeError):
                     return obj(*args, **kwargs)
         return handler
     elif isinstance(obj, MethodType):
@@ -103,13 +103,15 @@ class BioName:
     # 以下多个方法用于组装 get 协程
     # 跟踪协程的执行，并将执行结果生成缓存
 
-    def __build_cache_and_get_results(self, action, querys=None):
+    def __build_cache_and_get_results(self, action, need_querys=None):
         """ 构建查询缓存、返回查询结果
 
         action: 要进行的查询操作描述字符串
-        querys: 要进行 WEB 查询的检索词:解析出的检索要素组成的字典
+        need_querys: 没有缓存，需要进行 WEB 查询的检索词
+                     由 self.querys 部分元素组成解字典
 
         return 返回检索结果字典 results，字典由原始检索词:检索结果组成
+               若没有任何结果，返回 {}
                检索过程中，会一并生成 self.names 在相应平台的检索返回内容缓存
         """
         cache_mapping = {
@@ -127,8 +129,8 @@ class BioName:
         results = {}
         cache = cache_mapping[action]
         if cache:
-            if querys:
-                names = querys
+            if need_querys:
+                names = need_querys
             else:
                 names = self.querys
             action_func = {
@@ -160,18 +162,18 @@ class BioName:
                         # 如果检索词是合法的，加入检索项
                         search_terms.update({org_name: query})
                 except ValueError:
-                    # 如果缓存的相应结果中不存在特定数据
+                    # 如果有检索结果，但缓存结果中相应结果不存在特定数据
                     # 则不写入 results
                     pass
         else:
-            if not querys:
-                # 如果没有缓存，只重新执行一次 web 搜索
+            if not need_querys:
+                # 如果没有缓存，所有检索词执行一次 web 搜索
                 search_terms = self.querys
         # 未防止 search_terms 不存在，这里的条件判断应放置在后面
-        if not querys and search_terms:
-            # 若检索项是 None, 说明 web 请求是由用户主动发起，可以执行一次递归
-            # 若检索项并非 self.querys，说明 get 请求是由程序本身自动发起，完成
-            # 后将不再继续执行递归
+        if not need_querys and search_terms:
+            # 若need_querys 是 None, 说明 web 请求是首次发起，执行一次递归检索
+            # 若search_terms 并非 self.querys，说明 get 请求是由程序本身自动发起
+            # 执行结束后，将不再继续执行递归
             self.web_get(action, search_terms)
             # 这里的递归最多只执行一次
             sub_results = self.__build_cache_and_get_results(
@@ -179,15 +181,23 @@ class BioName:
             results.update(sub_results)
         return results
 
-    def get_cache_result(self, name, func):
+    def get_cache_result(self, query_result, get_result):
+        """ 从检索缓存中提取数据
+
+        query_result: raw_name 的检索结果
+        get_result: 从检索结果中提取特定检索结果的方法，
+                    可能是一个方法，也可能是多个方法组成的元组
+        return: 返回的结果样式，由检索方法决定
+
+        """
         try:
-            return func(name)
+            return get_result(query_result)
         # func 是 tuple 时触发
         except TypeError:
-            for f in func:
+            for func in get_result:
                 try:
                     # 遇到首个有正常返回值后，停止循环
-                    return self.get_cache_result(name, f)
+                    return self.get_cache_result(query_result, func)
                     break
                 # 若多个 API 返回结果的 keys 通用，这里可能不会触发 KeyError,目
                 # 前已知 col 和 ipni/powo 部分keys 通用，且 col 不存在属查询，
@@ -199,6 +209,13 @@ class BioName:
                     continue
 
     def web_get(self, action, search_terms):
+        """ 检索 WEB API，获得名称检索结果
+
+        action: str 类型，用于说明要执行的操作
+        search_terms: 搜索条件, 由self.querys 的全部或部分元素组成的字典
+                      元素样式为：raw_name:(simpleName, rank ,author, raw_name)
+        return: 返回 None, 检索结果会直接写入 self.cache
+        """
         get_action = {
             'stdName': self.get_name,
             'colTaxonTree': self.get_col_name,
@@ -245,7 +262,7 @@ class BioName:
     # 以下多个方法用于对 Api 返回结果进行有针对性的处理
     # 并根据具体调用的方法，返回用户所需要的数据
 
-    def powo_images(self, name):
+    def powo_images(self, query_result):
         """ 解析 self.cache['powo'] 中的图片
 
             powo 接口获得的图片有缩略图和原图 url
@@ -253,92 +270,92 @@ class BioName:
             返回的 iamges 是由三个 url 构成的元组
         """
         try:
-            images = [image['fullsize'] for image in name['images']]
+            images = [image['fullsize'] for image in query_result['images']]
         except KeyError:
             # 如果结果中没有 images 信息
             # 抛出值错误异常供调用程序捕获
             raise ValueError
         return images
 
-    def powo_accepted(self, name):
+    def powo_accepted(self, query_result):
         try:
-            name = name['synonymOf']
+            query_result = query_result['synonymOf']
         except KeyError:
             # 如果没有名称处理，默认将本名称作为接受名返回
             # 有些名字可能属于 unsolved 状态，也会被作为接受名返回
             pass
-        return " ".join([name['name'], name['author']]),
+        return " ".join([query_result['name'], query_result['author']]),
 
-    def powo_name(self, name):
-        scientific_name = name["name"]
-        author = name["author"]
-        family = name['family']
+    def powo_name(self, query_result):
+        scientific_name = query_result["name"]
+        author = query_result["author"]
+        family = query_result['family']
         # print(query[-1], genus, family, author)
         return scientific_name, author, family
 
-    def col_synonyms(self, name):
+    def col_synonyms(self, query_result):
         try:
             synonyms = [
                 synonym['synonym'] for synonym
-                in name['accepted_name_info']['Synonyms']
+                in query_result['accepted_name_info']['Synonyms']
             ]
             return synonyms
         except KeyError:
             raise ValueError
 
-    def col_taxontree(self, name):
+    def col_taxontree(self, query_result):
         try:
-            genus = name['accepted_name_info']['taxonTree']['genus']
-            family = name['accepted_name_info']['taxonTree']['family']
-            order = name['accepted_name_info']['taxonTree']['order']
-            _class = name['accepted_name_info']['taxonTree']['class']
-            phylum = name['accepted_name_info']['taxonTree']['phylum']
-            kingdom = name['accepted_name_info']['taxonTree']['kingdom']
+            genus = query_result['accepted_name_info']['taxonTree']['genus']
+            family = query_result['accepted_name_info']['taxonTree']['family']
+            order = query_result['accepted_name_info']['taxonTree']['order']
+            _class = query_result['accepted_name_info']['taxonTree']['class']
+            phylum = query_result['accepted_name_info']['taxonTree']['phylum']
+            kingdom = query_result['accepted_name_info']['taxonTree']['kingdom']
         except KeyError:
             try:
-                genus = name['genus']
-                family = name['family']
-                order = name['order']
-                _class = name['class']
-                phylum = name['phylum']
-                kingdom = name['kingdom']
+                genus = query_result['genus']
+                family = query_result['family']
+                order = query_result['order']
+                _class = query_result['class']
+                phylum = query_result['phylum']
+                kingdom = query_result['kingdom']
             except BaseException:
                 genus = None
-                family = name['family']
-                order = name['order']
-                _class = name['class']
-                phylum = name['phylum']
-                kingdom = name['kingdom']
+                family = query_result['family']
+                order = query_result['order']
+                _class = query_result['class']
+                phylum = query_result['phylum']
+                kingdom = query_result['kingdom']
         return genus, family, order, _class, phylum, kingdom
 
-    def col_name(self, name):
+    def col_name(self, query_result):
         try:  # 种及种下检索结果
-            family = name['accepted_name_info']['taxonTree']['family']
-            author = name['accepted_name_info']['author']
-            scientific_name = name['scientific_name']
+            family = query_result['accepted_name_info']['taxonTree']['family']
+            author = query_result['accepted_name_info']['author']
+            scientific_name = query_result['scientific_name']
         except KeyError:
             try:  # 属的检索结果
-                scientific_name = name['genus']
+                scientific_name = query_result['genus']
                 author = None
-                family = name['family']
+                family = query_result['family']
             except KeyError:  # 科的检索结果
-                family = name['family']
+                family = query_result['family']
                 author = None
                 scientific_name = family
         return scientific_name, author, family
 
-    def ipni_name(self, name):
-        scientific_name = name["name"]
-        author = name["authors"]
-        family = name['family']
+    def ipni_name(self, query_result):
+        scientific_name = query_result["name"]
+        author = query_result["authors"]
+        family = query_result['family']
         # print(query[-1], genus, family, author)
         return scientific_name, author, family
 
-    def ipni_reference(self, name):
-        publishing_author = name['publishingAuthor']
-        publication_year = name['publicationYear']
-        publication = name['publication']
-        reference = name['reference']
+    def ipni_reference(self,query_result):
+        publishing_author = query_result['publishingAuthor']
+        publication_year = query_result['publicationYear']
+        publication = query_result['publication']
+        reference = query_result['reference']
         return publishing_author, publication_year, publication, reference
 
     async def get_name(self, query, session):
@@ -649,8 +666,9 @@ class BioName:
                       属名 x 种名 种命名人 种下加词 种下命名人
                       这类学名格式的清洗，
                       其中杂交符、种命名人、种下命名人均可缺省。
-
-            目前仍有个别命名人十分复杂的名称，无法准确提取命名人，使用时需注意
+            return: (raw_name 去命名人的学名, Filters定义的学名等级, 原始名称提取的命名人, raw_name)
+                    目前仍有个别命名人十分复杂的名称，无法准确提取命名人，使用时需注意
+                    如果无法提取合法的学名，则返回 None
         """
         species_pattern = re.compile(
             r"\b([A-Z][a-zàäçéèêëöôùûüîï-]+)\s*([×Xx])?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*(.*)")
@@ -790,26 +808,34 @@ class BioName:
             choose = input(
                 "\n是否执行拼写检查，在线检查将基于 sp2000.org.cn、ipni.org 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
             if choose.strip() == 'y':
-                return pd.DataFrame(
-                    [
-                        ' '.join([name[0], name[1]]).strip()
-                        if name[1] else name[0]
-                        for name in self.get('stdName', mark=mark)
-                    ]
-                )
+                results = self.get('stdName', mark=mark)
+                if results:
+                    return pd.DataFrame(
+                        [
+                            ' '.join([name[0], name[1]]).strip()
+                            if name[1] else name[0]
+                            for name in results
+                        ]
+                    )
+                else:
+                    return pd.Series([None] * len(self.names))
             else:
                 return pd.DataFrame(self.format(p="scientificName"))
         elif self.style == 'simpleName':
             choose = input(
                 "\n是否执行拼写检查，在线检查将基于 sp2000.org.cn、ipni.org 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
             if choose.strip() == 'y':
-                return pd.DataFrame(
-                    [
-                        name[0].strip()
-                        if name[1] else name[0]
-                        for name in self.get('stdName', mark=mark)
-                    ]
-                )
+                results = self.get('stdName', mark=mark)
+                if results:
+                    return pd.DataFrame(
+                        [
+                            name[0].strip()
+                            if name[1] else name[0]
+                            for name in results
+                        ]
+                    )
+                else:
+                    return pd.Series([None]*len(self.names))
             else:
                 return pd.DataFrame(self.format(p="simpleName"))
 
