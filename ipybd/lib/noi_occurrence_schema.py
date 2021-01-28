@@ -347,6 +347,7 @@ schema={
             "植物",
             "动物",
             "真菌",
+            "假菌",
             "古细菌",
             "原核生物",
             "病毒"
@@ -405,6 +406,10 @@ schema={
         },
         "institutionCode": {
           "title_cn": "机构代码",
+          "type": "string"
+        },
+        "collectionCode":{
+          "title_cn": "馆藏代码",
           "type": "string"
         }
       },

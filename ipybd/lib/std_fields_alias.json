@@ -8,9 +8,6 @@
     ],
     "category":[
     ],
-    "institutionName":[
-        "机构名称"
-    ],
     "elevationUnit":[
         "海拔单位"
     ],
@@ -38,7 +35,7 @@
         "坐标基准",
         "GEODETICDATUM"
     ],
-    "fieldNote":[
+    "fieldNotes":[
         "考察记录",
         "野外记录",
         "FIELDNOTE"
@@ -367,12 +364,17 @@
         "MAXALTITUDE",
         "MAXIMUMELEVATIONINMETERS"
     ],
-    "institutionCode": [
+    "collectionCode": [
         "馆代码",
         "标本馆代码",
-        "收藏单位",
         "标本馆",
         "馆藏代码",
+        "国际标本馆代码",
+        "COLLECTIONCODE"
+    ],
+    "institutionCode": [
+        "收藏单位",
+        "机构名称",
         "MUSEUMID",
         "INSTITUTIONCODE"
     ],
@@ -532,7 +534,8 @@
         "区",
         "COUNTY",
         "COUNTY_LABEL",
-        "产地2"
+        "产地2",
+        "MUNICIPALITY"
     ],
     "height": [
         "植株高度",

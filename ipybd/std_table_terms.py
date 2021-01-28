@@ -4,7 +4,7 @@ from ipybd.data_cleaner import *
 
 class CvhTerms(Enum):
     条形码 = UniqueID('$catalogNumber')
-    馆代码 = RadioInput('$institutionCode', 'institutionCode')
+    馆代码 = RadioInput('$collectionCode', 'collectionCode')
     流水号 = UniqueID('$otherCatalogNumbers')
     标本状态 = RadioInput('$lifeStage', 'lifeStage')
     库存 = RadioInput('$disposition', 'disposition')
@@ -60,7 +60,7 @@ class OccurrenceTerms(Enum):
     licence = '$licence'
     modified = DateTime('$modified', 'datetime')
     references = '$references'
-    institutionCode = RadioInput('$institutionCode', 'institutionCode')
+    collectionCode = RadioInput('$collectionCode', 'collectionCode')
     classification = RadioInput('$classification', 'classification')
     # Occurrence
     OccurrenceID = UniqueID('$occurrenceID')
@@ -201,7 +201,8 @@ class NoiOccurrenceTerms(Enum):
 
     # Record Object
     datasetName = '$datasetName'
-    institutionCode = RadioInput('$institutionCode', 'institutionCode')
+    institutionCode = '$institutionCode'
+    collectionCode = '$collectionCode'
     category = RadioInput('$category', 'category')
     basisOfRecord = RadioInput('$basisOfRecord', 'basisOfRecord')
     rights = '$rights'
@@ -211,13 +212,13 @@ class NoiOccurrenceTerms(Enum):
     thumbnails = '$thumbnails'
     licence = '$licence'
     modified = DateTime('$modified', 'utc')
-    Record = ('$datasetName', '$institutionCode', '$category', '$basisOfRecord', '$rights', '$rightsHolder', '$references', '$dataApi', '$thumbnails', '$licence', '$modified', 'd')
+    Record = ('$datasetName', '$institutionCode', '$collectionCode', '$category', '$basisOfRecord', '$rights', '$rightsHolder', '$references', '$dataApi', '$thumbnails', '$licence', '$modified', 'd')
     DictForNoiOccurrence = ('$Occurrence', '$Location', '$Identification', '$Event', '$Record', 'd')
 
 
 class KingdoniaPlantTerms(Enum):
     catalogNumber = UniqueID('$catalogNumber')
-    institutionCode = RadioInput('$institutionCode', 'institutionCode')
+    institutionCode = RadioInput('$collectionCode', 'collectionCode')
     otherCatalogNumbers = '$otherCatalogNumbers'
     classification = RadioInput('$classification', 'classification')
     lifeStage = RadioInput('$lifeStage', 'lifeStage')
@@ -281,8 +282,8 @@ class KingdoniaAvesTerms(Enum):
 
 
 class HerbLabelTerms(Enum):
-    title = '$institutionName'
-    titleNote = '$institutionCode'
+    title = '$institutionCode'
+    titleNote = '$collectionCode'
     subTitle = '$fundedBy'
     family = '$family'
     vernacularName = '$vernacularName'
@@ -333,7 +334,7 @@ class NsiiTerms(Enum):
     licence = '$licence'
     modified = DateTime('$modified', 'datetime')
     references = '$references'
-    institutionCode = RadioInput('$institutionCode', 'institutionCode')
+    collectionCode = RadioInput('$collectionCode', 'collectionCode')
     # Occurrence
     catalogNumber = UniqueID('$catalogNumber')
     recordedBy = HumanName('$recordedBy')

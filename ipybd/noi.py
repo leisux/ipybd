@@ -26,6 +26,10 @@ SECRETKEY = "eztofeurrrpt8kexe4lptsgp89tnph4s"
 
 
 class Api:
+    """ noi.link Post Data API
+
+        实现单条记录的注册
+    """
     def __init__(
             self, json_data, data_rights, data_rights_holder, data_model_id):
         self.data = json_data
@@ -68,6 +72,11 @@ class Api:
 
 
 class Link:
+    """ 使用协程实现记录批量注册 noi.link
+
+        对于未注册成功的记录，会以json文件保存在相应路径下
+        对于已经注册成功的记录，会议json文件将返回结果保存在相应路径下
+    """
     def __init__(self, dict_in_list_datas, file_path, accesskey, secretkey, model_id=1):
         self.datas = dict_in_list_datas
         self.model_id = model_id
@@ -145,8 +154,6 @@ class Link:
                             return self.get_data(response)
                         except aiohttp.ClientPayloadError as e:
                             # 这个错误的具体原因尚未弄清楚
-                            # 据说可能是 aiohttp 库默认无法解码 br，
-                            # 需要安装第三方的依赖库才可解决
                             # 在遭遇这个错误之后，我们验证了 noi 数据库
                             # 发现相应的索引其实已经注册
                             # 但这到目前这只是个例，且原因不明，
@@ -156,7 +163,7 @@ class Link:
                         except JSONDecodeError as e:
                             # 这个错误，目前原因不明
                             # 数据库端解析请求，提示 401 错误
-                            # 索引数据没有注册成功
+                            # 索引数据没有注册成功，sleep后重新执行注册
                             await asyncio.sleep(5)
                             continue
             except aiohttp.ServerDisconnectedError:

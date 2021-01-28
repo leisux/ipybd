@@ -1175,12 +1175,13 @@ class HumanName:
         """
         names_mapping = dict.fromkeys(self.names)
         pattern = re.compile(
-            r'[\u4e00-\u9fa5\s]*[\u4e00-\u9fa5][\|\d]*|[A-Za-z][A-Za-z\.\s\-]+[A-Za-z\.][\|\d]*')
+            r'[\u4e00-\u9fa5\s]*[\u4e00-\u9fa5][\|\d]*|[\[A-Za-z][A-Za-z\u00C0-\u00FF\'\.\s\-\]]*[A-Za-z\u00C0-\u00FF\'\.\]][\|\d]*')
         for rec_names in tqdm(names_mapping, desc="人名处理", ascii=True):
             try:
-                # 切分人名，并大写首字母
-                names = [name.strip().title()
+                # 切分人名
+                names = [name.strip()
                          for name in pattern.findall(rec_names)]
+                print(names)
                 # 对一条记录里的每个人名的合理性进行判断
                 for i, name in enumerate(names):
                     # 先判断人名是否来自 Biotracks 网页端导出的带 id 的人名
@@ -1207,14 +1208,7 @@ class HumanName:
                             # 主要解决双字名中，中间有空格的情况
                             names[i] = name.replace(" ", "")
                     else:
-                        if len(name) < 3:
-                            raise ValueError
-                        else:
-                            en_name = [
-                                e + "."
-                                if len(e) == 1 else e
-                                for e in re.split(r"\.\s*", name)]
-                            names[i] = " ".join(en_name)
+                        names[i] = self.format_westname(name)
                 names_mapping[rec_names] = ", ".join(names)
             except NameError:
                 continue
@@ -1225,6 +1219,31 @@ class HumanName:
                     names_mapping[rec_names] = "!" + str(rec_names)
 
         return [names_mapping[txt] for txt in self.names]
+
+    def format_westname(self, name):
+        # 判断名字长度
+        if len(name) < 2:
+            raise ValueError
+        # 纠正空格数量
+        while True:
+            if "  " in name:
+                name = name.replace("  ", " ")
+            else:
+                break
+        # 纠正”.“后无空格
+        en_name = [
+            e + "."
+            if len(e) > 0 else e
+            for e in re.split(r"\.\s*", name)]
+        # 去除非简写姓或名后的”.“
+        if en_name[-1] == "":
+            del en_name[-1]
+        else:
+            en_name[-1] = en_name[-1][:-1]
+        #['de', 'das', 'dos', 'des', 'la', 'da', 'do', 'del', 'di', 'della', 'bai', 'la', 'zu', 'aus', 'dem', 'von', 'der', 'von', 'dem', 'vom', 'van']:
+        return " ".join(en_name)
+
+
 
     def __call__(self):
         return pd.DataFrame(pd.Series(self.format_names()))

@@ -6,13 +6,13 @@ import json
 
 # 这里请自行设置 NOI 账户生成的 API accesskey 和 secretkey
 # 可以登录网页端 NOI 账户，在个人中心 API 栏目获得
-acc = "rov74w60rzy0evtkjidx5bxn8jvxvto6"
-sec = "pmz52qpzk0lwx56jhd610w8dkdd7u8cm"
+acc = ""
+sec = ""
 
 # 这里设置数据路径
 # 可以是 .txt .json .xlsx .xls .csv 文件路径
 # 如果是 JSON 文件，数据结构必须符合 NOI Occurrence 类的规范
-path = r"/Users/xuzhoufeng/Downloads/Biotracks 物种记录20210105_needcheck.json"
+path = r"C:\Users\xu_zh\Downloads\0163434-200613084148143\occurrence_needcheck.json"
 path_elements = os.path.splitext(path)
 
 # 如果上面路径是其他格式，程序会引导用户清洗和转换数据
