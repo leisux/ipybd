@@ -1181,7 +1181,7 @@ class HumanName:
                 # 切分人名
                 names = [name.strip()
                          for name in pattern.findall(rec_names)]
-                print(names)
+                # print(names)
                 # 对一条记录里的每个人名的合理性进行判断
                 for i, name in enumerate(names):
                     # 先判断人名是否来自 Biotracks 网页端导出的带 id 的人名
@@ -1242,8 +1242,6 @@ class HumanName:
             en_name[-1] = en_name[-1][:-1]
         #['de', 'das', 'dos', 'des', 'la', 'da', 'do', 'del', 'di', 'della', 'bai', 'la', 'zu', 'aus', 'dem', 'von', 'der', 'von', 'dem', 'vom', 'van']:
         return " ".join(en_name)
-
-
 
     def __call__(self):
         return pd.DataFrame(pd.Series(self.format_names()))
