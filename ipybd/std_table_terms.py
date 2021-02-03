@@ -182,13 +182,14 @@ class NoiOccurrenceTerms(Enum):
     _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters_maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     geodeticDatum = RadioInput('$geodeticDatum', 'geodeticDatum')
+    georeferenceProtocol = '$georeferenceProtocol'
     _minimumDepthInMeters = Number('$minimumDepthInMeters')
     _maximumDepthInMeters = Number('$maximumDepthInMeters')
     minimumDepthInMeters_maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters')
     _minimumDistanceAboveSurfaceInMeters = Number('$minimumDistanceAboveSurfaceInMeters')
     _maximumDistanceAboveSurfaceInMeters = Number('$maximumDistanceAboveSurfaceInMeters')
     minimumDistanceAboveSurfaceInMeters_maximumDistanceAboveSurfaceInMeters = Number('$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters')
-    Location = ('$countryCode', '$country', '$province', '$city', '$county', '$locality', '$decimalLatitude', '$decimalLongitude', '$minimumElevationInMeters', '$maximumElevationInMeters', '$minimumDepthInMeters', '$maximumDepthInMeters', '$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters', 'd')
+    Location = ('$countryCode', '$country', '$province', '$city', '$county', '$locality', '$decimalLatitude', '$decimalLongitude', '$minimumElevationInMeters', '$maximumElevationInMeters', '$minimumDepthInMeters', '$maximumDepthInMeters', '$geodeticDatum', '$georeferenceProtocol', '$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters', 'd')
 
     # Idnetification Object
     vernacularName = '$vernacularName'

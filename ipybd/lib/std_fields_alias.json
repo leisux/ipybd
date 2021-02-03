@@ -1,4 +1,8 @@
 {
+    "georeferenceProtocol": [
+        "地理位置获取方式",
+        "地理位置确定方式"
+    ],
     "datasetName":[
         "数据集",
         "数据集名称"
@@ -65,7 +69,8 @@
     "licence":[
         "授权",
         "授权协议",
-        "LICENCE"
+        "LICENCE",
+        "LICENSE"
     ],
     "rightsHolder":[
     "版权代理",

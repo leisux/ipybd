@@ -10,9 +10,9 @@ schema={
         "occurrenceID": {
           "title_cn": "机构标识",
           "type": "string",
-          "pattern": "[A-Z]+:.+",
+          "pattern": "[A-Za-z0-9:-]+",
           "minLength": 5,
-          "maxLength": 25,
+          "maxLength": 36,
           "description": "like KUN:L1245789"
         },
         "catalogNumber": {
@@ -20,7 +20,7 @@ schema={
           "type": "string",
           "pattern": "[A-Za-z0-9]+",
           "minLength": 4,
-          "maxLength": 20,
+          "maxLength": 35,
           "description": "L1245789"
         },
         "otherCatalogNumbers": {
@@ -220,6 +220,10 @@ schema={
             "Clarke 1866",
             "Unknown"
           ]
+        },
+        "georeferenceProtocol":{
+          "title_cn": "地理位置确定方式",
+          "type": "string"
         },
         "minimumElevationInMeters": {
           "title_cn": "海拔/海拔低值",
