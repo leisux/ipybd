@@ -1,8 +1,4 @@
 # NoiOccurrence Test
-from enum import Enum
-from ipybd import HumanName
-from ipybd import Label
-from ipybd import imodel
 from ipybd import NoiOccurrence
 
 noi = NoiOccurrence(
@@ -11,7 +7,8 @@ noi.write_json()
 
 
 # Model Test
-
+from ipybd import imodel
+from enum import Enum
 
 @imodel
 class MyCollection(Enum):
@@ -26,14 +23,29 @@ cvh = MyCollection(r"/Users/xuzhoufeng/OneDrive/PDP/testfile/cvh.xlsx")
 
 
 # Label Test
+from ipybd import Label
 
 printer = Label(r"/Users/xuzhoufeng/OneDrive/PDP/testfile/cvh.xlsx", repeat=2)
 printer.write_html(start_code="KUN004123", page_num=8)
 
 
 # HumanName Test
+from ipybd import HumanName
 
 names = HumanName([
+    "Henry, A.",
+    "David, D. M., Henry, A., Delavayi F. K., Bob, C. F.",
+    "Chow, --",
+    "Chow, -- & Tsang",
+    "-- Tsang, -- Tang & Fung, --",
+    "-- Dorsett & -- Dorsett",
+    "-- Tsang, -. Tang & Fung, --",
+    "To Kang P'eng, W. T. Tsang & Ts' Ang Un Kin",
+    "Rev. Mr. Rankin",
+    "-- Keng & -. Kao",
+    "U. K. Tsang, -- Tang & Fung, --",
+    "Teilhard de Chardin (Abbé) Pierre, Teilhard de Chardin (Abbé) Pierre",
+    "David (Abbé)",
     "Capt. Francis (Frank) Kingdon-Ward", 
     "(Johann) Albert von Regel", 
     "T.N. Ho, B.M. Bartholomew, M.G. Gilbert & S.W. Liu", 

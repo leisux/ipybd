@@ -1,19 +1,28 @@
 {
+    "verbatimElevation": [
+        "原始海拔记录",
+        "VERBATIMELEVATION",
+        "ELEVATION"
+    ],
     "georeferenceProtocol": [
         "地理位置获取方式",
-        "地理位置确定方式"
+        "地理位置确定方式",
+        "GEOREFERENCEPROTOCOL"
     ],
     "datasetName":[
         "数据集",
-        "数据集名称"
+        "数据集名称",
+        "DATASETNAME"
     ],
     "countryCode":[
-        "国家代码"
+        "国家代码",
+        "COUNTRYCODE"
     ],
     "category":[
     ],
     "elevationUnit":[
-        "海拔单位"
+        "海拔单位",
+        "ELEVATIONUNIT"
     ],
     "temporaryIdentification":[
         "临时鉴定",
@@ -66,7 +75,7 @@
         "数据接口",
         "DATAAPI"
     ],
-    "licence":[
+    "license":[
         "授权",
         "授权协议",
         "LICENCE",
@@ -77,15 +86,16 @@
     "所有权代理",
     "所有权代理人",
     "PROVIDER",
-    "RIGHTSHOLDER"
+    "RIGHTSHOLDER",
+    "所有权",
+    "版权所有",
+    "版权",
+    "所有者",
+    "COPYRIGHT",
+    "RIGHTS"
 ],
-    "rights":[
-        "所有权",
-        "版权所有",
-        "版权",
-        "所有者",
-        "COPYRIGHT",
-        "RIGHTS"
+    "dataFrom":[
+        "数据来源"
     ],
     "identifiedByID":[
         "鉴定者ID",

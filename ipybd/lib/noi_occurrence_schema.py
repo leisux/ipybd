@@ -237,6 +237,10 @@ schema={
           "minimum": -800,
           "maximum": 8845
         },
+        "verbatimElevation": {
+          "title_cn": "原始海拔记录",
+          "type": "string"
+        },
         "minimumDepthInMeters": {
           "title_cn": "深度/最小深度",
           "type": "number",
@@ -375,15 +379,15 @@ schema={
             "不清"
           ]
         },
-        "rights": {
+        "rightsHolder": {
           "title_cn": "版权所有",
           "type": "string"
         },
-        "rightsHolder": {
+        "dataFrom": {
           "title_cn": "数据来源",
           "type": "string"
         },
-        "licence": {
+        "license": {
           "title_cn": "许可协议",
           "type": "string",
           "format":"uri"
@@ -419,9 +423,9 @@ schema={
       },
       "required": [
         "basisOfRecord",
-        "rights",
+        "dataFrom",
         "rightsHolder",
-        "licence"
+        "license"
       ]
     }
   },

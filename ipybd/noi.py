@@ -21,8 +21,9 @@ from tqdm import tqdm
 from ipybd.core import NpEncoder
 
 URL = "http://139.198.189.90/api/data_add"
-ACCESSKEY = "qqpq4m0vzpteirfrc0gnl6yajc5yomu5"
-SECRETKEY = "eztofeurrrpt8kexe4lptsgp89tnph4s"
+UPDATE_ID_URL = "http://139.198.189.90/api/data_update"
+ACCESSKEY = ""
+SECRETKEY = ""
 
 
 class Api:
@@ -31,16 +32,16 @@ class Api:
         实现单条记录的注册
     """
     def __init__(
-            self, json_data, data_rights, data_rights_holder, data_model_id):
+            self, json_data, rights, data_from, data_model_id):
         self.data = json_data
-        self.rights = data_rights
-        self.rights_holder = data_rights_holder
+        self.rights = rights
+        self.data_from = data_from
         self.model_id = data_model_id
 
-    def post(self):
+    def post(self, url):
         data, token = self.build_post_info()
         postdata = urllib.parse.urlencode(data).encode('utf-8')
-        req = urllib.request.Request(URL, postdata)
+        req = urllib.request.Request(url, postdata)
         req.add_header("token", token)
         res = urllib.request.urlopen(req)
         html = res.read()
@@ -56,7 +57,7 @@ class Api:
         json_policy = json.dumps(
             {
                 'data_info': self.data,
-                'data_from': self.rights_holder,
+                'data_from': self.data_from,
                 'data_copyright': self.rights,
                 'data_modelid': self.model_id
             },
@@ -71,6 +72,27 @@ class Api:
         return ":".join([ACCESSKEY, sign])
 
 
+class UpdateID(Api):
+    """ update occurrenceID of noi.link occurrence object
+
+        occurrencID 是用户更新 noi occurrence 对象的唯一 ID
+        一般该 ID 不会发生改变, 如果该 ID 发生改变或者发生错误,
+        可以借助已经注册获得的 NOI 更新 occurrenceID
+    """
+    def __init__(self, noi, new_id):
+        self.noi = noi
+        self.new_id = new_id
+
+    def build_policy(self):
+        json_policy = json.dumps(
+            {
+                'noi':self.noi,
+                'occurrenceID': self.new_id
+            }
+        )
+        return base64.b64encode(json_policy.encode('utf-8'))
+
+
 class Link:
     """ 使用协程实现记录批量注册 noi.link
 
@@ -81,6 +103,7 @@ class Link:
         self.datas = dict_in_list_datas
         self.model_id = model_id
         self.file_path = file_path
+        self.url = URL
         global ACCESSKEY
         global SECRETKEY
         ACCESSKEY = accesskey
@@ -127,21 +150,21 @@ class Link:
             return result
 
     def build_post_data(self, data: dict):
-        rights = data["Record"]["rights"]
-        rights_holder = data["Record"]["rightsHolder"]
+        rights = data["Record"]["rightsHolder"]
+        data_from = data["Record"]["dataFrom"]
         json_data = json.dumps(data, cls=NpEncoder, ensure_ascii=False)
         # print(json_data)
         api = Api(
             json_data,
             rights,
-            rights_holder,
+            data_from,
             self.model_id)
         return api.build_post_info()
 
     async def fetch(self, data: 'json', token, session):
         while True:
             try:
-                async with session.post(URL,
+                async with session.post(self.url,
                                         data=data,
                                         headers={"token": token}
                                         ) as resp:
@@ -180,7 +203,12 @@ class Link:
     def get_data(self, response):
         if response['code'] == 200:
             return response['data']
-        elif response['code'] == 400:
+        else:
+            self.error_print(response)
+            return None
+
+    def error_print(self, response):
+        if response['code'] == 400:
             print("\n请求报文格式错误 包括上传时，上传表单格式错误")
         elif response['code'] == 401:
             print("\n认证授权失败 错误信息包括密钥信息不正确；数字签名错误；授权已超时")
@@ -200,4 +228,39 @@ class Link:
             print("\n用户账户冻结\n")
         else:
             print("\n错误代码：{}\n".format(response['code']))
-        return None
+
+
+
+class UpdateIDs(Link):
+    def __init__(self, dict_in_list_datas, file_path, accesskey, secretkey, model_id=1):
+        super(UpdateIDs, self).__init__(dict_in_list_datas, file_path, accesskey, secretkey, model_id)
+        self.url = UPDATE_ID_URL
+
+    def build_post_data(self, data):
+        noi = data['noi']
+        occurrenceID = data['occurrenceID']
+        json_data = json.dumps(data, cls=NpEncoder, ensure_ascii=False)
+        api = UpdateID(noi, occurrenceID)
+        return api.build_post_info()
+
+    def get_data(self, response):
+        if response['code'] == 200:
+            return True
+        else:
+            print(response)
+            self.error_print(response)
+            return None
+
+    def update(self):
+        responses = self.add()
+        unvalid_resps = []
+        for resp, data in zip(responses, self.datas):
+            if resp:
+                pass
+            else:
+                unvalid_resps.append(data)
+        if unvalid_resps:
+            with open(self.file_path+'_unpost.json', "w", encoding='utf-8') as f:
+                json.dump(unvalid_resps, f, cls=NpEncoder, sort_keys=False,
+                           indent=2, separators=(',', ': '), ensure_ascii=False)
+

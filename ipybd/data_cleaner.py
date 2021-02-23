@@ -1175,7 +1175,8 @@ class HumanName:
         """
         names_mapping = dict.fromkeys(self.names)
         pattern = re.compile(
-            r'[\u4e00-\u9fa5\s]*[\u4e00-\u9fa5][\|\d]*|[A-Za-z\(\[][A-Za-z\u00C0-\u00FF\'\.\s\-\]\(\)]*[A-Za-z\u00C0-\u00FF\'\.\]][\|\d]*')
+            r'[\u4e00-\u9fa5\s]*[\u4e00-\u9fa5][\|\d]*|[A-Za-z\(\[][A-Za-z\u00C0-\u00FF\'\.\s\-\]\(\)]*[A-Za-z\u00C0-\u00FF\'\.\]\)][\|\d]*')
+            #r'[\u4e00-\u9fa5\s]*[\u4e00-\u9fa5][\|\d]*|[A-Za-z\(\[][A-Za-z\u00C0-\u00FF\'\s\-\]\(\)]*[,]?[A-Za-z\u00C0-\u00FF\'\.\s\-\]\(\)]*[A-Za-z\u00C0-\u00FF\'\.\]\)][\|\d]*')
         for rec_names in tqdm(names_mapping, desc="人名处理", ascii=True):
             try:
                 # 切分人名

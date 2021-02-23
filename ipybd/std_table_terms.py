@@ -181,6 +181,7 @@ class NoiOccurrenceTerms(Enum):
     _minimumElevationInMeters = Number('$minimumElevationInMeters')
     _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters_maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
+    verbatimElevation = '$verbatimElevation'
     geodeticDatum = RadioInput('$geodeticDatum', 'geodeticDatum')
     georeferenceProtocol = '$georeferenceProtocol'
     _minimumDepthInMeters = Number('$minimumDepthInMeters')
@@ -189,7 +190,7 @@ class NoiOccurrenceTerms(Enum):
     _minimumDistanceAboveSurfaceInMeters = Number('$minimumDistanceAboveSurfaceInMeters')
     _maximumDistanceAboveSurfaceInMeters = Number('$maximumDistanceAboveSurfaceInMeters')
     minimumDistanceAboveSurfaceInMeters_maximumDistanceAboveSurfaceInMeters = Number('$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters')
-    Location = ('$countryCode', '$country', '$province', '$city', '$county', '$locality', '$decimalLatitude', '$decimalLongitude', '$minimumElevationInMeters', '$maximumElevationInMeters', '$minimumDepthInMeters', '$maximumDepthInMeters', '$geodeticDatum', '$georeferenceProtocol', '$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters', 'd')
+    Location = ('$countryCode', '$country', '$province', '$city', '$county', '$locality', '$decimalLatitude', '$decimalLongitude', '$minimumElevationInMeters', '$maximumElevationInMeters', '$verbatimElevation', '$minimumDepthInMeters', '$maximumDepthInMeters', '$geodeticDatum', '$georeferenceProtocol', '$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters', 'd')
 
     # Idnetification Object
     vernacularName = '$vernacularName'
@@ -206,14 +207,14 @@ class NoiOccurrenceTerms(Enum):
     collectionCode = '$collectionCode'
     category = RadioInput('$category', 'category')
     basisOfRecord = RadioInput('$basisOfRecord', 'basisOfRecord')
-    rights = '$rights'
     rightsHolder = '$rightsHolder'
+    dataFrom = '$dataFrom'
     references = '$references'
     dataApi = '$dataApi'
     thumbnails = '$thumbnails'
-    licence = '$licence'
+    license = '$licence'
     modified = DateTime('$modified', 'utc')
-    Record = ('$datasetName', '$institutionCode', '$collectionCode', '$category', '$basisOfRecord', '$rights', '$rightsHolder', '$references', '$dataApi', '$thumbnails', '$licence', '$modified', 'd')
+    Record = ('$datasetName', '$institutionCode', '$collectionCode', '$category', '$basisOfRecord', '$dataFrom', '$rightsHolder', '$references', '$dataApi', '$thumbnails', '$license', '$modified', 'd')
     DictForNoiOccurrence = ('$Occurrence', '$Location', '$Identification', '$Event', '$Record', 'd')
 
 
