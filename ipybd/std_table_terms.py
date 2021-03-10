@@ -207,8 +207,8 @@ class NoiOccurrenceTerms(Enum):
     collectionCode = '$collectionCode'
     category = RadioInput('$category', 'category')
     basisOfRecord = RadioInput('$basisOfRecord', 'basisOfRecord')
-    rightsHolder = '$rightsHolder'
     dataFrom = '$dataFrom'
+    rightsHolder = '$rightsHolder'
     references = '$references'
     dataApi = '$dataApi'
     thumbnails = '$thumbnails'

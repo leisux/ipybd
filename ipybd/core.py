@@ -12,6 +12,10 @@ from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.shortcuts import prompt
 from tqdm import tqdm
 
+from warnings import filterwarnings
+
+filterwarnings('error', category=UserWarning)
+
 from ipybd.data_cleaner import (AdminDiv, BioName, DateTime, GeoCoordinate,
                                 HumanName, Number, RadioInput, UniqueID)
 
@@ -203,7 +207,25 @@ class FormatDataSet:
                 return mergers
 
     def _merge2pairs(self, columns, typ='dict'):
-        mergers = list(self.df[columns].to_dict("records"))
+        try:
+            mergers = list(self.df[columns].to_dict("records"))
+        except UserWarning:
+            # 出现此错误，说明 columns 中有元素在 self.df.columns 中可能存在多个同名
+            # 如果人工和模型指定的对应关系没有错误，那么极有可能是原始字段中存在字段名
+            # 误用的情形：
+            # 比如转换关系中存在 rights:$rightsHolder, rightsHolder:$dataFrom 
+            # 这样的关系，且 rights 和 rightsHolder 在原始数据中是独立的两列，
+            # 那么最终这两列都会被转换为 dataFrom 而非用户所希望的 rightsHolder 和 
+            # dataFrom 造成这一问题的原因在于 rightsHolder 在原始表中的语义被误用了，
+            # 而该字段名又需要被赋予原始数据中的其他列，当程序先执行 rights 到 
+            # rightsHolder 的映射后，self.df 中就会存在两个 rightsHolder，
+            # 程序再次执行 rightsHolder  到 dataFrom 转换是，
+            # 就又会将两列 rightsHolder 全部转换为 dataFrame
+            # 当 rightsholder 再次被调用时，就会在此处产生警告。
+            # 此问题可以通过更改字段转换顺序予以解决
+            # 也可以在转换关系确定后，通过程序进行初步的筛查
+            # 这些等后面有时间再完善把！
+            raise ValueError("字段转换中，存在环状转换链，请检查原始字段是否有字段名误用!\n")
         for i, r in enumerate(mergers):
             c = r.copy()
             for title, value in c.items():

@@ -12,14 +12,14 @@ schema={
           "type": "string",
           "pattern": "[A-Za-z0-9:-]+",
           "minLength": 5,
-          "maxLength": 36,
+          "maxLength": 45,
           "description": "like KUN:L1245789"
         },
         "catalogNumber": {
           "title_cn": "资源编号",
           "type": "string",
           "pattern": "[A-Za-z0-9]+",
-          "minLength": 4,
+          "minLength": 2,
           "maxLength": 35,
           "description": "L1245789"
         },

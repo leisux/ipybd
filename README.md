@@ -630,7 +630,7 @@ Name: 海拔, dtype: object
 ```python
 # split_column 方法会在下文详解
 # 这里将 altitude 按照 '-' 符号拆分为 minimumElevation 和 maximumElevation 两个新列
-collections.split_column("altitude", "-", new_headers["minimumElevation","maximumElevation"]) 
+collections.split_column("altitude", "-", new_headers=["minimumElevation","maximumElevation"]) 
   
 # 可以发现单纯的列拆分并不能将所有的区间值分开
 # 但是它可以为进一步使用 fromat_number 方法提供基础
@@ -1295,7 +1295,7 @@ Out:
 ```python
 
 from ipybd import imodel
-from ipybd import BioName, GeoCoordinate, DateTime, Nmber, AdminDiv
+from ipybd import BioName, GeoCoordinate, DateTime, Number, AdminDiv
 from enum import Enum
 
 @imodel
