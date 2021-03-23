@@ -400,11 +400,15 @@ class BioName:
                                 names.append(res)
                     # COL 可能 'accepted_name_info' 属性为None
                     except TypeError:
-                        return None
-                elif query[1] is Filters.generic and res['accepted_name_info']['taxonTree']['genus'] == query[0]:
-                    # col 接口目前尚无属一级的内容返回，这里先取属下种及种
-                    # 下一级的分类阶元返回。
-                    return res['accepted_name_info']['taxonTree']
+                        continue
+                # col 接口目前尚无属一级的内容返回，这里先取属下种及种
+                # 下一级的分类阶元返回。
+                elif query[1] is Filters.generic:
+                    try:
+                        if res['accepted_name_info']['taxonTree']['genus'] == query[0]:
+                            return res['accepted_name_info']['taxonTree']
+                    except TypeError:
+                        continue
                 elif query[1] is Filters.familial and res['family'] == query[0]:
                     return res
             authors = self.get_author_team(query[2])
