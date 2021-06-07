@@ -67,7 +67,7 @@ class ExpressionCompleter(Completer):
                 continue
 
 
-class FormatDataSet:
+class FormatDataset:
     with open(STD_TERMS_ALIAS_PATH, encoding="utf-8") as std_alias:
         std_field_alias = json.load(std_alias)
 
@@ -213,11 +213,11 @@ class FormatDataSet:
             # 出现此错误，说明 columns 中有元素在 self.df.columns 中可能存在多个同名
             # 如果人工和模型指定的对应关系没有错误，那么极有可能是原始字段中存在字段名
             # 误用的情形：
-            # 比如转换关系中存在 rights:$rightsHolder, rightsHolder:$dataFrom 
+            # 比如转换关系中存在 rights:$rightsHolder, rightsHolder:$dataFrom
             # 这样的关系，且 rights 和 rightsHolder 在原始数据中是独立的两列，
-            # 那么最终这两列都会被转换为 dataFrom 而非用户所希望的 rightsHolder 和 
+            # 那么最终这两列都会被转换为 dataFrom 而非用户所希望的 rightsHolder 和
             # dataFrom 造成这一问题的原因在于 rightsHolder 在原始表中的语义被误用了，
-            # 而该字段名又需要被赋予原始数据中的其他列，当程序先执行 rights 到 
+            # 而该字段名又需要被赋予原始数据中的其他列，当程序先执行 rights 到
             # rightsHolder 的映射后，self.df 中就会存在两个 rightsHolder，
             # 程序再次执行 rightsHolder  到 dataFrom 转换是，
             # 就又会将两列 rightsHolder 全部转换为 dataFrame
@@ -321,7 +321,7 @@ class FormatDataSet:
                             completer=ExpressionCompleter(
                                 self.raw_columns,
                                 self._stdfields,
-                                FormatDataSet.std_field_alias),
+                                FormatDataset.std_field_alias),
                             complete_while_typing=False
                             )
         # 如果忽略所有，这些列名将映射到自身
@@ -461,12 +461,12 @@ class FormatDataSet:
 
     def __auto2std_field(self, raw_field):
         # 首先找出表格列名中使用标准名称的列名
-        if raw_field in FormatDataSet.std_field_alias:
+        if raw_field in FormatDataset.std_field_alias:
             self.original_fields_mapping[raw_field] = raw_field
         else:
             # 如果列名用的不是标准名子，逐个比较别名库，找到对应的标准名称
             std_options = []
-            for k, v in FormatDataSet.std_field_alias.items():
+            for k, v in FormatDataset.std_field_alias.items():
                 if raw_field.upper() in v:
                     std_options.append(k)
             if len(std_options) == 1:
@@ -496,7 +496,7 @@ class FormatDataSet:
         for raw_field in tqdm(self.original_fields_mapping, desc="列名映射", ascii=True):
             self.__auto2std_field(raw_field)
         invalid_mapping = self.__check_duplicate_mapping()
-        self._stdfields = tuple(FormatDataSet.std_field_alias.keys())
+        self._stdfields = tuple(FormatDataset.std_field_alias.keys())
         while invalid_mapping:
             # print("\n下方式是可以映射的标准列名序列表：\n")
             # self._prt_items(2, self._stdfields)
@@ -509,11 +509,18 @@ class FormatDataSet:
         with open(PERSONAL_TEMPLATE_PATH, "w", encoding="utf-8") as pt:
             pt.write(json.dumps(json_template, ensure_ascii=False))
 
+    def to_excel(self, path):
+        writer = pd.ExcelWriter(path,
+                                engine='openpyxl',
+                                options={'strngs_to_urls':False})
+        self.df.to_excel(writer, index=False)
+        writer.save()
+
     def save_data(self, path):
         if path.endswith('.xlsx'):
-            self.df.to_excel(path, index=False)
+            self.to_excel(path)
         elif path.endswith('.xls'):
-            self.df.to_excel(path, index=False)
+            self.to_excel(path)
         elif path.endswith('.csv'):
             self.df.to_csv(path, index=None)
         elif path.endswith('.sql'):
@@ -687,7 +694,7 @@ class RestructureTableMeta(type):
         return super().__new__(cls, name, bases, dct)
 
 
-class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
+class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
     # self.__class__.columns_model from std_table_objects
     def __init__(self, *args, fields_mapping=False, cut=False, fcol=False, **kwargs):
         super(RestructureTable, self).__init__(*args, **kwargs)
@@ -775,6 +782,13 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
 
         self.df = self.df.reindex(columns=model_columns)
 
+    def custom_func_desc(self, series):
+        try:
+            return pd.concat(series, axis=1)
+        except TypeError:
+            return pd.DataFrame(series)
+        except Exception as e:
+            raise e
 
     def __skip_columns(self, field):
         if field in self.skip:
@@ -792,6 +806,7 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
         for field in self.__class__.columns_model:
             try:
                 params = field.value
+                print(params)
                 if not isinstance(params, dict) and isinstance(params[0], (type, FunctionType, MethodType)) and isinstance(params[-1], dict):
                     if isinstance(params[1], tuple) and len(params) == 3:
                         args = self.get_args(field.name, params[1], params[-1])
@@ -805,13 +820,13 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
                                 new_cols = self.custom_func_desc(params[0](*args[0], **args[1]))
                             # _ 开头的名称是模板用于临时定义使用，命名时需要去除 _
                             columns = field.name.split('_')[1:] if field.name.startswith(
-                                '_') else field.name.split('_')
+                                '_') else field.name.split('__')
                             new_cols.columns = columns
                             self.df.drop(args[-1], axis=1, inplace=True)
                             self.df = pd.concat([self.df, new_cols], axis=1)
                         elif self.fcol is not False:
                             columns = field.name.split('_')[1:] if field.name.startswith(
-                                '_') else field.name.split('_')
+                                '_') else field.name.split('__')
                             for col in columns:
                                 if col not in self.df.columns:
                                     self.df[col] = self.fcol
@@ -819,6 +834,7 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
                         raise ValueError("model value error: {}".format(field.name))
                 elif isinstance(params, (str, tuple, dict, list)):
                     arg_name = self.model_param_parser(field.name, params)
+                    print(arg_name)
                     # _ 开头的名称是模板用于临时定义使用，命名时需要去除 _
                     column_name = field.name[1:] \
                         if field.name.startswith("_") else field.name
@@ -831,7 +847,7 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
                     # 如果原表中无法找到相应的列，用指定的 self.fcol 填充新列
                     elif self.fcol is not False:
                         columns = field.name.split('_')[1:] if field.name.startswith(
-                            '_') else field.name.split('_')
+                            '_') else field.name.split('__')
                         for col in columns:
                             if col not in self.df.columns:
                                 self.df[col] = self.fcol
@@ -925,7 +941,7 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
             if len(keys) == 1:
                 separators = param[keys[0]]
                 param = keys[0]
-                new_fields = title.split('_')
+                new_fields = title.split('__')
                 # 如果要拆分的列本身就是由其他列合并而成
                 if isinstance(param, tuple):
                     param = list(param)
@@ -1056,12 +1072,12 @@ class RestructureTable(FormatDataSet, metaclass=RestructureTableMeta):
                 如果找不到对应列名，返回 None
         """
         column_names = []
-        # 如果 ReStructureTable 已经与 FormatDataSet 一致，
+        # 如果 ReStructureTable 已经与 FormatDataset 一致，
         # 则直接用原始表中与之对应列
         if param in self.original_fields_mapping.values():
             column_names.append(self.__get_key(param))
             del self.original_fields_mapping[column_names[0]]
-        # 对于ReStructureTable与 FormatDataSet 不一致的字段转换，
+        # 对于ReStructureTable与 FormatDataset 不一致的字段转换，
         # 综合比较后以前者为主修改后者，前者未覆盖的则依据后者处理。
         else:
             if isinstance(param, str):

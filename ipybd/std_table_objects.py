@@ -150,16 +150,19 @@ class CVH(RestructureTable):
         recordedby = list(self.df["采集人"])
         btk_userid_pattern = re.compile(r"\|[0-9]+")
         for num, coll in enumerate(tqdm(recordedby, desc="去除采集人ID", ascii=True)):
-            if coll.startswith("!"):
-                continue
-            else:
-                btk_userid = btk_userid_pattern.findall(coll)
-                if btk_userid == []:
+            try:
+                if coll.startswith("!"):
                     continue
                 else:
-                    for userid in btk_userid:
-                        coll = coll.replace(userid, "")
-                    recordedby[num] = coll
+                    btk_userid = btk_userid_pattern.findall(coll)
+                    if btk_userid == []:
+                        continue
+                    else:
+                        for userid in btk_userid:
+                            coll = coll.replace(userid, "")
+                        recordedby[num] = coll
+            except AttributeError:
+                continue
         self.df["采集人"] = pd.Series(recordedby)
 
     def split_scientific_name(self):

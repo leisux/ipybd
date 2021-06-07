@@ -5,7 +5,7 @@
 - [二、安装方法](#二安装方法)
 - [三、主要的数据处理方法](#三主要的数据处理方法)
   - [3.1 BioName](#31-bioname)
-  - [3.2 FormatDataSet](#32-formatdataset)
+  - [3.2 FormatDataset](#32-FormatDataset)
     - [3.2.1 数据的装载](#321-数据的装载)
     - [3.2.2 学名处理](#322-学名处理)
     - [3.2.3 中文行政区划清洗和转换](#323-中文行政区划清洗和转换)
@@ -27,7 +27,6 @@
 - [六、标签打印](#六标签打印)
 - [七、数据统计与分析](#七数据统计与分析)
 - [八、特别声明](#八特别声明)
-  
 
 ## 一、概述
 
@@ -148,32 +147,32 @@ Out:
 
 使用时，只需将上例`get`方法中的相应关键字替换为所需关键字即可。
 
-### 3.2 FormatDataSet
+### 3.2 FormatDataset
 
-`FormatDataSet` 类是 `ipybd` 执行数据处理的核心类，也是 `ipybd` 数据模型类的父类。它提供了对生物多样性相关的各类数据集进行各种结构重构和值格式化处理的基本方法。普通用户也可以直接调用它以更加自主的方式处理个性化的数据集或者开发自己的脚本和程序。
+`FormatDataset` 类是 `ipybd` 执行数据处理的核心类，也是 `ipybd` 数据模型类的父类。它提供了对生物多样性相关的各类数据集进行各种结构重构和值格式化处理的基本方法。普通用户也可以直接调用它以更加自主的方式处理个性化的数据集或者开发自己的脚本和程序。
 
 #### 3.2.1 数据的载入
 
-目前 FormatDataSet 可接受一个 Excel、CSV、TXT、JSON、`Pandas.DataFrame`、RDBMS 数据库对象进行实例化：基于 Excel 、CSV 、TXT、JSON 实例化，可以直接传递相应文件的路径给 `FormatDataSet`：
+目前 FormatDataset 可接受一个 Excel、CSV、TXT、JSON、`Pandas.DataFrame`、RDBMS 数据库对象进行实例化：基于 Excel 、CSV 、TXT、JSON 实例化，可以直接传递相应文件的路径给 `FormatDataset`：
 
 ```python
-collections = FormatDataSet(r"~/Documents/record2019-09-10.xlsx") 
+collections = FormatDataset(r"~/Documents/record2019-09-10.xlsx") 
 ```
 
-`FormatDataSet` 默认采用 `UTF-8` 编码文件，如果传递 CSV 文件出现`UnicodeDecodeError`错误，可以尝试显式指定相应的编码方式，一般都可以得到解决（Python 支持的标准编码[戳这里](https://docs.python.org/3/library/codecs.html#standard-encodings)。此外，`ipybd` 的数据载入方式主要基于 `pandas.read_*`等方法封装，支持这些方法中绝大部分的参数传入，因此若遭遇一些特殊问题，也可以直接查看[`pandas`](https://pandas.pydata.org/)相应方法的说明。
+`FormatDataset` 默认采用 `UTF-8` 编码文件，如果传递 CSV 文件出现`UnicodeDecodeError`错误，可以尝试显式指定相应的编码方式，一般都可以得到解决（Python 支持的标准编码[戳这里](https://docs.python.org/3/library/codecs.html#standard-encodings)。此外，`ipybd` 的数据载入方式主要基于 `pandas.read_*`等方法封装，支持这些方法中绝大部分的参数传入，因此若遭遇一些特殊问题，也可以直接查看[`pandas`](https://pandas.pydata.org/)相应方法的说明。
 
 ```python
 # 这里显式的指定了 csv 文件的编码方式为 gbk
-collections = FormatDataSet(r"~/Documents/record2019-09-10.cvs", encoding='gbk') 
+collections = FormatDataset(r"~/Documents/record2019-09-10.cvs", encoding='gbk') 
 ```
 
-如果已经有一个 `DataFrame` 对象，也可以直接传递给 `FormatDataSet`：
+如果已经有一个 `DataFrame` 对象，也可以直接传递给 `FormatDataset`：
 
 ```pythoon
-collections = FormatDataSet(DataFrame)
+collections = FormatDataset(DataFrame)
 ```
 
-基于本地或线上的关系型数据库创建 `FormatDataSet` 实例，需要先创建数据库连接。在 python 生态中，比如广泛使用的 `MySQL`数据库就有诸如 mysqlclient、pymysql、mysql-connector 等多种连接库可以使用，下方示例演示的是通过 sqlalchemy 建立 mysql 数据库连接，个人可以根据喜好和使用的数据库自行选择相应的连接库创建连接器。
+基于本地或线上的关系型数据库创建 `FormatDataset` 实例，需要先创建数据库连接。在 python 生态中，比如广泛使用的 `MySQL`数据库就有诸如 mysqlclient、pymysql、mysql-connector 等多种连接库可以使用，下方示例演示的是通过 sqlalchemy 建立 mysql 数据库连接，个人可以根据喜好和使用的数据库自行选择相应的连接库创建连接器。
 
 ```python
 # 首先导入相应的连接库
@@ -187,8 +186,8 @@ conn = create_engine('mysql+pymysql://root:mypassward@localhost:3306/ScientificN
 # 这里的sql语句演示了从 ScientificName 数据库中调取 10 条 theplantlist 学名数据
 sql = "select * from theplantlist limit 10;"
 
-# 将 sql 语句和建立好的连接器传递给 ipybd.FormatDataSet
-tpl = FormatDataSet(sql, conn)
+# 将 sql 语句和建立好的连接器传递给 ipybd.FormatDataset
+tpl = FormatDataset(sql, conn)
 
 # 执行完毕后，数据会以 DataFrame 结构保存到 tpl 实例的 df 对象之中
 # 然后就可以在本地内存中对这些数据进行各种操作了
@@ -211,7 +210,7 @@ Out:
 
 #### 3.2.2 学名处理
 
-`FormatDataSet` 类基于 `BioName` 实例封装了一些学名处理方法，以便用户能够更便捷的对数据表中的名称进行处理。比如对于上述 `collections` 实例，若相关数据表中的学名并非单列，而是按照 `"属名"`、`"种名"`、`"种下单元"`、`"命名人"`四列分列存储，单纯使用 `BioName` 类需要用户先自行合并相应数据列才可以执行在线查询。而 `FormatDataSet` 实例则可以直接进行学名的查询和匹配：
+`FormatDataset` 类基于 `BioName` 实例封装了一些学名处理方法，以便用户能够更便捷的对数据表中的名称进行处理。比如对于上述 `collections` 实例，若相关数据表中的学名并非单列，而是按照 `"属名"`、`"种名"`、`"种下单元"`、`"命名人"`四列分列存储，单纯使用 `BioName` 类需要用户先自行合并相应数据列才可以执行在线查询。而 `FormatDataset` 实例则可以直接进行学名的查询和匹配：
 
 ```python
 # 这里以获取 ipni 平台的信息为例
@@ -240,7 +239,7 @@ Out:
  ]
 ```
 
-如上所示，不同数据表的学名表示方式时常会有差异，而通过诸如`get_ipni_name`这样的实例方法可以大幅提高数据处理的便捷性和灵活性。目前 `FormatDataSet` 实例共支持以下几种学名处理方法：
+如上所示，不同数据表的学名表示方式时常会有差异，而通过诸如`get_ipni_name`这样的实例方法可以大幅提高数据处理的便捷性和灵活性。目前 `FormatDataset` 实例共支持以下几种学名处理方法：
 
 + `get_powo_name`: 获取 powo 平台相应学名的科属地位、学名简写和命名人信息；
 
@@ -272,10 +271,10 @@ collections.save_data(r"~/Documents/new_record.xlsx")
 
 #### 3.2.3 中文行政区划清洗和转换
 
-同物种学名一样，数据表中的中文行政区划也有可能是多列或单列。`FormatDataSet`提供了类似的方法对其进行批量清洗和转换。
+同物种学名一样，数据表中的中文行政区划也有可能是多列或单列。`FormatDataset`提供了类似的方法对其进行批量清洗和转换。
 
 ```python
-# FormatDataSet 实例可以通过 df 属性获得数据表的 DataFrame
+# FormatDataset 实例可以通过 df 属性获得数据表的 DataFrame
 # 下行代码输出了 collections 前 30 行记录的行政区划：
 collections.df[["国别", "行政区"]].head(30)                                                                                                                                                                                           
 
@@ -324,7 +323,7 @@ Out:
 
 类似这样的行政区数据大多转录自手写的纸质标签记录，尤其对于那些年代比较久远的生物多样性原始数据集，这样简略的记录其实是广泛存在的。纯粹依靠人工逐条处理这些历史数据，事实上是一件极为低效且不可靠的方式。而将人工和 `ipybd`相结合，则可以大幅提高这类工作的效率和品质。
 
-目前 `FormatDataSet` 实例的`format_admindiv`方法可以自动进行县级及其以上等级的中文行政区名称的清洗和转换，其使用方法非常类似于上述拉丁学名的处理方法：
+目前 `FormatDataset` 实例的`format_admindiv`方法可以自动进行县级及其以上等级的中文行政区名称的清洗和转换，其使用方法非常类似于上述拉丁学名的处理方法：
 
 ```python
 # 将覆盖国省市县行政区名的相关字段按序传递
@@ -536,7 +535,7 @@ UTC 世界协调时在处理和分析跨时区生物多样性数据时，具有�
 
 #### 3.2.5 经纬度清洗和转换
 
-经纬度数据是物种分布信息最为关键的信息，`FormatDataSet`实例为此提供了严格可靠的数据清洗方法 `format_latlon`，该方法既能最大限度的执行数据的自动清洗和转换，又能实现百分之百的数据纠错：
+经纬度数据是物种分布信息最为关键的信息，`FormatDataset`实例为此提供了严格可靠的数据清洗方法 `format_latlon`，该方法既能最大限度的执行数据的自动清洗和转换，又能实现百分之百的数据纠错：
 
 ```python
 collections.df['GPS'].head(20)     
@@ -706,7 +705,7 @@ Out:
 `format_options` 函数可以将一些选值项自动或半自动的转换为标准值。这里以一个脏数据为例：
 
 ```python
-from ipybd import FormatDataSet as fd
+from ipybd import FormatDataset as fd
 
 dirtydata = fd(r"/Users/.../dirtydata.xlsx")
 dirtydata.df.head()
@@ -773,7 +772,7 @@ collections.format_options("植物习性", "habit")
 
 #### 3.2.8 重复值标注
 
-`FormatDataSet` 提供了类似 Excel 的行值判重功能，该功能可以通过 `mark_repeat` 方法实现。
+`FormatDataset` 提供了类似 Excel 的行值判重功能，该功能可以通过 `mark_repeat` 方法实现。
 
 ```python
 collections.df[["标本号", "国别", "Time"]]
@@ -1127,7 +1126,7 @@ class MyModel(Enum):
     记录人 = '$采集人'   
     记录编号 = '$采集号' 
     记录时间 = '$采集日期'
-    省_市 = {'$省市':','}  
+    省__市 = {'$省市':','}  
     学名 = ('$属', '$种', '$种下等级', ' ')  
 
 ```
@@ -1136,7 +1135,7 @@ class MyModel(Enum):
 
 + **字段更名**：原数据集中的数据对象不用做任何改变，直接更名后映射到新的数据集中。上面代码中的`采集人`,`采集号`,`采集日期`就是通过更名表达式重新映射为新数据集中的`记录人`,`记录编号`,`记录时间`。其中 `$` 前缀在 `ipybd` 模型中用于修饰一个数据对象，带有该前缀的字符串会被认为是一个数据对象参数。因此 `记录人 = $采集人` 这样的表达式表示的就是：将原数据集中的`采集人`数据对象转换为新数据集中的`记录人`数据对象。
 
-+ **数据拆分**：将原数据集中的单个数据对象拆分为新数据集中的多个数据对象。`ipybd` 通过 `dict` 类型表达拆分，比如上面代码中的 `省_市 = {'$省市':','}`  就是表示：将原数据集中的`省市`数据对象通过 `,` 分隔符拆分为新数据集中的`省`,`市`两个新数据对象。其中新分出的列名之间要以 `_` 进行连接。需要注意的是 `str` 类型的分隔符只会参与一次拆分，如果想要进行多次拆分，可以将多个分隔符组装为一个 `tuple` ，比如 `国_省_市_县 = {行政区划:(";", ";",";")}` 或者 `国_省_市_县 = {行政区划:(";",)*3}` 就表示将`行政区划`拆分为`国`,`省`,`市`,`县`四个新数据对象。
++ **数据拆分**：将原数据集中的单个数据对象拆分为新数据集中的多个数据对象。`ipybd` 通过 `dict` 类型表达拆分，比如上面代码中的 `省__市 = {'$省市':','}`  就是表示：将原数据集中的`省市`数据对象通过 `,` 分隔符拆分为新数据集中的`省`,`市`两个新数据对象。其中新分出的列名之间要以 `__` 进行连接。需要注意的是 `str` 类型的分隔符只会参与一次拆分，如果想要进行多次拆分，可以将多个分隔符组装为一个 `tuple` ，比如 `国__省__市__县 = {"$行政区划":(";", ";",";")}` 或者 `国__省__市__县 = {"$行政区划":(";",)*3}` 就表示将`行政区划`拆分为`国`,`省`,`市`,`县`四个新数据对象。
 
 + **数据合并**：将原数据集中的多个数据对象合并为单个数据对象。 `ipybd` 通过 `tuple` 类型表达合并，比如上面代码中的
 
@@ -1164,7 +1163,7 @@ Out:
 cvh = MyModel(r"/Users/.../cvh.xlsx", cut=False) 
 ```
 
-此外通过 `@imodel` 修饰生成的数据模型，都是前述 `FormatDataSet` 的子类，因此 `FormatDataSet` 实例具有的方法都可以被这些模型的实例直接调用。
+此外通过 `@imodel` 修饰生成的数据模型，都是前述 `FormatDataset` 的子类，因此 `FormatDataset` 实例具有的方法都可以被这些模型的实例直接调用。
 
 ### 4.2 众源数据集的结构重塑
 
@@ -1179,7 +1178,7 @@ class MySmartModel(Enum):
     记录人 = '$recordedBy'  
     记录编号 = '$recordNumber'  
     采集日期 = '$eventDate' 
-    省_市 = {('$province', '$city'): ','} 
+    省__市 = {('$province', '$city'): ','} 
     学名 = ['$scientificName',  ('$genus', '$specificEpithet', '$taxonRank', '$infraspecificEpithet', ' ')] 
     
 ```
@@ -1187,13 +1186,13 @@ class MySmartModel(Enum):
 如上所示，对于具备字段映射功能的 `ipybd` 数据模型，其数据对象的表达不再是具体真实的字段名，而是采用了一套新的标准字段名以指代同一语义的不同字段名。比如上面代码中的 "recordedBy" 就可以同时指代"采集人"、"采集人员"、"记录人"、"记录者"、"记录人员"、"COLLECTOR" .... 等一批不同名称但意义相同的字段。`ipybd` 就是依靠这种标准字段名称的泛化关系实现了众源数据集结构的转换。目前 `ipybd` 的标准字段名称库主要基于 [DarwinCore](https://dwc.tdwg.org/terms/) 定义，其中也有部分字段名称会根据国内数据的现实情况，做了一些调整和扩展。标准字段名称库相当于一类对象的基本构成元素库。使用它进行模型的定义，会存在一些特殊的表达方式，比如上述 `MySmartModel` 模型中：
 
 ```python
-省_市 = {('$province', '$city'): ','} 
+省__市 = {('$province', '$city'): ','} 
 ```
 
 与 `MyModel` 中`$省市`的表达方式就有很大差异：
 
 ```python
-省_市 = {'$省市':','}
+省__市 = {'$省市':','}
 ```
 
 这是因为在 `ipybd` 的标准字段名称库中，并不存在与"省市"完全等同的标准字段名，而只存在 "province" 和 "city" 两个标准字段名。显然“省市”应该是由"province"和"city"两个标准字段组合而成，因此在 `MySmartModel`中就需要以表示合并语义的元组表达`$省市`这个概念。
@@ -1301,11 +1300,11 @@ from enum import Enum
 @imodel
 class DataCleaner(Enum):  
     拉丁名 = BioName('$鉴定', style='scientificName')  # style 关键字参数指名返回带有完整命名人的学名
-    经度_纬度 = GeoCoordinate('$坐标') 
+    经度__纬度 = GeoCoordinate('$坐标') 
     采集日期 = DateTime('$日期') 
-    海拔1_海拔2 = {'$海拔':'-'} 
+    海拔1__海拔2 = {'$海拔':'-'} 
     海拔_海拔高 = Number('$海拔1', '$海拔2', int)   # int 位置参数指明返回 int 类型的数值
-    国_省_市_县 = AdminDiv(('$国别', '$产地1', '$产地2', ','))  # ipybd 定义的元组等表达式都可以作为单个参数进行传递                                                                                                                                                             
+    国__省__市__县 = AdminDiv(('$国别', '$产地1', '$产地2', ','))  # ipybd 定义的元组等表达式都可以作为单个参数进行传递                                                                                                                                                             
 ```
 
 相对于简单的结构转换模型，`DataCleaner` 的枚举值中不仅定义了`$`修饰的数据对象，还将这些对象传递给了诸如 `BioName` 这样的 `ipybd` 数据类。这些类会自动清洗相应的数据，并返回符合预期的结果：
@@ -1372,10 +1371,10 @@ Out:
 @imodel  
 class SmartCleaner(Enum):  
     拉丁名 = BioName(['$scientificName', ('$genus', '$specificEpithet', '$taxonRank', '$infraspecificEpithet', ' ')], style='scientificName') 
-    经度_纬度 = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';')) 
+    经度__纬度 = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';')) 
     采集日期 = DateTime('$eventDate') 
-    海拔_海拔高 = Number('$minimumElevationInMeters', '$maximumElevationInMeters', int) 
-    国_省_市_县 = AdminDiv(('$country', '$province', '$city', '$county', ',')) 
+    海拔__海拔高 = Number('$minimumElevationInMeters', '$maximumElevationInMeters', int) 
+    国__省__市__县 = AdminDiv(('$country', '$province', '$city', '$county', ',')) 
 
 ```
 
@@ -1449,7 +1448,7 @@ class MyFuncModel(Enum):
     海拔1 = '$海拔' 
     海拔2 = '$海拔高' 
     #枚举元素的key也要写成多个字段名，以匹配 avg 的返回结果
-    海拔低_海拔高_海拔 = avg('$海拔1', '$海拔2')
+    海拔低__海拔高__海拔 = avg('$海拔1', '$海拔2')
                                                                                                                                                
 mydata = MyFuncModel(cleandata.copy())                                                                                                                 
 mydata.df.head()                                                                                                                                                         
@@ -1525,7 +1524,7 @@ printer.write_html(start_code="KUN004123", page_num=8)
 第一步：装载和概览数据：
 
 ```python
-from ipybd import FormatDataSet as fd
+from ipybd import FormatDataset as fd
 
 gbows = fd(r"/User/.../GBOWS20200918fromKingdonia.xlsx"")
 

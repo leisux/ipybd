@@ -31,6 +31,7 @@
     ],
     "vernacularName":[
         "CHINESENAME",
+        "CNNAME",
         "中文名",
         "中文种名",
         "中名",
@@ -483,7 +484,8 @@
         "TIME",
         "DATE_COLLECTED",
         "COLLECTDATE_LABEL",
-        "EVENTDATE"
+        "EVENTDATE",
+        "RECORDTIME"
     ],
     "lifeStage": [
         "标本状态",
@@ -496,7 +498,8 @@
         "生命周期",
         "Status",
         "幼体",
-        "LIFESTAGE"
+        "LIFESTAGE",
+        "REPORDUCTIVECONDITON"
     ],
     "seed": [
         "种质",
@@ -655,7 +658,8 @@
         "NAMELA",
         "拉丁名",
         "IDENTIFICATIONS",
-        "SCIENTIFICNAME"
+        "SCIENTIFICNAME",
+        "SCINAME"
     ],
     "recordedBy": [
         "采集人",
@@ -830,6 +834,7 @@
     "references": [
         "参考文献",
         "出处",
+        "REFERENCE",
         "SOURCE",
         "REFERENCES"
     ]
