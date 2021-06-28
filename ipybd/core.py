@@ -807,7 +807,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
         for field in self.__class__.columns_model:
             try:
                 params = field.value
-                print(params)
+                # print(params)
                 if not isinstance(params, dict) and isinstance(params[0], (type, FunctionType, MethodType)) and isinstance(params[-1], dict):
                     if isinstance(params[1], tuple) and len(params) == 3:
                         args = self.get_args(field.name, params[1], params[-1])
@@ -835,7 +835,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
                         raise ValueError("model value error: {}".format(field.name))
                 elif isinstance(params, (str, tuple, dict, list)):
                     arg_name = self.model_param_parser(field.name, params)
-                    print(arg_name)
+                    # print(arg_name)
                     # _ 开头的名称是模板用于临时定义使用，命名时需要去除 _
                     column_name = field.name[1:] \
                         if field.name.startswith("_") else field.name
