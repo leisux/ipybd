@@ -110,7 +110,7 @@ class BioName:
         need_querys: 没有缓存，需要进行 WEB 查询的检索词
                      由 self.querys 部分元素组成解字典
 
-        return 返回检索结果字典 results，字典由原始检索词:检索结果组成
+         返回检索结果字典 results，字典由原始检索词:检索结果组成
                若没有任何结果，返回 {}
                检索过程中，会一并生成 self.names 在相应平台的检索返回内容缓存
         """
@@ -290,7 +290,6 @@ class BioName:
         scientific_name = query_result["name"]
         author = query_result["author"]
         family = query_result['family']
-        # print(query[-1], genus, family, author)
         return scientific_name, author, family
 
     def col_synonyms(self, query_result):
@@ -504,7 +503,14 @@ class BioName:
             names = []
             for res in results:
                 if res["name"] == query[0]:
-                    res['authorTeam'] = self.get_author_team(res['author'])
+                    try:
+                        res['authorTeam'] = self.get_author_team(res['author'])
+                    except KeyError:
+                        # 如果查询的结果中没有命名人信息,则补充空值
+                        # 如果匹配结果只有这一个结果，采用该结果
+                        # 如果匹配结果多余一个，该结果将因 autorTeam 为空排除
+                        res['author'] = None
+                        res['authroTeam'] = []
                     names.append(res)
             authors = self.get_author_team(query[2])
             # 如果搜索名称和返回名称不一致，标注后待人工核查
@@ -526,7 +532,7 @@ class BioName:
                 std_teams = {
                     n: self.code_authors(
                         r['authorTeam']) for n,
-                    r in enumerate(names)}
+                    r in enumerate(names) if r['authorTeam']}
                 # 开始比对原命名人与可选学名的命名人的比对结果
                 scores = self.contrast_code(aut_codes, std_teams)
                 # print(query[-1], scores)
