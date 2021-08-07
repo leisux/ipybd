@@ -20,8 +20,8 @@ from tqdm import tqdm
 
 from ipybd.core import NpEncoder
 
-URL = "http://139.198.189.90/api/data_add"
-UPDATE_ID_URL = "http://139.198.189.90/api/data_update"
+URL = "https://noi.link/api/data_add"
+UPDATE_ID_URL = "https://noi.link/api/data_update"
 ACCESSKEY = ""
 SECRETKEY = ""
 
