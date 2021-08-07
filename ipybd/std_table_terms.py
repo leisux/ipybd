@@ -284,18 +284,13 @@ class KingdoniaAvesTerms(Enum):
 
 
 class HerbLabelTerms(Enum):
-    title = '$institutionCode'
-    titleNote = '$collectionCode'
-    subTitle = '$fundedBy'
+    duplicatesOfLabel = Number('$duplicatesOfLabel', None, int)
+    labelTitle = ['$labelTitle', '$institutionCode']
+    labelNote = ['$labelNote', '$collectionCode']
+    labelSubtitle = ['$labelSubtitle', '$fundedBy']
     family = '$family'
     vernacularName = '$vernacularName'
-    genus = '$genus'
-    specificEpithet = '$specificEpithet'
-    specificAuthorship = '$specificAuthorship'
-    taxonRank = '$taxonRank'
-    infraspecificEpithet = '$infraspecificEpithet'
-    scientificNameAuthorship = '$scientificNameAuthorship'
-    scientificName = BioName('$scientificName')
+    genus__specificEpithet__taxonRank__infraspecificEpithet__scientificNameAuthorship = BioName(['$scientificName', ('$genus', '$specificEpithet',  'specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='plantSplitName')
     identifiedBy = HumanName('$identifiedBy')
     dateIdentified = DateTime('$dateIdentified', 'date')
     country__province__city__county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
@@ -372,4 +367,5 @@ class NsiiTerms(Enum):
     typeStatus = RadioInput('$typeStatus', 'typeStatus')
     identifiedBy = HumanName('$identifiedBy')
     dateIdentified = DateTime('$dateIdentified')
+
     identificationRemarks = '$identificationRemarks'

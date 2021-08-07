@@ -32,7 +32,7 @@ class Label(RestructureTable):
         io: CSV/Excel file path
         repeat: A positive integer indicating the number of copies of
                 the label to be printed, if it is zero, the number of
-                copies is based on individualCount field.
+                copies is based on duplicatesOfLabel field.
         """
         super(Label, self).__init__(io, fields_mapping=True, cut=True, fcol="")
         self.repeat = repeat
@@ -73,7 +73,7 @@ class Label(RestructureTable):
             for r in records:
                 try:
                     if start_code:
-                        for _ in range(r['individualCount']):
+                        for _ in range(r['duplicatesOfLabel']):
                             code = self.code_maker(
                                 prefix, str(num), num_length)
                             # add code image path to HerbLabel instance properties
@@ -86,7 +86,7 @@ class Label(RestructureTable):
                             new_table = new_table.append(r, ignore_index=True)
                             num += 1
                     else:
-                        labels.extend([HerbLabel(r)]*r['individualCount'])
+                        labels.extend([HerbLabel(r)]*r['duplicatesOfLabel'])
                 # if the field value not a valid number, default repeat = 1
                 except:
                     if start_code:

@@ -1,10 +1,28 @@
 {
-    "verbatimElevation": [
+    "duplicatesOfLabel":[
+        "DUPLICATESOFLABEL",
+        "标签复份",
+        "标签数量"
+    ],
+    "labelTitle":[
+        "LABELTITLE",
+        "标签标题"
+    ],
+    "labelNote":[
+        "LABELNOTE",
+        "标签备注"
+    ],
+    "labelSubtitle":[
+        "LABELSUBTITLE",
+        "标签副标题",
+        "标签小标题"
+    ],
+    "verbatimElevation":[
         "原始海拔记录",
         "VERBATIMELEVATION",
         "ELEVATION"
     ],
-    "georeferenceProtocol": [
+    "georeferenceProtocol":[
         "地理位置获取方式",
         "地理位置确定方式",
         "GEOREFERENCEPROTOCOL"
@@ -364,6 +382,7 @@
     "province": [
         "省",
         "省/自治区",
+        "自治区/省",
         "省自治区",
         "PROVINCE",
         "STATE_PROVINCE",
@@ -376,7 +395,6 @@
         "海拔高值",
         "海拔（高）",
         "海拔(高)",
-        "海拔",
         "MAXALTITUDE",
         "MAXIMUMELEVATIONINMETERS"
     ],
@@ -454,8 +472,8 @@
         "根",
         "ROOT",
         "根部",
-        "不定根",
-        "根（菌根）"
+        "根（菌根）",
+        "根系"
     ],
     "fruit": [
         "果实",
@@ -508,6 +526,10 @@
     ],
     "city": [
         "市",
+        "州/市",
+        "市/州",
+        "州市",
+        "市州",
         "地级市/地区/自治州",
         "地级市",
         "地区",
@@ -532,6 +554,7 @@
         "味道"
     ],
     "seedMaterialSample": [
+        "种质材料",
         "种子材料",
         "种质资源",
         "SEEDMATERIALSAMPLE"
@@ -548,6 +571,9 @@
     ],
     "county": [
         "区县",
+        "县区",
+        "区/县",
+        "县/区",
         "县",
         "区",
         "COUNTY",
@@ -599,6 +625,7 @@
         "花（孢子）"
     ],
     "scientificNameAuthorship": [
+        "学名命名人",
         "命名人",
         "定名人",
         "种下命名人",
@@ -647,6 +674,7 @@
         "RELATIONSHIPESTABLISHEDTIME"
     ],
     "scientificName": [
+        "学名",
         "鉴定名称",
         "鉴定",
         "鉴定名",
@@ -714,13 +742,13 @@
         "LOCAL_NAME",
         "当地名称",
         "地方名",
+        "当地名",
         "DIALECTNAME"
     ],
     "vernacularGenusName": [
         "中文属名",
         "属中文名",
         "属名",
-        "属",
         "GENUSNAMEZH",
         "GENUS_C",
         "VERNACULARGENUSNAME"
@@ -729,7 +757,6 @@
         "中文科名",
         "科中文名",
         "科名",
-        "科",
         "FAMILYNAMEZH",
         "FAMILY_C",
         "VERNACULAFAMILYNAME"

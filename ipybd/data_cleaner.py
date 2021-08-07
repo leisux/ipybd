@@ -52,11 +52,13 @@ def ifunc(obj):
 class BioName:
     def __init__(self, names: Union[list, pd.Series, tuple], style='scientificName'):
         self.names = names
-        self.querys = self.build_querys(self.names)
+        self.querys = {}
         self.cache = {'ipni': {}, 'col': {}, 'powo': {}}
         self.style = style
 
     def get(self, action, typ=list, mark=False):
+        if self.querys == {}:
+            self.querys = self.build_querys()
         results = self.__build_cache_and_get_results(action)
         if results:
             if typ is list:
@@ -648,81 +650,93 @@ class BioName:
         else:
             return filters.value['kew']
 
-    def format(self, p='scientificName'):
-        std_names = self.build_querys(self.names)
-        if p == 'simpleName':
-            return [
-                std_names[name][0]
-                if std_names[name] else None
-                for name in self.names
-            ]
-        elif p == 'scientificName':
-            return [
-                ' '.join([std_names[name][0], std_names[name][2]])
-                if std_names[name] else None
-                for name in self.names
-            ]
-
-    def build_querys(self, names):
-        raw2stdname = dict.fromkeys(names)
+    def build_querys(self):
+        raw2stdname = dict.fromkeys(self.names)
         for raw_name in raw2stdname:
-            raw2stdname[raw_name] = self.format_name(raw_name)
+            split_name = self._format_name(raw_name)
+            if split_name is None:
+                raw2stdname[raw_name] = None
+                continue
+            else:
+                if split_name[2] == "" and split_name[3]:
+                    simple_name = ' '.join([split_name[0], split_name[1], split_name[3]]).strip()
+                else:
+                    simple_name = ' '.join(split_name[:4]).strip()
+                raw2stdname[raw_name] = simple_name, split_name[-2], split_name[4], split_name[-1]
         return raw2stdname
 
-    def format_name(self, raw_name):
+    def format_latin_names(self, pattern):
+        raw2stdname = dict.fromkeys(self.names)
+        for raw_name in raw2stdname:
+            split_name = self._format_name(raw_name)
+            if split_name is None:
+                raw2stdname[raw_name] = None
+                continue
+            if pattern == 'simpleName':
+                if split_name[2] == "" and split_name[3]:
+                    simple_name = ' '.join([split_name[0], split_name[1], split_name[3]]).strip()
+                else:
+                    simple_name = ' '.join(split_name[:4]).strip()
+                raw2stdname[raw_name] = simple_name
+            elif pattern == 'scientificName':
+                if split_name[2] == "" and split_name[3]:
+                    simple_name = ' '.join([split_name[0], split_name[1], split_name[3]]).strip()
+                else:
+                    simple_name = ' '.join(split_name[:4]).strip()
+                author = split_name[4]
+                raw2stdname[raw_name] = ' '.join([simple_name, author]) if author else simple_name
+            elif pattern == 'plantSplitName':
+                raw2stdname[raw_name] = split_name[:-2]
+            elif pattern == 'animalSplitName':
+                raw2stdname[raw_name] = (split_name[0], split_name[1], split_name[3], split_name[4])
+            else:
+                raise ValueError("学名处理参数错误，不存在{}".format(pattern))
+        return [raw2stdname[name] for name in self.names]
+
+    def _format_name(self, raw_name):
         """ 将手写学名转成规范格式
 
             raw_name: 各类动植物学名，目前仅支持:
                       属名 x 种名 种命名人 种下加词 种下命名人
                       这类学名格式的清洗，
                       其中杂交符、种命名人、种下命名人均可缺省。
-            return: (raw_name 去命名人的学名, Filters定义的学名等级, 原始名称提取的命名人, raw_name)
+            return: 去除命名人的各个组成部分, Filters定义的学名等级, 原始名称提取的命名人, raw_name
                     目前仍有个别命名人十分复杂的名称，无法准确提取命名人，使用时需注意
                     如果无法提取合法的学名，则返回 None
         """
         species_pattern = re.compile(
-            r"\b([A-Z][a-zàäçéèêëöôùûüîï-]+)\s*([×Xx])?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*(.*)")
+            r"(!?\b[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*([×Xx])?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*(.*)")
         subspecies_pattern = re.compile(
-            r"(.*?)\s*(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)\s*([\(（A-Z]*.*)")
+            r"\b([A-Z\(].*?[^A-Z])?\s*(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)?\s*\b([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)\s*([（A-Z\(].*?[^A-Z])?$")
         try:
             species_split = species_pattern.findall(raw_name)[0]
         except BaseException:
             return None
         subspec_split = subspecies_pattern.findall(species_split[3])
 
+        genus = species_split[0]
+        if species_split[1] == "":
+            species = species_split[2]
+        else:
+            species = " ".join([species_split[1], species_split[2]])
         if subspec_split == []:
-            simple_name = " ".join([species_split[0], species_split[2]]) if \
-                species_split[1] == "" else " ".join(
-                [species_split[0], species_split[1], species_split[2]]
-            )
             author = species_split[3]
+            taxon_rank = ""
+            infraspecies = ""
             if species_split[2] != "":
-                rank = Filters.specific
-            elif species_split[0].lower().endswith((
+                platform_rank = Filters.specific
+            elif genus.lower().endswith((
                 "aceae", "idae", "umbelliferae", "labiatae", "compositae", "gramineae",
                     "leguminosae")):
-                rank = Filters.familial
+                platform_rank = Filters.familial
             else:
-                rank = Filters.generic
+                platform_rank = Filters.generic
         else:
-            if subspec_split[0][1]:
-                simple_name = " ".join(
-                    [species_split[0], species_split[2],
-                        subspec_split[0][1], subspec_split[0][2]]
-                ) if species_split[1] == "" else " ".join(
-                    [species_split[0], species_split[1], species_split[2],
-                     subspec_split[0][1], subspec_split[0][2]]
-                )
-            else:
-                simple_name = " ".join(
-                    [species_split[0], species_split[2], subspec_split[0][2]]
-                ) if species_split[1] == "" else " ".join(
-                    [species_split[0], species_split[1],
-                     species_split[2], subspec_split[0][2]]
-                )
+            taxon_rank = subspec_split[0][1]
+            infraspecies = subspec_split[0][2]
             author = subspec_split[0][3]
-            rank = Filters.infraspecific
-        return simple_name.strip(), rank, author, raw_name
+            platform_rank = Filters.infraspecific
+        return genus, species, taxon_rank, infraspecies, author, platform_rank, raw_name
 
     def contrast_code(self, raw_code, std_codes):
         """ 将一个学名的命名人和一组学名的命名人编码进行比较，以确定最匹配的
@@ -810,8 +824,12 @@ class BioName:
         return author_team
 
     def __call__(self, mark=True):
-        if input("是否要进行学名处理？（y/n）\n") == 'y':
+        if input("是否有必须对学名做进一步的处理？（y/n）\n") == 'y':
             pass
+        elif self.style == 'plantSplitName':
+            return pd.DataFrame(self.format_latin_names(pattern="plantSplitName"))
+        elif self.style == 'animalSplitName':
+            return pd.DataFrame(self.format_latin_names(pattern="animalSplitName"))
         else:
             return pd.DataFrame(self.names)
         if self.style == 'scientificName':
@@ -830,7 +848,7 @@ class BioName:
                 else:
                     return pd.DataFrame([None] * len(self.names))
             else:
-                return pd.DataFrame(self.format(p="scientificName"))
+                return pd.DataFrame(self.format_latin_names(pattern="scientificName"))
         elif self.style == 'simpleName':
             choose = input(
                 "\n是否执行拼写检查，在线检查将基于 sp2000.org.cn、ipni.org 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
@@ -847,7 +865,26 @@ class BioName:
                 else:
                     return pd.DataFrame([None]*len(self.names))
             else:
-                return pd.DataFrame(self.format(p="simpleName"))
+                return pd.DataFrame(self.format_latin_names(pattern="simpleName"))
+        elif self.style == 'plantSplitName':
+            choose = input(
+                "\n是否执行拼写检查，在线检查将基于 sp2000.org.cn、ipni.org 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
+            if choose.strip() == 'y':
+                results = self.get('stdName', mark=mark)
+                if results:
+                    return pd.DataFrame(
+                        [
+                            self._format_name(name[0].strip())[:4] + (name[1],)
+                            if name[1] else self._format_name(name[0].strip())[:-2]
+                            for name in results
+                        ]
+                    )
+                else:
+                    return pd.DataFrame([[None, None, None, None, None]] * len(self.names))
+            else:
+                return pd.DataFrame(self.format_latin_names(pattern="plantSplitName"))
+        else:
+            raise ValueError("学名处理参数有误，不存在{}".format(self.style))
 
 
 @ifunc
