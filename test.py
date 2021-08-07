@@ -46,19 +46,49 @@ names = HumanName([
     "U. K. Tsang, -- Tang & Fung, --",
     "Teilhard de Chardin (Abbé) Pierre, Teilhard de Chardin (Abbé) Pierre",
     "David (Abbé)",
-    "Capt. Francis (Frank) Kingdon-Ward", 
-    "(Johann) Albert von Regel", 
-    "T.N. Ho, B.M. Bartholomew, M.G. Gilbert & S.W. Liu", 
-    "A Herb. Monteiro de Carvalho", "[Cavalerie] J.", 
-    "[en chinois]", "[Delavay]", "Alleizette C. d'", 
+    "Capt. Francis (Frank) Kingdon-Ward",
+    "(Johann) Albert von Regel",
+    "T.N. Ho, B.M. Bartholomew, M.G. Gilbert & S.W. Liu",
+    "A Herb. Monteiro de Carvalho", "[Cavalerie] J.",
+    "[en chinois]", "[Delavay]", "Alleizette C. d'",
     "Alleizette C. d', Maire leg.",
-    "Annenkov N. I.", 
-    "Handel-Mazzetti H. von", 
-    "Hong De-Y", "Higuchi M.", 
-    "Hort. Bot. Vilmorin", "Wan F.-H.", 
-    "Soulié J.A.", "To, Ts'ang", 
-    "Bons d'Anty", "Bonvalot P.G.E., d'Orléans H.", 
-    "Incarville   P.N.   C. d'", 
+    "Annenkov N. I.",
+    "Handel-Mazzetti H. von",
+    "Hong De-Y", "Higuchi M.",
+    "Hort. Bot. Vilmorin", "Wan F.-H.",
+    "Soulié J.A.", "To, Ts'ang",
+    "Bons d'Anty", "Bonvalot P.G.E., d'Orléans H.",
+    "Incarville   P.N.   C. d'",
     "Kang P., Tak Ts'ang, Kin Ts'ang"])
-    
+
 names()
+
+
+# BioName format_latin_names
+
+from ipybd import BioName
+
+latiname = ['Saxifraga umbellulata Hook. f. et Thoms. var. pectinata (C. Marq. et Airy Shaw) J. T. Pan',
+ 'Anemone demissa Hook. f. et Thoms. var. yunnanensis Franch.',
+ 'Schisandra grandiflora (Wall.) Hook. f. et Thoms.',
+ 'Phaeonychium parryoides (Kurz ex Hook. f. et T. Anderson) O. E. Schulz',
+ 'Crucihimalaya lasiocarpa (Hook. f. et Thoms.) Al-Shehbaz et al.',
+ 'Saxifraga rufescens bal f. f.',
+ 'Saxifraga rufescens Bal f. f. var. uninervata J. T. Pan',
+ 'Lindera pulcherrima (Nees) Hook. f. var. attenuata C. K. Allen',
+ 'Polygonum glaciale (Meisn.) Hook. f. var. przewalskii (A. K. Skvortsov et Borodina) A. J. Li',
+ 'Psilotrichum ferrugineum (Roxb.) Moq. var. ximengense Y. Y. Qian',
+ 'Houpoëa officinalis (Rehd. et E. H. Wils.) N. H. Xia et C. Y. Wu',
+ 'Rhododendron delavayi Franch.',
+ 'Rhodododendron',
+ 'Fabaceae',
+ 'Lindera sinisis var. nssi Franch.',
+ 'Poa annua subsp. sine',
+ 'Poa annua',
+ 'Poa annua annua',
+ 'Poa annua annua (Kurz ex Hook. f. et T. Anderson) O. E. Schulz',
+ 'Saxifraga rufescens Bal. var.uninervata J. T. Pan',
+ 'Saxifraga rufescens Bal f. f. var.uninervata J. T. Pan']
+
+test = BioName(latiname, style='plantSplitName')
+test()
