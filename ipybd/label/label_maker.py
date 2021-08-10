@@ -152,5 +152,5 @@ class Label(RestructureTable):
         return code
 
     def encoder(self, barcode):
-        code = Code128Encoder(barcode)
+        code = Code128Encoder(barcode, options={'ttf_font':'arial.ttf', 'ttf_fontsize':32})
         code.save(os.path.join(self.path, barcode+".png"))
