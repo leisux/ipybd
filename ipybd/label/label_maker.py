@@ -40,7 +40,7 @@ class Label(RestructureTable):
         self.outfile = self.path + '.html'
 
     def to_dict(self):
-        records = list(self.df.to_dict('record'))
+        records = list(self.df.to_dict(orient='records'))
         for i, record in enumerate(records):
             c = record.copy()
             for key, value in c.items():
@@ -152,5 +152,5 @@ class Label(RestructureTable):
         return code
 
     def encoder(self, barcode):
-        code = Code128Encoder(barcode, options={'ttf_font':'arial.ttf', 'ttf_fontsize':32})
+        code = Code128Encoder(barcode, options={'ttf_font':'Arial', 'ttf_fontsize':28})
         code.save(os.path.join(self.path, barcode+".png"))
