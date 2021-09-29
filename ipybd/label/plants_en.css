@@ -1,0 +1,67 @@
+html {
+  margin: 0;
+  padding: 0;
+}
+
+body{
+  color: black;
+  margin: 15px;
+  padding: 0;
+  font-size: 9.5px;
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+	line-height: 1.2;
+	display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+article {
+  flex-basis: 45%;
+  padding: 10px;
+  margin-bottom: 10px;
+  page-break-inside: avoid;
+  line-height: 1.2;
+}
+
+h1 {
+  font-style: bold;
+  font-size: 10px;
+  text-align: center;
+}
+
+h2 {
+  font-style: bold;
+  font-variant: small-caps;
+  font-size: 10px;
+  text-align: center;
+}
+
+.label-item {
+	min-height: 100px
+}
+
+footer{
+  font-size: flex;
+  font-style: bold;
+  font-variant: small-caps;
+  text-align: center;
+}
+
+@media print {
+	body {
+		display: block;
+	}
+
+	.item-wrapper {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, auto);
+  grid-column-gap: 20px;
+	page-break-after: always;
+	}
+
+  article:nth-child(6n) {
+    page-break-after: always;
+  }
+}

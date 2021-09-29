@@ -1,0 +1,84 @@
+html {
+  margin: 0;
+  padding: 0;
+}
+
+body{
+  color: black;
+  margin: 0px 10px;
+  padding: 0;
+  font-size: 9.5px;
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, "SimSun", serif;
+  line-height: 1.2;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+article {
+  flex-basis: 45%;
+  padding: 10px 10px 0px 10px;
+  /*margin-bottom: 10px;*/
+  page-break-inside: avoid;
+  line-height: 1.4;
+}
+
+h1 {
+  font-family: SimHei, STXihei, "MicrosoftJhengHei", STHeiti, MingLiu, "Palatino Linotype", "Book Antiqua", Palatino, "SimSun", serif;
+  font-size: 14px;
+  line-height: 1.1;
+  text-align: center;
+}
+
+h2 {
+  font-variant: small-caps;
+  font-size: 10px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.title {
+  font-family: SimHei, STXihei, "MicrosoftJhengHei", STHeiti, MingLiu;
+}
+
+.label-item {
+  min-height: 100px
+}
+
+img {
+  height: 45px;
+  display: block;
+  margin: -3px -10px 0 auto;
+}
+
+footer{
+  font-size: flex;
+  font-style: bold;
+  font-variant: small-caps;
+  text-align: center;
+}
+
+@media print {
+body {
+display: block;
+}
+
+.item-wrapper {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+grid-template-rows: repeat(3, auto) !important;
+grid-column-gap: 10px;
+page-break-after: always;
+}
+article:nth-child(Odd) {
+  border-right: 1px dashed rgb(230, 230, 230);
+}
+article:nth-child(n+2) {
+  border-top: 1px dashed rgb(230, 230, 230);
+}
+
+article:nth-child(6n) {
+page-break-after: always;
+}
+}

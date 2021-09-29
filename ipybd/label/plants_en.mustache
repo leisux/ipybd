@@ -1,0 +1,13 @@
+
+<article class="label-item">  
+  <h1>{{labelTitle}}</h1>
+  <h2>{{labelSubtitle}}</h2>
+  <p>{{#family}}<b>{{family}}</b>{{/family}}</p>
+  <p>{{#vernacularName}}{{vernacularName}}，{{/vernacularName}}<i>{{genus}} {{specificEpithet}}</i>{{#taxonRank}} {{taxonRank}}{{/taxonRank}}<i> {{infraspecificEpithet}}</i> {{scientificNameAuthorship}}</p>
+  {{#identifiedBy}}<p><span class="title">鉴定人：</span>{{identifiedBy}}<span style="float:right">{{dateIdentified}}</span></p>{{/identifiedBy}}
+  <p><u>Loc.:</u> {{#country}}{{country}}，{{/country}}{{#province}}{{province}}，{{/province}}{{#city}}{{city}}，{{/city}}{{#county}}{{county}}，{{/county}}{{#locality}}{{{locality}}}，{{/locality}}</p>
+  <p><u>Habitat:</u> {{#habitat}}{{{habitat}}}{{/habitat}}</p>
+  <p><u>Notes:</u> {{#individualCount}}individualCount: {{individualCount}}; {{/individualCount}}{{#molecularMaterialSample}}molecularMaterialSample: {{molecularMaterialSample}}; {{/molecularMaterialSample}}{{#habit}}habit: {{habit}}; {{/habit}}{{#frequency}}frequency: {{frequency}}; {{/frequency}}{{#height}}height: {{height}}; {{/height}}{{#DBH}}DBH: {{DBH}}; {{/DBH}}{{#flower}}flower: {{flower}}; {{/flower}}{{#rhizoids}}rhizoids: {{rhizoids}}; {{/rhizoids}}{{#leaf}}leaf: {{leaf}}; {{/leaf}}{{#fruit}}fruit: {{fruit}}; {{/fruit}}{{#seed}}seed: {{seed}}; {{/seed}}{{#stem}}stem: {{stem}}; {{/stem}}{{#root}}root: {{root}}; {{/root}}{{#temporaryIdentification}}temporaryIdentification: {{temporaryIdentification}}; {{/temporaryIdentification}}{{#dialectName}}dialectName: {{dialectName}}; {{/dialectName}}{{#occurrenceRemarks}}occurrenceRemarks: {{occurrenceRemarks}}{{/occurrenceRemarks}}</p>
+  <p><u>Elev.:</u> {{minimumElevationInMeters}}{{#maximumElevationInMeters}}-{{maximumElevationInMeters}}{{/maximumElevationInMeters}} m<span style="float:right;"><u>Lat./Long.:</u> {{decimalLatitude}}&deg;, {{decimalLongitude}}&deg;</span></p>
+  <p>{{#eventDate}}{{eventDate}}{{/eventDate}} <span style="float:right;">{{recordedBy}} &#8470; <b>{{recordNumber}}</b>{{#labelNote}}, with {{labelNote}} {{/labelNote}}</span></p>
+</article>

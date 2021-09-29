@@ -21,7 +21,6 @@ from ipybd.std_table_terms import HerbLabelTerms
 from pystrich.code128 import Code128Encoder
 
 HERE = os.path.dirname(__file__)
-CSS_PATH = os.path.join(HERE, 'label_format.css')
 
 
 class Label(RestructureTable):
@@ -118,7 +117,7 @@ class Label(RestructureTable):
             new_table.to_excel(self.path+"_withcode.xlsx", index=False)
         return labels
 
-    def write_html(self, start_code=None, page_num=6):
+    def write_html(self, start_code=None, page_num=6, template='flora'):
         """
         Makes list of Mustache-templated HTML articles, then iterates over list
         to generate complete HTML code containing all of the articles.
@@ -126,13 +125,21 @@ class Label(RestructureTable):
         count = 0
         labels = self.mustachify(start_code)
         renderer = pystache.Renderer()
+        tpl_path = os.path.join(HERE, template + '.mustache')
+        css_path = os.path.join(HERE, template + '.css')
+        try:
+            with open(tpl_path, 'r') as f:
+                tpl = f.read()
+        except Exception as error:
+            raise error
+        parsed = pystache.parse(tpl)
         with open(self.outfile, 'w') as fh:
             fh.write("<!DOCTYPE html><html><head><link rel=\"stylesheet\" href=\"" +
-                     CSS_PATH + "\"/></head><body>")
+                     css_path + "\"/></head><body>")
             fh.write("<div class=\"item-wrapper\">")
             for l in labels:
                 count += 1
-                labeltext = renderer.render(l)
+                labeltext = renderer.render(parsed, l)
                 fh.write(labeltext)
                 if count % page_num == 0:
                     fh.write("</div><div class=\"item-wrapper\">")
