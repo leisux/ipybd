@@ -128,12 +128,12 @@ class Label(RestructureTable):
         tpl_path = os.path.join(HERE, template + '.mustache')
         css_path = os.path.join(HERE, template + '.css')
         try:
-            with open(tpl_path, 'r') as f:
+            with open(tpl_path, 'r', encoding="utf-8") as f:
                 tpl = f.read()
         except Exception as error:
             raise error
         parsed = pystache.parse(tpl)
-        with open(self.outfile, 'w') as fh:
+        with open(self.outfile, 'w', encoding="utf-8") as fh:
             fh.write("<!DOCTYPE html><html><head><link rel=\"stylesheet\" href=\"" +
                      css_path + "\"/></head><body>")
             fh.write("<div class=\"item-wrapper\">")
@@ -159,5 +159,5 @@ class Label(RestructureTable):
         return code
 
     def encoder(self, barcode):
-        code = Code128Encoder(barcode, options={'ttf_font':'Arial', 'ttf_fontsize':28})
+        code = Code128Encoder(barcode, options={'ttf_font':'arial.ttf', 'ttf_fontsize':28})
         code.save(os.path.join(self.path, barcode+".png"))
