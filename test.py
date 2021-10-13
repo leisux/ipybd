@@ -88,7 +88,14 @@ latiname = ['Saxifraga umbellulata Hook. f. et Thoms. var. pectinata (C. Marq. e
  'Poa annua annua',
  'Poa annua annua (Kurz ex Hook. f. et T. Anderson) O. E. Schulz',
  'Saxifraga rufescens Bal. var.uninervata J. T. Pan',
- 'Saxifraga rufescens Bal f. f. var.uninervata J. T. Pan']
+ 'Saxifraga rufescens Bal f. f. var.uninervata J. T. Pan',
+ 'Rhododendron delavayi Franch.']
 
-test = BioName(latiname, style='plantSplitName')
+test = BioName(latiname, style='fullPlantSplitName')
 test()
+
+
+
+from ipybd import CVH
+
+table = CVH(r"C:\Users\xu_zh\OneDrive\PDP\iherbarium\标签推荐模版ss.xlsx")

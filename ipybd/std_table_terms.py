@@ -31,8 +31,8 @@ class CvhTerms(Enum):
     种命名人 = '$specificAuthorship'
     种下等级 = '$taxonRank'
     种下加词 = '$infraspecificEpithet'
-    种下等级命名人 = '$scientificNameAuthorship'
-    拉丁名 = BioName('$scientificName', style='scientificName')
+    种下命名人 = '$scientificNameAuthorship'
+    属__种加词__种命名人__种下等级__种下加词__种下命名人 = BioName('$scientificName', style='fullPlantSplitName')
     模式类型 = RadioInput('$typeStatus', 'typeStatus')
     鉴定人 = HumanName('$identifiedBy')
     鉴定日期 = DateTime('$dateIdentified')
