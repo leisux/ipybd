@@ -1,5 +1,5 @@
 """
-Author: M Maher, Xu Zhoufeng
+Author: Xu Zhoufeng, M Maher
 Date: 20171202
 
 CSV/Excel->Pandas.DataFrame->Python Dict->Mustache-templated Html articles
@@ -12,6 +12,7 @@ then open .html file in browser; print
 
 import os
 import re
+import platform
 
 import pandas as pd
 import pystache
@@ -36,7 +37,7 @@ class Label(RestructureTable):
         super(Label, self).__init__(io, fields_mapping=True, cut=True, fcol="")
         self.repeat = repeat
         self.path = os.path.splitext(io)[0]
-        self.outfile = self.path + '.html'
+        self.outfile = os.path.join(self.path, 'Labels.html')
 
     def to_dict(self):
         records = list(self.df.to_dict(orient='records'))
@@ -58,16 +59,18 @@ class Label(RestructureTable):
         """
         records = self.to_dict()
         labels = []
+        barcode_path = os.path.join(self.path, 'barcodes')
+        try:
+            # creat a new dir, Will be used to store code images
+            os.mkdir(self.path)
+            os.mkdir(barcode_path)
+        except FileExistsError:
+            pass
         if start_code:
             prefix, num, num_length = self.barcode_analyzer(start_code)
             # creat a new DataFrame, and add new record to this DataFrame
             # that with new code Number and new duplicate records
             new_table = pd.DataFrame()
-            try:
-                # creat a new dir, Will be used to store code images
-                os.mkdir(self.path)
-            except FileExistsError:
-                pass
         if self.repeat == 0:
             for r in records:
                 try:
@@ -78,43 +81,63 @@ class Label(RestructureTable):
                             # add code image path to HerbLabel instance properties
                             # then the code image will be linked to the label
                             r['code_path'] = os.path.join(
-                                self.path, code+".png")
+                                barcode_path, code+".png")
                             labels.append(HerbLabel(r))
                             del r['code_path']
-                            r['barcode'] = code
+                            r['catalogNumber'] = code
                             new_table = new_table.append(r, ignore_index=True)
                             num += 1
                     else:
-                        labels.extend([HerbLabel(r)]*r['duplicatesOfLabel'])
+                        if r['catalogNumber'] != "" and r['duplicatesOfLabel'] == 1:
+                            prefix, num, num_length = self.barcode_analyzer(r['catalogNumber'])
+                            code = self.code_maker(prefix, str(num), num_length)
+                            r['code_path'] = os.path.join(barcode_path, code+".png")
+                            labels.append(HerbLabel(r))
+                        else:
+                            labels.extend([HerbLabel(r)]*r['duplicatesOfLabel'])
                 # if the field value not a valid number, default repeat = 1
                 except:
                     if start_code:
                         code = self.code_maker(prefix, str(num), num_length)
-                        r['code_path'] = os.path.join(self.path, code+".png")
+                        r['code_path'] = os.path.join(barcode_path, code+".png")
                         labels.append(HerbLabel(r))
                         del r['code_path']
-                        r['barcode'] = code
+                        r['catalogNumber'] = code
                         new_table = new_table.append(r, ignore_index=True)
                         num += 1
                     else:
+                        if r['catalogNumber'] != "":
+                            prefix, num, num_length = self.barcode_analyzer(r['catalogNumber'])
+                            code = self.code_maker(prefix, str(num), num_length)
+                            r['code_path'] = os.path.join(barcode_path, code+".png")
+                        else:
+                            pass
                         labels.append(HerbLabel(r))
         elif isinstance(self.repeat, int):
             for r in records:
                 if start_code:
                     for _ in range(self.repeat):
                         code = self.code_maker(prefix, str(num), num_length)
-                        r['code_path'] = os.path.join(self.path, code+".png")
+                        r['code_path'] = os.path.join(barcode_path, code+".png")
                         labels.append(HerbLabel(r))
                         del r['code_path']
-                        r['barcode'] = code
+                        r['catalogNumber'] = code
                         new_table = new_table.append(r, ignore_index=True)
                         num += 1
                 else:
-                    labels.extend([HerbLabel(r)]*self.repeat)
+                    if r['catalogNumber'] != "" and self.repeat == 1:
+                        prefix, num, num_length = self.barcode_analyzer(r['catalogNumber'])
+                        code = self.code_maker(prefix, str(num), num_length)
+                        r['code_path'] = os.path.join(barcode_path, code+".png")
+                        labels.append(HerbLabel(r))
+                    else:
+                        labels.extend([HerbLabel(r)]*self.repeat)
         # svae the new records to new table
         # this table can be used to import to other herbarium systems
         if start_code:
-            new_table.to_excel(self.path+"_withcode.xlsx", index=False)
+            resort_columns = list(self.df.columns)
+            new_table = new_table.reindex(columns=resort_columns)
+            new_table.to_excel(os.path.join(self.path, "DarwinCore_Specimens.xlsx"), index=False)
         return labels
 
     def write_html(self, start_code=None, page_num=6, template='flora'):
@@ -159,5 +182,8 @@ class Label(RestructureTable):
         return code
 
     def encoder(self, barcode):
-        code = Code128Encoder(barcode, options={'ttf_font':'arial.ttf', 'ttf_fontsize':28})
-        code.save(os.path.join(self.path, barcode+".png"))
+        if platform.system() == 'Windows':
+            code = Code128Encoder(barcode, options={'ttf_font':'arial.ttf', 'ttf_fontsize':28})
+        else:
+            code = Code128Encoder(barcode, options={'ttf_font':'Arial', 'ttf_fontsize':28})
+        code.save(os.path.join(self.path,'barcodes', barcode+".png"))

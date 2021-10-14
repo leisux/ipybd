@@ -144,7 +144,7 @@ class CVH(RestructureTable):
 
     def __init__(self, *args, **kwargs):
         super(CVH, self).__init__(
-            *args, fields_mapping=True, cut=True, **kwargs)
+            *args, fields_mapping=True, cut=True, fcol=None, **kwargs)
 
     def btk_collectors2cvh(self):
         recordedby = list(self.df["采集人"])

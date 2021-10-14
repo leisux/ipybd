@@ -284,20 +284,27 @@ class KingdoniaAvesTerms(Enum):
 
 
 class HerbLabelTerms(Enum):
+    catalogNumber = UniqueID('$catalogNumber')
     duplicatesOfLabel = Number('$duplicatesOfLabel', None, int)
     labelTitle = ['$labelTitle', '$institutionCode']
     labelNote = ['$labelNote', '$collectionCode']
     labelSubtitle = ['$labelSubtitle', '$fundedBy']
-    family = '$family'
-    vernacularName = '$vernacularName'
-    genus__specificEpithet__taxonRank__infraspecificEpithet__scientificNameAuthorship = BioName(['$scientificName', ('$genus', '$specificEpithet',  'specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='plantSplitName')
-    identifiedBy = HumanName('$identifiedBy')
-    dateIdentified = DateTime('$dateIdentified', 'date')
+    recordedBy = HumanName('$recordedBy')
+    recordNumber = '$recordNumber'
+    eventDate = DateTime('$eventDate', 'date')
+    decimalLatitude__decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
+    minimumElevationInMeters = Number('$minimumElevationInMeters', None, int)
+    maximumElevationInMeters = Number('$maximumElevationInMeters', None, int)
     country__province__city__county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
     locality = ('$locality', '$mountain', '$waterBody', ',')
     habitat = '$habitat'
     individualCount = Number('$individualCount', None, int)
     habit = RadioInput('$habit', 'habit')
+    family = '$family'
+    vernacularName = '$vernacularName'
+    genus__specificEpithet__taxonRank__infraspecificEpithet__scientificNameAuthorship = BioName(['$scientificName', ('$genus', '$specificEpithet',  '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='plantSplitName')
+    identifiedBy = HumanName('$identifiedBy')
+    dateIdentified = DateTime('$dateIdentified', 'date')
     flower = '$flower'
     leaf = '$leaf'
     stem = '$stem'
@@ -315,12 +322,6 @@ class HerbLabelTerms(Enum):
     molecularMaterialSample = '$molecularMaterialSample'
     seedMaterialSample = '$seedMaterialSample'
     livingMaterialSample = '$livingMaterialSample'
-    decimalLatitude__decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
-    minimumElevationInMeters = Number('$minimumElevationInMeters', None, int)
-    maximumElevationInMeters = Number('$maximumElevationInMeters', None, int)
-    recordedBy = HumanName('$recordedBy')
-    recordNumber = '$recordNumber'
-    eventDate = DateTime('$eventDate', 'date')
     occurrenceRemarks = '$occurrenceRemarks'
 
 
