@@ -6,12 +6,13 @@ class CvhTerms(Enum):
     条形码 = UniqueID('$catalogNumber')
     馆代码 = RadioInput('$collectionCode', 'collectionCode')
     流水号 = UniqueID('$otherCatalogNumbers')
-    标本状态 = RadioInput('$lifeStage', 'lifeStage')
+    模式类型 = RadioInput('$typeStatus', 'typeStatus')
     库存 = RadioInput('$disposition', 'disposition')
+    标本状态 = RadioInput('$lifeStage', 'lifeStage')
     采集人 = HumanName('$recordedBy')
     采集号 = '$recordNumber'
-    份数 = Number('$individualCount', None, int)
     采集日期 = DateTime('$eventDate')
+    份数 = Number('$individualCount', None, int)
     国家 = '$country'
     province = '$province'
     city = '$city'
@@ -19,30 +20,29 @@ class CvhTerms(Enum):
     省市 = ('$province', '$city', ',')
     区县 = '$county'
     小地点 = ('$locality', '$mountain', '$waterBody', ',')
-    纬度__经度 = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
+    生境 = '$habitat'
+    科 = '$family'
+    属__种__定名人__种下等级__种下加词__种下等级定名人 = BioName(['$scientificName', ('$genus', '$specificEpithet',  '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='fullPlantSplitName')
+    中文名 = '$vernacularName'
+    鉴定人 = HumanName('$identifiedBy')
+    鉴定日期 = DateTime('$dateIdentified')
+    decimalLatitude__decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
+    经度 = '$decimalLongitude'
+    纬度 = '$decimalLatitude'
     _海拔 = Number('$minimumElevationInMeters')
     _海拔高 = Number('$maximumElevationInMeters')
     海拔__海拔高 = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
-    生境 = '$habitat'
-    中文名 = '$vernacularName'
-    科 = '$family'
-    属__种加词__种命名人__种下等级__种下加词__种下命名人 = BioName(['$scientificName', ('$genus', '$specificEpithet',  '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='fullPlantSplitName')
-    模式类型 = RadioInput('$typeStatus', 'typeStatus')
-    鉴定人 = HumanName('$identifiedBy')
-    鉴定日期 = DateTime('$dateIdentified')
+    备注 = '$occurrenceRemarks'
     习性 = RadioInput('$habit', 'habit')
     体高 = '$height'
     胸径 = '$DBH'
-    频度 = '$frequency'
-    花 = '$flower'
-    果 = '$fruit'
+    树皮 = '$stem'
     叶 = '$leaf'
-    茎 = '$stem'
-    根 = '$root'
-    种子 = '$seed'
-    野外鉴定 = '$temporaryIdentification'
-    当地名称 = '$dialectName'
-    备注 = '$occurrenceRemarks'
+    花 = '$flower'
+    果实 = '$fruit'
+    寄主 = '$host'
+    备注2 = '$organismRemarks'
+
 
 
 
