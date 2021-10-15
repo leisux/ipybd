@@ -878,11 +878,24 @@ class BioName:
                 else:
                     return pd.DataFrame([[None, None, None, None, None]] * len(self.names))
             else:
-                return pd.DataFrame(self.format_latin_names(pattern="plantSplitName"))
+                results = self.format_latin_names(pattern="plantSplitName")
+                if set(results) == {None}:
+                    results = [[None, None, None, None, None]] * len(results)
+                return pd.DataFrame(results)
         elif self.style == 'fullPlantSplitName':
-            return pd.DataFrame(self.format_latin_names(pattern="fullPlantSplitName"))
+            # 该模式在这里刻意不提供在线名称比对
+            # 我们不是很赞成对植物学名进行包含种下命名人和种命名人的拆分
+            # 但进行要素全拆分，有的时候又是必须，
+            # 所以这里暂时只将其作为一个拆分功能，供用户进行学名拆分
+            results = self.format_latin_names(pattern="fullPlantSplitName")
+            if set(results) == {None}:
+                results = [[None, None, None, None, None, None]] * len(results)
+            return pd.DataFrame(results)
         elif self.style == 'animalSplitName':
-            return pd.DataFrame(self.format_latin_names(pattern="animalSplitName"))
+            results = self.format_latin_names(pattern="animalSplitName")
+            if set(results) == {None}:
+                results = [[None, None, None, None]] * len(results)
+            return pd.DataFrame(results)
         else:
             print("\n学名处理参数有误，不存在{}\n".format(self.style))
             return pd.DataFrame(self.names)
@@ -1259,7 +1272,7 @@ class HumanName:
                             names[i] = name.replace(" ", "")
                     else:
                         names[i] = self.format_westname(name)
-                names_mapping[rec_names] = ", ".join(names)
+                names_mapping[rec_names] = "，".join(names)
             except NameError:
                 continue
             except BaseException:
