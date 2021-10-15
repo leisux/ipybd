@@ -26,13 +26,7 @@ class CvhTerms(Enum):
     生境 = '$habitat'
     中文名 = '$vernacularName'
     科 = '$family'
-    属 = '$genus'
-    种加词 = '$specificEpithet'
-    种命名人 = '$specificAuthorship'
-    种下等级 = '$taxonRank'
-    种下加词 = '$infraspecificEpithet'
-    种下命名人 = '$scientificNameAuthorship'
-    属__种加词__种命名人__种下等级__种下加词__种下命名人 = BioName('$scientificName', style='fullPlantSplitName')
+    属__种加词__种命名人__种下等级__种下加词__种下命名人 = BioName(['$scientificName', ('$genus', '$specificEpithet',  '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='fullPlantSplitName')
     模式类型 = RadioInput('$typeStatus', 'typeStatus')
     鉴定人 = HumanName('$identifiedBy')
     鉴定日期 = DateTime('$dateIdentified')
