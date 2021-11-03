@@ -18,7 +18,7 @@ body{
 
 article {
   flex-basis: 45%;
-  padding: 10px 30px 0px 30px;
+  padding: 10px 17px 0px 17px;
   /*margin-bottom: 10px;*/
   page-break-inside: avoid;
   line-height: 1.4;
@@ -28,7 +28,7 @@ article {
 h1 {
   font-family: SimHei, STXihei, "MicrosoftJhengHei", STHeiti, MingLiu, "Palatino Linotype", "Book Antiqua", Palatino, "SimSun", serif;
   font-size: 14px;
-  line-height: 1.1;
+	line-height: 1.1;
   text-align: center;
 }
 
@@ -41,6 +41,7 @@ h2 {
 
 .title {
   font-family: SimHei, STXihei, "MicrosoftJhengHei", STHeiti, MingLiu;
+  font-weight: bold;
 }
 
 img {

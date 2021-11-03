@@ -151,7 +151,7 @@ class Label(RestructureTable):
                 self.path, "DarwinCore_Specimens.xlsx"), index=False)
         return labels
 
-    def write_html(self, start_code=None, columns=2, rows=3, page_height=297, template='flora'):
+    def write_html(self, columns=2, rows=3, page_height=297, start_code=None, template='plant'):
         """
         Makes list of Mustache-templated HTML articles, then iterates over list
         to generate complete HTML code containing all of the articles.
@@ -193,7 +193,7 @@ class Label(RestructureTable):
   article:nth-child("+str(page_num)+"n) {\n  \
     page-break-after: always;\n\
   }\n\n\
-}\n\
+}\n\n\
 @page {\n\
   size:  auto;\n\
   margin: 0mm;\n\

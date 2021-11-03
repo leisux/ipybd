@@ -1,0 +1,12 @@
+<article class="label-item">
+  <h1>{{labelTitle}}{{#labelNote}}（{{labelNote}}）{{/labelNote}}</h1>
+  <h2>{{labelSubtitle}}</h2>
+  <p>{{#family}}<b>{{family}}</b>{{/family}}</p>
+  <p>{{#vernacularName}}{{vernacularName}}，{{/vernacularName}}<i>{{genus}} {{specificEpithet}}</i>{{#taxonRank}} {{taxonRank}}{{/taxonRank}}<i> {{infraspecificEpithet}}</i> {{scientificNameAuthorship}}</p>
+  {{#identifiedBy}}<p><span class="title">鉴定人：</span>{{identifiedBy}}<span style="float:right">{{dateIdentified}}</span></p>{{/identifiedBy}}
+  <p><span class="title">采集地：</span>{{#country}}{{country}}{{/country}}{{#province}}，{{province}}{{/province}}{{#city}}，{{city}}{{/city}}{{#county}}，{{county}}{{/county}}{{#locality}}，{{{locality}}}{{/locality}}{{#habitat}}，{{{habitat}}}{{/habitat}}</p>
+  <p>{{#individualCount}}标本份数：{{individualCount}}；{{/individualCount}}{{#molecularMaterialSample}}分子材料：{{molecularMaterialSample}}；{{/molecularMaterialSample}}{{#habit}}生活型：{{habit}}；{{/habit}}{{#frequency}}频率：{{frequency}}；{{/frequency}}{{#height}}体高：{{height}}；{{/height}}{{#DBH}}胸径：{{DBH}}；{{/DBH}}{{#flower}}花：{{flower}}；{{/flower}}{{#rhizoids}}不定根：{{rhizoids}}；{{/rhizoids}}{{#leaf}}叶：{{leaf}}；{{/leaf}}{{#fruit}}果：{{fruit}}；{{/fruit}}{{#seed}}种子：{{seed}}；{{/seed}}{{#stem}}茎：{{stem}}；{{/stem}}{{#root}}根：{{root}}；{{/root}}{{#temporaryIdentification}}野外鉴定：{{temporaryIdentification}}；{{/temporaryIdentification}}{{#dialectName}}当地名称：{{dialectName}}；{{/dialectName}}{{#occurrenceRemarks}}备注：{{occurrenceRemarks}}{{/occurrenceRemarks}}</p>
+  <p><span class="title">海拔：</span>{{minimumElevationInMeters}}{{#maximumElevationInMeters}}-{{maximumElevationInMeters}}{{/maximumElevationInMeters}} m<span style="float:right"><span class="title">经纬度：</span>{{decimalLongitude}}&deg;，{{decimalLatitude}}&deg;<span></p>
+  <p><span class="title">采集人：</span>{{{recordedBy}}}</p>
+  <p><b>{{recordNumber}}&nbsp;&nbsp;&nbsp;</b>{{#eventDate}}<span style="float:right">{{eventDate}}</span>{{/eventDate}}</p>
+</article>
