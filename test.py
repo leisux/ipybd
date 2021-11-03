@@ -68,7 +68,8 @@ names()
 
 from ipybd import BioName
 
-latiname = ['Saxifraga umbellulata Hook. f. et Thoms. var. pectinata (C. Marq. et Airy Shaw) J. T. Pan',
+latiname = [
+ 'Saxifraga umbellulata Hook. f. et Thoms. var. pectinata (C. Marq. et Airy Shaw) J. T. Pan',
  'Anemone demissa Hook. f. et Thoms. var. yunnanensis Franch.',
  'Schisandra grandiflora (Wall.) Hook. f. et Thoms.',
  'Phaeonychium parryoides (Kurz ex Hook. f. et T. Anderson) O. E. Schulz',
@@ -89,7 +90,8 @@ latiname = ['Saxifraga umbellulata Hook. f. et Thoms. var. pectinata (C. Marq. e
  'Poa annua annua (Kurz ex Hook. f. et T. Anderson) O. E. Schulz',
  'Saxifraga rufescens Bal. var.uninervata J. T. Pan',
  'Saxifraga rufescens Bal f. f. var.uninervata J. T. Pan',
- 'Rhododendron delavayi Franch.']
+ 'Rhododendron delavayi Franch.'
+ ]
 
 test = BioName(latiname, style='fullPlantSplitName')
 test()
@@ -99,3 +101,33 @@ test()
 from ipybd import CVH
 
 table = CVH(r"C:\Users\xu_zh\OneDrive\PDP\iherbarium\标签推荐模版ss.xlsx")
+
+
+
+from ipybd import AdminDiv
+import pandas as pd
+
+admindiv = [
+    "内蒙古阿左旗贺兰山南寺沟",
+    "内蒙古",
+    "辽宁省，朝阳市，努鲁儿虎山自然保护区",
+    "中国浙江省，临安市，浙江农林大学新校区",
+    "中国浙江省，临安市",
+    "中国浙江省，临安市，天目山景区",
+    "西藏日喀则地区",
+    "中国,西藏,林芝市，巴宜区",
+    "西藏林芝县",
+    "西藏林芝",
+    "西藏林芝米林"
+]
+
+test = AdminDiv(admindiv)
+test.format_chinese_admindiv()
+table = pd.DataFrame({
+    "raw":admindiv,
+    "country":test.country,
+    "province":test.province,
+    "city":test.city,
+    "county":test.county
+})
+table

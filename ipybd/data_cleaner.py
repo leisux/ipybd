@@ -59,6 +59,7 @@ class BioName:
     def get(self, action, typ=list, mark=False):
         if self.querys == {}:
             self.querys = self.build_querys()
+        # results 只包含有检索有结果的
         results = self.__build_cache_and_get_results(action)
         if results:
             if typ is list:
@@ -828,6 +829,12 @@ class BioName:
         return author_team
 
     def __call__(self, mark=True):
+        """
+        这里定义了对名称进行在线比对后，单纯返回学名，该采用哪种样式的逻辑
+        不管检索结果如何，程序都会返回与相应样式名称匹配的 DataFrame
+        对于检索结果中，有部分名称没有返回值，这些名称默认将使用"!"标注
+        对于检索结果中，所有的名称都没有返回值，则直接返回以对应列数 None 组成的 DataFrame
+        """
         if self.style == 'scientificName':
             choose = input(
                 "\n是否执行拼写检查，在线检查将基于 sp2000.org.cn、ipni.org 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")

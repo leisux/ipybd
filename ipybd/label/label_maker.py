@@ -1,13 +1,11 @@
 """
-Author: Xu Zhoufeng, M Maher
-Date: 20171202
+Author: 20171202, M Maher; 20201030, Xu Zhoufeng
 
 CSV/Excel->Pandas.DataFrame->Python Dict->Mustache-templated Html articles
 
 then open .html file in browser; print
 
 """
-
 #!/usr/bin/python
 
 import os
@@ -37,7 +35,8 @@ class Label(RestructureTable):
         super(Label, self).__init__(io, fields_mapping=True, cut=True, fcol="")
         self.repeat = repeat
         self.path = os.path.splitext(io)[0]
-        self.outfile = os.path.join(self.path, 'Labels.html')
+        self.labels = os.path.join(self.path, 'Labels.html')
+        self.style = os.path.join(self.path, 'Style.css')
 
     def to_dict(self):
         records = list(self.df.to_dict(orient='records'))
@@ -81,7 +80,7 @@ class Label(RestructureTable):
                             # add code image path to HerbLabel instance properties
                             # then the code image will be linked to the label
                             r['code_path'] = os.path.join(
-                                barcode_path, code+".png")
+                                "./barcodes", code+".png")
                             labels.append(HerbLabel(r))
                             del r['code_path']
                             r['catalogNumber'] = code
@@ -89,17 +88,22 @@ class Label(RestructureTable):
                             num += 1
                     else:
                         if r['catalogNumber'] != "" and r['duplicatesOfLabel'] == 1:
-                            prefix, num, num_length = self.barcode_analyzer(r['catalogNumber'])
-                            code = self.code_maker(prefix, str(num), num_length)
-                            r['code_path'] = os.path.join(barcode_path, code+".png")
+                            prefix, num, num_length = self.barcode_analyzer(
+                                r['catalogNumber'])
+                            code = self.code_maker(
+                                prefix, str(num), num_length)
+                            r['code_path'] = os.path.join(
+                                "./barcodes", code+".png")
                             labels.append(HerbLabel(r))
                         else:
-                            labels.extend([HerbLabel(r)]*r['duplicatesOfLabel'])
+                            labels.extend([HerbLabel(r)] *
+                                          r['duplicatesOfLabel'])
                 # if the field value not a valid number, default repeat = 1
                 except:
                     if start_code:
                         code = self.code_maker(prefix, str(num), num_length)
-                        r['code_path'] = os.path.join(barcode_path, code+".png")
+                        r['code_path'] = os.path.join(
+                            "./barcodes", code+".png")
                         labels.append(HerbLabel(r))
                         del r['code_path']
                         r['catalogNumber'] = code
@@ -107,9 +111,12 @@ class Label(RestructureTable):
                         num += 1
                     else:
                         if r['catalogNumber'] != "":
-                            prefix, num, num_length = self.barcode_analyzer(r['catalogNumber'])
-                            code = self.code_maker(prefix, str(num), num_length)
-                            r['code_path'] = os.path.join(barcode_path, code+".png")
+                            prefix, num, num_length = self.barcode_analyzer(
+                                r['catalogNumber'])
+                            code = self.code_maker(
+                                prefix, str(num), num_length)
+                            r['code_path'] = os.path.join(
+                                "./barcodes", code+".png")
                         else:
                             pass
                         labels.append(HerbLabel(r))
@@ -118,7 +125,8 @@ class Label(RestructureTable):
                 if start_code:
                     for _ in range(self.repeat):
                         code = self.code_maker(prefix, str(num), num_length)
-                        r['code_path'] = os.path.join(barcode_path, code+".png")
+                        r['code_path'] = os.path.join(
+                            "./barcodes", code+".png")
                         labels.append(HerbLabel(r))
                         del r['code_path']
                         r['catalogNumber'] = code
@@ -126,9 +134,11 @@ class Label(RestructureTable):
                         num += 1
                 else:
                     if r['catalogNumber'] != "" and self.repeat == 1:
-                        prefix, num, num_length = self.barcode_analyzer(r['catalogNumber'])
+                        prefix, num, num_length = self.barcode_analyzer(
+                            r['catalogNumber'])
                         code = self.code_maker(prefix, str(num), num_length)
-                        r['code_path'] = os.path.join(barcode_path, code+".png")
+                        r['code_path'] = os.path.join(
+                            "./barcodes", code+".png")
                         labels.append(HerbLabel(r))
                     else:
                         labels.extend([HerbLabel(r)]*self.repeat)
@@ -137,28 +147,66 @@ class Label(RestructureTable):
         if start_code:
             resort_columns = list(self.df.columns)
             new_table = new_table.reindex(columns=resort_columns)
-            new_table.to_excel(os.path.join(self.path, "DarwinCore_Specimens.xlsx"), index=False)
+            new_table.to_excel(os.path.join(
+                self.path, "DarwinCore_Specimens.xlsx"), index=False)
         return labels
 
-    def write_html(self, start_code=None, page_num=6, template='flora'):
+    def write_html(self, start_code=None, columns=2, rows=3, page_height=297, template='flora'):
         """
         Makes list of Mustache-templated HTML articles, then iterates over list
         to generate complete HTML code containing all of the articles.
         """
         count = 0
+        page_num = columns * rows
+        label_height = int((page_height - rows + 1)/rows)
         labels = self.mustachify(start_code)
         renderer = pystache.Renderer()
         tpl_path = os.path.join(HERE, template + '.mustache')
         css_path = os.path.join(HERE, template + '.css')
         try:
+            with open(css_path, 'r', encoding="utf-8") as f:
+                style = f.read()
+            with open(self.style, 'w', encoding="utf-8") as f:
+                f.write(style)
+                f.write(
+                    "\n\n.label-item {\n  min-height: 100px;\n  height: "+str(label_height)+"mm;\n}")
+                f.write("\n\n\
+@media print {\n  \
+  body {\n  \
+  display: block;\n\
+  }\n\
+  .item-wrapper {\n  \
+    display: grid;\n  \
+    grid-template-columns: repeat("+str(columns)+", 1fr);\n  \
+    grid-template-rows: repeat("+str(rows)+", auto) !important;\n  \
+    page-break-after: always;\n\
+  }\n\
+  article:nth-child(n) {\n  \
+    border-right: 1px dashed rgb(230, 230, 230);\n\
+  }\n\
+  article:nth-child("+str(columns)+"n) {\n  \
+    border-right: None\n\
+  }\n\
+  article:nth-child(n+"+str(columns+1)+") {\n  \
+    border-top: 1px dashed rgb(230, 230, 230);\n\
+  }\n\
+  article:nth-child("+str(page_num)+"n) {\n  \
+    page-break-after: always;\n\
+  }\n\n\
+}\n\
+@page {\n\
+  size:  auto;\n\
+  margin: 0mm;\n\
+}"
+                )
             with open(tpl_path, 'r', encoding="utf-8") as f:
                 tpl = f.read()
         except Exception as error:
             raise error
         parsed = pystache.parse(tpl)
-        with open(self.outfile, 'w', encoding="utf-8") as fh:
-            fh.write("<!DOCTYPE html><html><head><link rel=\"stylesheet\" href=\"" +
-                     css_path + "\"/></head><body>")
+        with open(self.labels, 'w', encoding="utf-8") as fh:
+            fh.write(
+                "<!DOCTYPE html><html><head><link rel=\"stylesheet\" href=\"./Style.css\"/></head><body>")
             fh.write("<div class=\"item-wrapper\">")
             for l in labels:
                 count += 1
@@ -183,7 +231,9 @@ class Label(RestructureTable):
 
     def encoder(self, barcode):
         if platform.system() == 'Windows':
-            code = Code128Encoder(barcode, options={'ttf_font':'arial.ttf', 'ttf_fontsize':28})
+            code = Code128Encoder(
+                barcode, options={'ttf_font': 'arial.ttf', 'ttf_fontsize': 32})
         else:
-            code = Code128Encoder(barcode, options={'ttf_font':'Arial', 'ttf_fontsize':28})
-        code.save(os.path.join(self.path,'barcodes', barcode+".png"))
+            code = Code128Encoder(
+                barcode, options={'ttf_font': 'Arial', 'ttf_fontsize': 32})
+        code.save(os.path.join(self.path, 'barcodes', barcode+".png"))

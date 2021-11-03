@@ -1,11 +1,11 @@
 html {
-  margin: 0;
-  padding: 0;
+  margin: 0px;
+  padding: 0px;
 }
 
 body{
   color: black;
-  margin: 15px;
+  margin: 0px;
   padding: 0;
   font-size: 9.5px;
   font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
@@ -18,10 +18,10 @@ body{
 
 article {
   flex-basis: 45%;
-  padding: 10px;
-  margin-bottom: 10px;
+  padding: 10px 20px 0px 20px;
   page-break-inside: avoid;
   line-height: 1.2;
+  box-sizing: border-box;
 }
 
 h1 {
@@ -37,10 +37,6 @@ h2 {
   text-align: center;
 }
 
-.label-item {
-	min-height: 100px
-}
-
 footer{
   font-size: flex;
   font-style: bold;
@@ -48,20 +44,3 @@ footer{
   text-align: center;
 }
 
-@media print {
-	body {
-		display: block;
-	}
-
-	.item-wrapper {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(3, auto);
-  grid-column-gap: 20px;
-	page-break-after: always;
-	}
-
-  article:nth-child(6n) {
-    page-break-after: always;
-  }
-}

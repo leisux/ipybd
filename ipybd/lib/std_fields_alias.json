@@ -1,4 +1,14 @@
 {
+    "georeferenceSources":[
+        "地理参考",
+        "地理参考源",
+        "GEOREFERENCESOURCES",
+        "GEOREFERENCE_SOURCES",
+        "GEOREFERENCESOURCES"
+    ],
+    "materialSampleID":[
+        "MATERIALSAMPLEID"
+    ],
     "dynamicProperties":[
     ],
     "duplicatesOfLabel":[
@@ -8,7 +18,8 @@
     ],
     "labelTitle":[
         "LABELTITLE",
-        "标签标题"
+        "标签标题",
+        "TITLE"
     ],
     "labelNote":[
         "LABELNOTE",
@@ -406,7 +417,8 @@
         "标本馆",
         "馆藏代码",
         "国际标本馆代码",
-        "COLLECTIONCODE"
+        "COLLECTIONCODE",
+        "HERBARIUM"
     ],
     "institutionCode": [
         "收藏单位",
@@ -440,7 +452,8 @@
         "图片",
         "NOTES",
         "备注",
-        "OCCURRENCEREMARKS"
+        "OCCURRENCEREMARKS",
+        "ATTRIBUTES"
     ],
     "habitat": [
         "生活环境",
@@ -485,7 +498,8 @@
     ],
     "modified": [
         "录入日期",
-        "MODIFIED"
+        "MODIFIED",
+        "DATE_LASTMODIFIED"
     ],
     "classification": [
         "大类群",
@@ -508,14 +522,14 @@
         "RECORDTIME"
     ],
     "lifeStage": [
-        "标本状态",
-        "花果状态",
-        "花期果期",
         "生长期",
         "物候期",
         "物候",
         "生命期",
         "生命周期",
+        "标本状态",
+        "花果状态",
+        "花期果期",
         "Status",
         "幼体",
         "LIFESTAGE",
@@ -550,7 +564,8 @@
         "项目来源",
         "项目",
         "标本来源",
-        "FUNDEDBY"
+        "FUNDEDBY",
+        "PROJECT"
     ],
     "气味": [
         "味道"
@@ -640,7 +655,8 @@
         "SPECIFICEPITHETAUTHORSHIP",
         "INFRASPECIFICAUTHORITY",
         "INFRASPECIFICAUTHORSHIP",
-        "SCIENTIFICNAMEAUTHORSHIP"
+        "SCIENTIFICNAMEAUTHORSHIP",
+        "AUTHOR_OF_INFRASPECIFIC_RANK"
     ],
     "individualCount": [
         "标本份数",
@@ -776,7 +792,8 @@
     "taxonRank": [
         "种下等级",
         "INFRASPECIFICRANK",
-        "TAXONRANK"
+        "TAXONRANK",
+        "INFRASPECIFIC_RANK"
     ],
     "kingdom": [
         "界",
@@ -834,13 +851,15 @@
         "AUTHOR",
         "AUTHORITY",
         "SPECIFICAUTHORSHIP",
-        "SPECIFICEPITHETAUTHORSHIP"
+        "SPECIFICEPITHETAUTHORSHIP",
+        "AUTHOR_OF_SPECIES"
     ],
     "infraspecificEpithet": [
         "种下加词",
         "种下等级",
         "亚种名",
-        "INFRASPECIFICEPITHET"
+        "INFRASPECIFICEPITHET",
+        "INFRASPECIFIC_EPITHET"
     ],
     "acceptedNameUsage": [
         "拉丁接受名",
@@ -861,8 +880,8 @@
         "BIBLIOGRAPHICCITATION"
     ],
     "references": [
-        "参考文献",
         "出处",
+        "参考文献",
         "REFERENCE",
         "SOURCE",
         "REFERENCES"
