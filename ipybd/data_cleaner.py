@@ -687,11 +687,13 @@ class BioName:
                 author = split_name[4]
                 raw2stdname[raw_name] = ' '.join([simple_name, author]) if author else simple_name
             elif pattern == 'plantSplitName':
-                raw2stdname[raw_name] = split_name[:5]
+                raw2stdname[raw_name] = tuple(e if e !='' else None for e in split_name[:5])
             elif pattern == 'fullPlantSplitName':
-                raw2stdname[raw_name] = (split_name[0], split_name[1], split_name[5], split_name[2], split_name[3], split_name[4])
+                elements = (split_name[0], split_name[1], split_name[5], split_name[2], split_name[3], split_name[4])
+                raw2stdname[raw_name] = tuple(e if e !='' else None for e in elements)
             elif pattern == 'animalSplitName':
-                raw2stdname[raw_name] = (split_name[0], split_name[1], split_name[3], split_name[4])
+                elements = (split_name[0], split_name[1], split_name[3], split_name[4])
+                raw2stdname[raw_name] = tuple(e if e !='' else None for e in elements)
             else:
                 raise ValueError("学名处理参数错误，不存在{}".format(pattern))
         return [raw2stdname[name] for name in self.names]
