@@ -18,7 +18,7 @@ body{
 
 article {
   flex-basis: 45%;
-  padding: 10px 17px 0px 17px;
+  padding: 10px 17px 0px 16px;
   /*margin-bottom: 10px;*/
   page-break-inside: avoid;
   line-height: 1.4;
