@@ -206,7 +206,7 @@ class Label(RestructureTable):
         parsed = pystache.parse(tpl)
         with open(self.labels, 'w', encoding="utf-8") as fh:
             fh.write(
-                "<!DOCTYPE html><html><head><link rel=\"stylesheet\" href=\"./Style.css\"/></head><body>")
+                "<!DOCTYPE html><html><head><link rel=\"stylesheet\" href=\"./Style.css\"/><meta charset=UTF-8></head><body>")
             fh.write("<div class=\"item-wrapper\">")
             for l in labels:
                 count += 1
