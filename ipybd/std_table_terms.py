@@ -22,7 +22,8 @@ class CvhTerms(Enum):
     小地点 = ('$locality', '$mountain', '$waterBody', ',')
     生境 = '$habitat'
     科 = '$family'
-    属__种__定名人__种下等级__种下加词__种下等级定名人 = BioName(['$scientificName', ('$genus', '$specificEpithet',  '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='fullPlantSplitName')
+    拉丁名 = '$scientificName'
+    属__种__定名人__种下等级__种下加词__种下等级定名人 = BioName([('$genus', '$specificEpithet',  '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' '), '$拉丁名'], style='fullPlantSplitName')
     中文名 = '$vernacularName'
     鉴定人 = HumanName('$identifiedBy')
     鉴定日期 = DateTime('$dateIdentified')
@@ -221,7 +222,7 @@ class KingdoniaPlantTerms(Enum):
     disposition = RadioInput('$disposition', 'disposition')
     preservedLocation = RadioInput('$preservedLocation', 'preservedLocation')
     preservedTime = DateTime('$preservedTime', 'utc')
-    recordedBy = HumanName('$recordedBy')
+    recordedBy = HumanName('$recordedBy', separator=',')
     recordNumber = '$recordNumber'
     eventDate = DateTime('$eventDate', 'datetime')
     _individualCount = Number('$individualCount', None, int)
@@ -279,6 +280,7 @@ class KingdoniaAvesTerms(Enum):
 
 class HerbLabelTerms(Enum):
     catalogNumber = UniqueID('$catalogNumber')
+    otherCatalogNumbers = '$otherCatalogNumbers'
     duplicatesOfLabel = Number('$duplicatesOfLabel', None, int)
     labelTitle = ['$labelTitle', '$institutionCode']
     labelNote = ['$labelNote', '$collectionCode']
@@ -296,7 +298,7 @@ class HerbLabelTerms(Enum):
     habit = RadioInput('$habit', 'habit')
     family = '$family'
     vernacularName = '$vernacularName'
-    genus__specificEpithet__taxonRank__infraspecificEpithet__scientificNameAuthorship = BioName(['$scientificName', ('$genus', '$specificEpithet',  '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='plantSplitName')
+    genus__specificEpithet__taxonRank__infraspecificEpithet__scientificNameAuthorship = BioName([('$genus', '$specificEpithet',  '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' '), '$scientificName'], style='plantSplitName')
     identifiedBy = HumanName('$identifiedBy')
     dateIdentified = DateTime('$dateIdentified', 'date')
     flower = '$flower'

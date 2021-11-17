@@ -236,7 +236,11 @@ class BioName:
         self.sema = asyncio.Semaphore(500, loop=loop)
         tasks = self.build_tasks(get_action[action], search_terms)
         results = loop.run_until_complete(tasks)
-        loop.close()
+        # 修复 Windows 下出现的 RuntimeErro: Event loop is closed
+        # 为什么注销 close 会管用，我也没完全搞清楚
+        # 猜测可能是 asyncio 会自动关闭 loop
+        # 暂且先这样吧！
+        #loop.close()
         self.pbar.close()
         for res in results:
             try:
@@ -472,7 +476,13 @@ class BioName:
                     t = []
                     for a in r["authorTeam"]:
                         t.append(a["name"])
-                    std_teams[n] = self.code_authors(t)
+                    if t:
+                        std_teams[n] = self.code_authors(t)
+                    else:
+                        # ipni 一些学名的检索返回会有 authorTeam = []
+                        # 但 authors 属性却有合法值的情况，此时可以基于 authors
+                        # 生成可用于比对的 authorTeam，然后再进行编码
+                        std_teams[n] = self.code_authors(self.get_author_team(r['authors']))
                 # 开始比对原命名人与可选学名的命名人的比对结果
                 scores = self.contrast_code(aut_codes, std_teams)
                 # print(scores)
@@ -1235,8 +1245,9 @@ class DateTime:
 
 @ifunc
 class HumanName:
-    def __init__(self, names: Union[list, pd.Series, tuple]):
+    def __init__(self, names: Union[list, pd.Series, tuple], separator='，'):
         self.names = names
+        self.separator = separator
 
     def format_names(self):
         """
@@ -1281,7 +1292,7 @@ class HumanName:
                             names[i] = name.replace(" ", "")
                     else:
                         names[i] = self.format_westname(name)
-                names_mapping[rec_names] = "，".join(names)
+                names_mapping[rec_names] = self.separator.join(names)
             except NameError:
                 continue
             except BaseException:

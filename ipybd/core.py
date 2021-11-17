@@ -1101,9 +1101,16 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
                                     {header: header})
                         column_names.append(clm)
                 if len(column_names) < n + 1:
-                    # 对于需要进行多次映射处理的字段，self.original_fields_mapping
-                    # 只会记录字段的首次映射关系，因此若 self.original_fields_mapping
-                    # 无法找到 clm，则进一步寻找实际表格字段名
+                    # self.original_fields_mapping 记录了尚未被模型使用的原始
+                    # 字段到标准字段的映射关系。对于需要进行多次映射处理的字段，
+                    # self.original_fields_mapping 只会记录字段的首次映射关系，
+                    # 因此若 self.original_fields_mapping 无法找到 clm，
+                    # 则进一步寻找现有实际表格字段名self.df.columns,
+                    # 因此对于一些泛化模型，如果泛化的字段首次映射时已经被
+                    # 处理为一个定制字段名，则后续模型需要再次处理它，
+                    # 就必须使用它的定制字段名，比如 scientificName 首次被处理为
+                    # “学名”，后续还需要对 scientificName 进行处理，则后续模型
+                    # 定义就必须使用 “学名”，否则无法在 self.df.columns 找到
                     if clm in self.df.columns:
                         column_names.append(clm)
                     # 一些 tuple 型位置参数在实际表中并非每个字段都可以找到，

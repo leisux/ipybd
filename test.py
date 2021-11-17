@@ -70,6 +70,7 @@ from ipybd import BioName
 
 latiname = [
  'Saxifraga umbellulata Hook. f. et Thoms. var. pectinata (C. Marq. et Airy Shaw) J. T. Pan',
+ 'Cerasus pseudocerasus (Lindl.)G.Don',
  'Anemone demissa Hook. f. et Thoms. var. yunnanensis Franch.',
  'Schisandra grandiflora (Wall.) Hook. f. et Thoms.',
  'Phaeonychium parryoides (Kurz ex Hook. f. et T. Anderson) O. E. Schulz',
