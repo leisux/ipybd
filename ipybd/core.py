@@ -133,7 +133,7 @@ class FormatDataset:
                 if splitter == "$":
                     # 中英文分列
                     match = re.match(
-                        r"[\s\"\']*[\u4e00-\u9fa5][^a-zA-Z]*",
+                        r"[\s\"\']*[\u4e00-\u9fa5][^a-zA-Z0-9]*",
                         result[-1]
                     )
                     if match:
@@ -143,7 +143,7 @@ class FormatDataset:
                         ]
                     else:
                         match = re.match(
-                            r"[\s\"\']*[a-zA-Z][^\u4e00-\u9fa5]*",
+                            r"[\s\"\']*[a-zA-Z0-9][^\u4e00-\u9fa5]*",
                             result[-1]
                         )
                         if match:
