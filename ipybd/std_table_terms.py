@@ -229,9 +229,12 @@ class KingdoniaPlantTerms(Enum):
     individualCount = FillNa('$individualCount', 0)
     country__stateProvince__city__county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
     locality = ('$locality', '$mountain', '$waterBody', ',')
-    habitat = '$habitat'
+    _habitat = '$habitat'
+    habitat = FillNa('$habitat', '无')
     habit = RadioInput('$habit', 'habit')
     decimalLatitude__decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
+    decimalLatitude = FillNa('$decimalLatitude', 0)
+    decimalLongitude = FillNa('$decimalLongitude', 0)
     _minimumElevationInMeters = Number('$minimumElevationInMeters')
     _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')

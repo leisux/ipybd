@@ -819,7 +819,8 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
                             else:
                                 # 通过自定义的函数处理数据
                                 new_cols = self.custom_func_desc(params[0](*args[0], **args[1]))
-                            # _ 开头的名称是模板用于临时定义使用，命名时需要去除 _
+                            # Enum 的 title 不准有重复，因此 _ 开头的名称
+                            # 是模板用于临时定义同名字段使用，命名时需要去除 _
                             columns = field.name.split('_')[1:] if field.name.startswith(
                                 '_') else field.name.split('__')
                             new_cols.columns = columns
