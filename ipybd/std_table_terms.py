@@ -83,7 +83,7 @@ class OccurrenceTerms(Enum):
     fieldNotes = '$fieldNotes'
     fundedBy = '$fundedBy'
     # Location
-    country__province__city__county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
+    country__province__city__county = AdminDiv(['$higherGeography', ('$country', '$province', '$city', '$county', '::')])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude__decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
     _minimumElevationInMeters = Number('$minimumElevationInMeters')
@@ -227,7 +227,7 @@ class KingdoniaPlantTerms(Enum):
     eventDate = DateTime('$eventDate', 'datetime')
     _individualCount = Number('$individualCount', None, int)
     individualCount = FillNa('$individualCount', 0)
-    country__stateProvince__city__county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
+    country__stateProvince__city__county = AdminDiv(['$higherGeography', ('$country', '$province', '$city', '$county', '::')])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     _habitat = '$habitat'
     habitat = FillNa('$habitat', '无')
@@ -294,7 +294,7 @@ class HerbLabelTerms(Enum):
     decimalLatitude__decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
     minimumElevationInMeters = Number('$minimumElevationInMeters', None, int)
     maximumElevationInMeters = Number('$maximumElevationInMeters', None, int)
-    country__province__city__county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
+    country__province__city__county = AdminDiv(['$higherGeography', ('$country', '$province', '$city', '$county', '::')])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     habitat = '$habitat'
     individualCount = Number('$individualCount', None, int)
@@ -342,7 +342,7 @@ class NsiiTerms(Enum):
     habitat = '$habitat'
     fundedBy = '$fundedBy'
     # Location
-    country__province__city__county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
+    country__province__city__county = AdminDiv(['$higherGeography', ('$country', '$province', '$city', '$county', '::')])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude__decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
     _minimumElevationInMeters = Number('$minimumElevationInMeters')
