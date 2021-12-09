@@ -69,6 +69,7 @@ names()
 from ipybd import BioName
 
 latiname = [
+ 'Eurya handel-mazzettii Hung T. Chang',
  'Saxifraga umbellulata Hook. f. et Thoms. var. pectinata (C. Marq. et Airy Shaw) J. T. Pan',
  'Cerasus pseudocerasus (Lindl.)G.Don',
  'Anemone demissa Hook. f. et Thoms. var. yunnanensis Franch.',
