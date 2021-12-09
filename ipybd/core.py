@@ -537,7 +537,7 @@ class FormatDataset:
             if path_elms[1].lower() in [".xls", ".xlsx"]:
                 print(
                     "\n开始载入数据表格...\n\n如果数据表格太大，此处可能会耗时很长...\n如果长时间无法载入，请将 Excel 表转换为 CSV 格式后重新尝试...\n")
-                table = pd.read_excel(*args, dtype=str, **kwargs)
+                table = pd.read_excel(*args, dtype=str, engine='openpyxl', **kwargs)
             elif path_elms[1].lower() == '.csv':
                 table = self.read_csv(*args, **kwargs)
             elif path_elms[1].lower() == '.txt':
