@@ -1385,18 +1385,20 @@ class AdminDiv:
     def _build_mapping(self, raw_region, std_regions):
         score = (0, 0)  # 分别记录匹配的字数和匹配项的长度
         region = raw_region.rstrip(":")
+        region_index = len(region) - 1
         for stdregion in std_regions:
+            len_stdregion = len(stdregion)
             each_score = 0  # 记录累计匹配的字数
             i = 0  # 记录 region 参与匹配的起始字符位置
             j = 0  # 记录 stdregion 参与匹配的起始字符位置
-            while i < len(region)-1 and j < len(stdregion)-1:  # 单字无法匹配
+            while i < region_index and j < len_stdregion-1:  # 单字无法匹配
                 k = 2  # 用于初始化、递增可匹配的字符长度
                 n = stdregion[j:].find("::"+region[i:i+k])
                 m = 0  # 记录最终匹配的字符数
                 if n != -1:
                     # 白云城矿区可能会错误的匹配“中国,内蒙古自治区,白云鄂博矿区”
                     if region[-2] in stdregion:
-                        while n != -1 and k <= len(region[i:]):
+                        while n != -1 and k <= region_index - i + 1:
                             k += 1
                             m = n
                             n = stdregion[j:].find(region[i:i+k])
@@ -1414,11 +1416,11 @@ class AdminDiv:
                 if self.region_mapping[raw_region] in stdregion:
                     pass
                 # 优先匹配短的行政区，避免“河北”匹配“中国,天津,天津市,河北区“
-                elif len(stdregion) < score[1]:
-                    score = each_score, len(stdregion)
+                elif len_stdregion < score[1]:
+                    score = each_score, len_stdregion
                     self.region_mapping[raw_region] = "!"+stdregion
             elif each_score > score[0]:
-                score = each_score, len(stdregion)
+                score = each_score, len_stdregion
                 self.region_mapping[raw_region] = stdregion
         if score == (0, 0):
             if raw_region == "中国":
