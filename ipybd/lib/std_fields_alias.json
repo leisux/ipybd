@@ -1,11 +1,22 @@
 {
+    "verbatimCoordinates":[
+        "原始坐标",
+        "经纬度",
+        "经纬度坐标",
+        "经/纬度",
+        "地理坐标",
+        "GPS",
+        "VERBATIMCOORDINATES"
+    ],
     "higherGeographyID":[
         "行政区划代码",
-        "行政区编码"
+        "行政区编码",
+        "HIGHERGEOGRAPHYID"
     ],
     "higherGeography": [
         "行政区划",
-        "行政区"
+        "行政区",
+        "HIGHERGEOGRAPHY"
     ],
     "georeferenceSources":[
         "地理参考",

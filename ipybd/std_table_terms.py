@@ -27,7 +27,7 @@ class CvhTerms(Enum):
     中文名 = '$vernacularName'
     鉴定人 = HumanName('$identifiedBy')
     鉴定日期 = DateTime('$dateIdentified')
-    decimalLatitude__decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
+    decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     经度 = '$decimalLongitude'
     纬度 = '$decimalLatitude'
     _海拔 = Number('$minimumElevationInMeters')
@@ -85,7 +85,7 @@ class OccurrenceTerms(Enum):
     # Location
     country__province__city__county = AdminDiv(['$higherGeography', ('$country', '$province', '$city', '$county', '::')])
     locality = ('$locality', '$mountain', '$waterBody', ',')
-    decimalLatitude__decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
+    decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     _minimumElevationInMeters = Number('$minimumElevationInMeters')
     _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
@@ -172,7 +172,7 @@ class NoiOccurrenceTerms(Enum):
     county = '$county'
     #country__province__city__county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
     locality = ('$locality', '$mountain', '$waterBody', ',')
-    decimalLatitude__decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
+    decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     _minimumElevationInMeters = Number('$minimumElevationInMeters')
     _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
@@ -232,7 +232,7 @@ class KingdoniaPlantTerms(Enum):
     _habitat = '$habitat'
     habitat = FillNa('$habitat', '无')
     habit = RadioInput('$habit', 'habit')
-    decimalLatitude__decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
+    decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     decimalLatitude = FillNa('$decimalLatitude', 0)
     decimalLongitude = FillNa('$decimalLongitude', 0)
     _minimumElevationInMeters = Number('$minimumElevationInMeters')
@@ -291,7 +291,7 @@ class HerbLabelTerms(Enum):
     recordedBy = HumanName('$recordedBy')
     recordNumber = '$recordNumber'
     eventDate = DateTime('$eventDate', 'date')
-    decimalLatitude__decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
+    decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     minimumElevationInMeters = Number('$minimumElevationInMeters', None, int)
     maximumElevationInMeters = Number('$maximumElevationInMeters', None, int)
     country__province__city__county = AdminDiv(['$higherGeography', ('$country', '$province', '$city', '$county', '::')])
@@ -344,7 +344,7 @@ class NsiiTerms(Enum):
     # Location
     country__province__city__county = AdminDiv(['$higherGeography', ('$country', '$province', '$city', '$county', '::')])
     locality = ('$locality', '$mountain', '$waterBody', ',')
-    decimalLatitude__decimalLongitude = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';'))
+    decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     _minimumElevationInMeters = Number('$minimumElevationInMeters')
     _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
