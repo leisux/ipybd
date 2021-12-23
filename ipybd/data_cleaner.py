@@ -76,7 +76,7 @@ class BioName:
         """ 对 get 的结果进行组装
 
         results: 从 self.cache 中解析得到的结果字典, 每个元素都为元组
-        mark: 如果为 True，没有获得结果的检索词会被虽结果返回并以!标记
+        mark: 如果为 True，没有获得结果的检索词会被当成结果返回并以!标记
               如果为 None，没有检索结果则返回由 None 组成的与其他结果等长的元组
 
         return: 按照 self.names 中的元素顺序排列的检索结果 list，list 中的元素
@@ -91,11 +91,11 @@ class BioName:
                     try:
                         results[name] = ["".join(["!", name])]
                     except TypeError:
-                        if name:
+                        if pd.isnull(name):
+                            results[name] = [None]
+                        else:
                             # 如果 name 不是 None, 说明检索词有错误
                             results[name] = ["".join(["!", str(name)])]
-                        else:
-                            results[name] = [None]
                     results[name].extend([None]*(result_len - 1))
             else:
                 if self.querys[name] is None or name not in results:
@@ -711,12 +711,11 @@ class BioName:
     def _format_name(self, raw_name):
         """ 将手写学名转成规范格式
 
-            raw_name: 各类动植物学名，目前仅支持:
+            raw_name: 各类动植物学名字符串，目前仅支持:
                       属名 x 种名 种命名人 种下加词 种下命名人
                       这类学名格式的清洗，
                       其中杂交符、种命名人、种下命名人均可缺省。
-            return: 去除命名人的各个组成部分, Filters定义的学名等级, 原始名称提取的命名人, raw_name
-                    目前仍有个别命名人十分复杂的名称，无法准确提取命名人，使用时需注意
+            return: 命名人的各个组成部分构成的元组
                     如果无法提取合法的学名，则返回 None
         """
         species_pattern = re.compile(
@@ -891,6 +890,7 @@ class BioName:
                         [
                             self._format_name(name[0].strip())[:4] + (name[1],)
                             if name[1] else self._format_name(name[0].strip())[:5]
+                            if name[0] else (None, None, None, None, None)
                             for name in results
                         ]
                     )
