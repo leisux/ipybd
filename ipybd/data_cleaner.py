@@ -291,7 +291,11 @@ class BioName:
             # 如果没有名称处理，默认将本名称作为接受名返回
             # 有些名字可能属于 unsolved 状态，也会被作为接受名返回
             pass
-        return " ".join([query_result['name'], query_result['author']]),
+        try:
+            return " ".join([query_result['name'], query_result['author']]),
+        except KeyError:
+            # 对于原变种，返回的结果中没有 author 属性，先直接返回 name
+            return query_result['name'],
 
     def powo_name(self, query_result):
         scientific_name = query_result["name"]
