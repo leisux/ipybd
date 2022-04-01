@@ -511,9 +511,10 @@ class FormatDataset:
             pt.write(json.dumps(json_template, ensure_ascii=False))
 
     def to_excel(self, path):
-        writer = pd.ExcelWriter(path,
-                                engine='openpyxl',
-                                options={'strngs_to_urls':False})
+        writer = pd.ExcelWriter(path, engine='openpyxl')
+                            # 下面原由的这段代码，应该是 xlsxwriter 的engine 参数，
+                            # 使用 openpyxl报错具体原因待确实，先隐去处理
+                            #engine_kwargs={"options":{'strngs_to_urls':False}})
         self.df.to_excel(writer, index=False)
         writer.save()
 
@@ -679,7 +680,7 @@ class FormatDataset:
 
     @drop_and_concat_columns
     def format_human_name(self, header, inplace=True):
-        return HumanName(self.df[header])(), header, inplace
+        return HumanName(self.df[header])(), [header], inplace
 
     @drop_and_concat_columns
     def mark_repeat(self, *headers, inplace=True):

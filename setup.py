@@ -5,7 +5,7 @@ with open("README.md", "r", encoding='utf-8') as fh:
 
 setup(
         name = 'ipybd',
-        version = '1.1.4',
+        version = '1.1.5',
         description = 'Powerful data cleaner for biodiversity',
         license = 'GPL-3.0 License',
         author = 'Xu Zhoufeng',
@@ -28,7 +28,7 @@ setup(
             'labelmaker'
             ),
         install_requires=[
-            'pandas>=1.1.1',
+            'pandas>=1.3.0',
             'openpyxl>=3.0.7',
             'tqdm>=4.40.2',
             'prompt_toolkit>=3.0.5',

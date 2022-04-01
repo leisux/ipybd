@@ -665,6 +665,7 @@
         "命名人",
         "定名人",
         "种下命名人",
+        "种下定名人",
         "变种命名人",
         "种下加词命名人",
         "种下等级定名人",
@@ -876,6 +877,7 @@
     "infraspecificEpithet": [
         "种下加词",
         "种下等级",
+        "种下名称",
         "亚种名",
         "INFRASPECIFICEPITHET",
         "INFRASPECIFIC_EPITHET"
