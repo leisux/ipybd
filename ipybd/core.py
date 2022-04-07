@@ -713,10 +713,10 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
         elif self.__check_old_mapping():
             self.build_mapping_template()
         # 对表格按照定义的枚举Terms进行重塑
-        self.rebuild_columns()
+        new_columns = self.rebuild_columns()
         # 对枚举中尚未定义的列按照人工给定的映射关系进行重塑
         self.table_mapping(self.original_fields_mapping)
-        self._re_range_columns(self.cut)
+        self._re_range_columns(new_columns)
 
     def __check_old_mapping(self):
         """ 确定用户处理的数据表是否之前已经经过处理
@@ -760,29 +760,15 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
         else:
             return True
 
-    def _re_range_columns(self, cut):
-        columns = [
-            column for column in self.__class__.columns_model.__members__.keys()
-        ]
-        model_columns = []
-        for column in columns:
-            if column in self.df.columns and column not in model_columns:
-                model_columns.append(column)
-            elif '_' in column:
-                if column.startswith('_') and column[1:] in self.df.columns and column[1:] not in model_columns:
-                    model_columns.append(column[1:])
-                else:
-                    split_columns = [clm for clm in column.split("__") if clm in self.df.columns]
-                    if not any(clm in model_columns for clm in split_columns):
-                        model_columns.extend(split_columns)
-        if not cut:
+    def _re_range_columns(self, columns):
+        if not self.cut:
             other_columns = [
                 column for column in self.df.columns
-                if column not in model_columns
+                if column not in columns
             ]
-            model_columns.extend(other_columns)
+            columns.extend(other_columns)
 
-        self.df = self.df.reindex(columns=model_columns)
+        self.df = self.df.reindex(columns=columns)
 
     def custom_func_desc(self, series):
         try:
@@ -792,72 +778,75 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
         except Exception as e:
             raise e
 
-    def __skip_columns(self, field):
-        if field in self.skip:
-            pass
-        elif field.startswith("_"):
-            pass
-        elif '__' in field:
-            pass
-        else:
-            return False
-
     def rebuild_columns(self):
         """ 按照 std_table_terms 定义的 key 生成新表格的各列
         """
+        new_columns = []
         for field in self.__class__.columns_model:
             try:
                 params = field.value
                 # print(params)
                 if not isinstance(params, dict) and isinstance(params[0], (type, FunctionType, MethodType)) and isinstance(params[-1], dict):
                     if isinstance(params[1], tuple) and len(params) == 3:
-                        args = self.get_args(field.name, params[1], params[-1])
+                        # Enum 的 title 不准有重复，因此 _ 开头的名称
+                        # 是模板用于临时定义同名字段使用，命名时需要去除 _
+                        # 同时模版中以 _ 结尾的 title
+                        # 具有特殊含义，命名时需特殊对待
+                        field_name = field.name.strip('_')
+                        columns = field_name.split('__')
+                        args = self.get_args(field_name, params[1], params[-1])
                         if args:
+                            print(args[-1])
                             # 通过定义类的__call__函数实现原始列值的处理
                             if isinstance(params[0], type):
                                 # 通过 ipybd 内置类处理数据
                                 new_cols = params[0](*args[0], **args[1])()
+                                # 唯一性标识，可以传递多列进行重复比较
+                                # 但并不会删除其他参与运算但列，只会更换第一列
+                                if params[0].__name__ == 'UniqueID':
+                                    args[-1][:] = [args[-1][0]]
                             else:
                                 # 通过自定义的函数处理数据
                                 new_cols = self.custom_func_desc(params[0](*args[0], **args[1]))
-                            # Enum 的 title 不准有重复，因此 _ 开头的名称
-                            # 是模板用于临时定义同名字段使用，命名时需要去除 _
-                            columns = field.name.split('_')[1:] if field.name.startswith(
-                                '_') else field.name.split('__')
                             new_cols.columns = columns
                             self.df.drop(args[-1], axis=1, inplace=True)
                             self.df = pd.concat([self.df, new_cols], axis=1)
+                            new_columns.extend(columns)
                         elif self.fcol is not False:
-                            columns = field.name.split('_')[1:] if field.name.startswith(
-                                '_') else field.name.split('__')
                             for col in columns:
                                 if col not in self.df.columns:
                                     self.df[col] = self.fcol
+                            new_columns.extend(columns)
+                        else:
+                            pass
                     else:
                         raise ValueError("model value error: {}".format(field.name))
                 elif isinstance(params, (str, tuple, dict, list)):
-                    arg_name = self.model_param_parser(field.name, params)
+                    field_name = field.name.lstrip('_')
+                    columns = field_name.split('__')
+                    arg_name = self.model_param_parser(field_name, params)
                     # print(arg_name)
-                    # _ 开头的名称是模板用于临时定义使用，命名时需要去除 _
-                    column_name = field.name[1:] \
-                        if field.name.startswith("_") else field.name
-                    # print(column_name)
                     if arg_name:
                         # print(args_name)
-                        # 只对原表相应对字段名进行修改，args_name 为 str 类型
+                        # 如果是对列进行切分，arg_name 为 None ，因此这里
+                        # 只会对原表相应对字段名进行修改，args_name 为 str 类型
                         self.df.rename(
-                            columns={arg_name: column_name}, inplace=True)
+                            columns={arg_name: field_name}, inplace=True)
+                        new_columns.extend(columns)
                     # 如果原表中无法找到相应的列，用指定的 self.fcol 填充新列
                     elif self.fcol is not False:
-                        columns = field.name.split('_')[1:] if field.name.startswith(
-                            '_') else field.name.split('__')
                         for col in columns:
                             if col not in self.df.columns:
                                 self.df[col] = self.fcol
+                        new_columns.extend(columns)
+                    else:
+                        pass
                 else:
                     raise ValueError("model value error: {}".format(field.name))
             except Exception as e:
                 raise e
+        # 去重复,并尽可能的按照模型定义的顺序返回新的列名
+        return sorted(set(new_columns), key=new_columns.index)
 
     def get_args(self, title, args, kwargs):
         columns = []
@@ -1021,7 +1010,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
                         self.df.rename(columns=rename_columns,inplace=True)
                         return None
                     else:
-                        title = "_".join(title)
+                        title = "__".join(title)
         # 对单个参数基本元素做进一步处理
         for n, clm in enumerate(columns):
             # 找到的如果是一个待拆分字段如 [("GPS", (";"))]
