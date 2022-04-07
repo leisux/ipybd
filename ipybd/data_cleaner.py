@@ -1844,13 +1844,13 @@ class UniqueID:
         self.duplicated = self.df.duplicated(keep=False)
         marks = [
             "".join(["!", m]) if d and not pd.isnull(m) else m
-            for m, d in zip(self.df[self.df.columns[0]], self.duplicated)
+            for m, d in zip(self.df.iloc[:, 0], self.duplicated)
         ]
         return marks
 
     def __call__(self):
-        self.df[self.df.columns[0]] = self.mark_duplicate()
-        return self.df
+        self.df.iloc[:, 0] = self.mark_duplicate()
+        return self.df.iloc[:, [0]]
 
 
 @ifunc
