@@ -796,7 +796,6 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
                         columns = field_name.split('__')
                         args = self.get_args(field_name, params[1], params[-1])
                         if args:
-                            print(args[-1])
                             # 通过定义类的__call__函数实现原始列值的处理
                             if isinstance(params[0], type):
                                 # 通过 ipybd 内置类处理数据

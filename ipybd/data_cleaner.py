@@ -1855,12 +1855,12 @@ class UniqueID:
 
 @ifunc
 class FillNa:
-    def __init__(self, df: Union[pd.DataFrame, pd.Series], fval):
+    def __init__(self, df: Union[pd.DataFrame, pd.Series], value=None, method=None, limit=None, downcast=None):
         self.df = df
-        self.fval = fval
+        self.fval = value
 
     def __call__(self):
-        return pd.DataFrame(self.df.fillna(self.fval))
+        return pd.DataFrame(self.df.fillna(self.fval, method=None, limit=None, downcast=None))
 
 
 @ifunc
