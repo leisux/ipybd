@@ -45,8 +45,6 @@ class CvhTerms(Enum):
     备注2 = '$organismRemarks'
 
 
-
-
 class OccurrenceTerms(Enum):
     # Record
     basisOfRecord = RadioInput('$basisOfRecord', 'basisOfRecord')
@@ -367,5 +365,4 @@ class NsiiTerms(Enum):
     typeStatus = RadioInput('$typeStatus', 'typeStatus')
     identifiedBy = HumanName('$identifiedBy')
     dateIdentified = DateTime('$dateIdentified')
-
     identificationRemarks = '$identificationRemarks'
