@@ -838,14 +838,19 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
                             if col not in self.df.columns:
                                 self.df[col] = self.fcol
                         new_columns.extend(columns)
+                    # 如果是列拆分，将拆分获得的列名加入新列
+                    elif isinstance(params, dict):
+                        new_columns.extend(columns)
                     else:
                         pass
                 else:
                     raise ValueError("model value error: {}".format(field.name))
             except Exception as e:
                 raise e
-        # 去重复,并尽可能的按照模型定义的顺序返回新的列名
-        return sorted(set(new_columns), key=new_columns.index)
+        # 去重复&删除已经被多次处理转换为其他列的列名
+        # 并尽可能的按照模型定义的顺序返回新的列名
+        new_columns = sorted(set(new_columns), key=new_columns.index)
+        return [column for column in new_columns if column in self.df.columns]
 
     def get_args(self, title, args, kwargs):
         columns = []
