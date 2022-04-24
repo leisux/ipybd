@@ -28,6 +28,12 @@ class LinkCVH:
                 self.cache[res['uuid']] = res
             except TypeError:
                 pass
+    
+    def _unpack_pages_result(self, pages_result):
+        results = []
+        for result in pages_result:
+            results.extend(result)
+        return results
 
     def get(self, *, taxonName=None, family=None, genus=None, country=None,
                  county=None, locality=None, minimumElevation=None, maximumElevation=None,
@@ -37,10 +43,11 @@ class LinkCVH:
         params = self.build_params(locals())
         headers = self.build_headers()
         pages = self.query(QUERY_API, params, headers)
-        results = self.mult_get(QUERY_API, params, headers, range(pages))
+        pages_result = self.mult_get(QUERY_API, params, headers, range(pages))
+        results = self._unpack_pages_result(pages_result)
         if self.detail:
             ids = [specimen['collectionID'] for specimen in results]
-            results = self.multi_get(INFO_API, {}, headers, ids)
+            results = self.mult_get(INFO_API, {}, headers, ids)
         print(results)
         if self.enable_cache:
             self.build_cache(results)
