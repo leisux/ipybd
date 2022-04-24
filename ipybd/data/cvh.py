@@ -1,12 +1,10 @@
 from argparse import ArgumentError
 import asyncio
-import json
 import aiohttp
 import pandas as pd
 import requests
 from time import sleep
 from tqdm import tqdm
-import base64
 import urllib
 
 
@@ -25,7 +23,7 @@ class LinkCVH:
             try:
                 self.cache[res.pop('collectionID')] = res
             except KeyError:
-                self.cache[res['uuid']] = res
+                self.cache[res.pop('uuid')] = res
             except TypeError:
                 pass
     
@@ -35,7 +33,7 @@ class LinkCVH:
             results.extend(result)
         return results
 
-    def get(self, *, taxonName=None, family=None, genus=None, country=None,
+    def get(self, taxonName=None, family=None, genus=None, country=None,
                  county=None, locality=None, minimumElevation=None, maximumElevation=None,
                  recordedBy=None, recordNumber=None, collectedYear=None, institutionCode=None,
                  collectionCode=None, identifiedBy=None, dateIdentified=None, withPhoto=False,
@@ -48,9 +46,10 @@ class LinkCVH:
         if self.detail:
             ids = [specimen['collectionID'] for specimen in results]
             results = self.mult_get(INFO_API, {}, headers, ids)
-        print(results)
         if self.enable_cache:
             self.build_cache(results)
+        else:
+            return results
 
     def mult_get(self, api, params, headers, pages_or_ids):
         """ 检索 WEB API，获得检索结果
@@ -60,7 +59,7 @@ class LinkCVH:
         self.pbar = tqdm(total=len(pages_or_ids), desc='列表数据获取', ascii=True)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        self.sema = asyncio.Semaphore(500, loop=loop)
+        self.sema = asyncio.Semaphore(50, loop=loop)
         tasks = self.build_tasks(api, params, headers, pages_or_ids)
         results = loop.run_until_complete(tasks)
         # 修复 Windows 下出现的 RuntimeErro: Event loop is closed
@@ -85,9 +84,15 @@ class LinkCVH:
 
     async def get_track(self, url, headers, session):
         async with self.sema:
-            result = await self.async_get(url, headers, session)
+            response = await self.async_get(url, headers, session)
             self.pbar.update(1)
-            return result['rows']
+            result = response['rows']
+            try:
+                result['associatedMedia'] = url
+            except TypeError:
+                pass
+            return result
+
 
     def build_url(self, api, params, page_or_id=False):
         if isinstance(page_or_id, int):
@@ -105,7 +110,7 @@ class LinkCVH:
                 # print(url)
                 async with session.get(url, headers=headers, timeout=60) as resp:
                     if resp.status == 429:
-                        await asyncio.sleep(3)
+                        await asyncio.sleep(10)
                     else:
                         response = await resp.json()
                         # print(response)
@@ -122,7 +127,7 @@ class LinkCVH:
                 rps = requests.get(url, headers=headers)
                 # print(rps.status_code)
                 if rps.status_code == 429:
-                    await asyncio.sleep(3)
+                    await asyncio.sleep(10)
                 else:
                     return rps.json()
         except BaseException:
