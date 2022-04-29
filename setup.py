@@ -5,7 +5,7 @@ with open("README.md", "r", encoding='utf-8') as fh:
 
 setup(
         name = 'ipybd',
-        version = '1.1.7',
+        version = '1.1.8',
         description = 'Powerful data cleaner for biodiversity',
         license = 'GPL-3.0 License',
         author = 'Xu Zhoufeng',
@@ -15,10 +15,10 @@ setup(
         long_description=long_description,
         long_description_content_type="text/markdown",
         package_data = {
-            '':['lib/*.py', 'lib/*.json', 'lib/*.xlsx', 'label/*.py', 'label/*.mustache', 'label/*.css']
+            '':['lib/*.py', 'lib/*.json', 'label/*.py', 'label/*.mustache', 'label/*.css', 'occurrence/*.py']
             },
         platforms = 'any',
-        python_requires=">=3.6.1",
+        python_requires=">=3.6.1, <3.10",
         keywords = (
             'biodiversity',
             'scientificName',

@@ -23,7 +23,7 @@ from ipybd.std_table_objects import (
     CVH
 )
 
-from ipybd.data.cvh import LinkCVH
+from ipybd.occurrence.cvh import LinkCVH
 
 from ipybd import noi
 

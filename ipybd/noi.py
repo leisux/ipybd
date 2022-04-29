@@ -72,27 +72,6 @@ class Api:
         return ":".join([ACCESSKEY, sign])
 
 
-class UpdateID(Api):
-    """ update occurrenceID of noi.link occurrence object
-
-        occurrencID 是用户更新 noi occurrence 对象的唯一 ID
-        一般该 ID 不会发生改变, 如果该 ID 发生改变或者发生错误,
-        可以借助已经注册获得的 NOI 更新 occurrenceID
-    """
-    def __init__(self, noi, new_id):
-        self.noi = noi
-        self.new_id = new_id
-
-    def build_policy(self):
-        json_policy = json.dumps(
-            {
-                'noi':self.noi,
-                'occurrenceID': self.new_id
-            }
-        )
-        return base64.b64encode(json_policy.encode('utf-8'))
-
-
 class Link:
     """ 使用协程实现记录批量注册 noi.link
 
@@ -229,6 +208,26 @@ class Link:
         else:
             print("\n错误代码：{}\n".format(response['code']))
 
+            
+class UpdateID(Api):
+    """ update occurrenceID of noi.link occurrence object
+
+        occurrencID 是用户更新 noi occurrence 对象的唯一 ID
+        一般该 ID 不会发生改变, 如果该 ID 发生改变或者发生错误,
+        可以借助已经注册获得的 NOI 更新 occurrenceID
+    """
+    def __init__(self, noi, new_id):
+        self.noi = noi
+        self.new_id = new_id
+
+    def build_policy(self):
+        json_policy = json.dumps(
+            {
+                'noi':self.noi,
+                'occurrenceID': self.new_id
+            }
+        )
+        return base64.b64encode(json_policy.encode('utf-8'))
 
 
 class UpdateIDs(Link):
