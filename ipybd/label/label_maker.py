@@ -16,7 +16,7 @@ import pandas as pd
 import pystache
 from ipybd.core import RestructureTable
 from ipybd.label.herb_label import HerbLabel
-from ipybd.std_table_terms import HerbLabelTerms
+from ipybd.table.terms import HerbLabelTerms
 from pystrich.code128 import Code128Encoder
 
 HERE = os.path.dirname(__file__)

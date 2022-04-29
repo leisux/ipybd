@@ -1,6 +1,6 @@
 from ipybd.core import FormatDataset, RestructureTable
 
-from ipybd.data_cleaner import (
+from ipybd.cleaner import (
     ifunc,
     BioName,
     AdminDiv,
@@ -14,7 +14,7 @@ from ipybd.data_cleaner import (
     FillNa
 )
 
-from ipybd.std_table_objects import (
+from ipybd.table.model import (
     imodel,
     Occurrence,
     KingdoniaPlant,
