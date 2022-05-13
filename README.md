@@ -1570,4 +1570,4 @@ plt.show()
 ## 八、特别声明
 
 1. Ipybd 遵从 GNU General Public License v3.0 许可    
-2. 本软件由 NSII 资助，© 徐洲锋，中国科学院昆明植物研究所
+2. 本软件由 NSII 资助，© 徐洲锋-中国科学院华南植物园
