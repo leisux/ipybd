@@ -507,9 +507,14 @@ class FormatDataset:
         # print(self.original_fields_mapping)
         json_template = {str(k): str(v)
                          for k, v in self.original_fields_mapping.items()}
-        with open(PERSONAL_TEMPLATE_PATH, "w", encoding="utf-8") as pt:
-            pt.write(json.dumps(json_template, ensure_ascii=False))
-
+        # 防止 ipybd 运行没有获得系统管理员权限，写入文件被拒而被终止
+        try:
+            with open(PERSONAL_TEMPLATE_PATH, "w", encoding="utf-8") as pt:
+                pt.write(json.dumps(json_template, ensure_ascii=False))
+        except PermissionError:
+            print("\n提醒：使用系统管理员权限运行终端，iPybd 可记录转换历史！\n")
+            pass
+        
     def to_excel(self, path):
         writer = pd.ExcelWriter(path, engine='openpyxl')
                             # 下面原由的这段代码，应该是 xlsxwriter 的engine 参数，
