@@ -293,8 +293,8 @@ class BioName:
             pass
         try:
             return " ".join([query_result['name'], query_result['author']]),
-        except KeyError:
-            # 对于原变种，返回的结果中没有 author 属性，先直接返回 name
+        except (KeyError, TypeError):
+            # 对于原变种，返回的结果中没有 author 属性，或者 author 属性为 None， 先直接返回 name
             return query_result['name'],
 
     def powo_name(self, query_result):
@@ -486,7 +486,12 @@ class BioName:
                         # ipni 一些学名的检索返回会有 authorTeam = []
                         # 但 authors 属性却有合法值的情况，此时可以基于 authors
                         # 生成可用于比对的 authorTeam，然后再进行编码
-                        std_teams[n] = self.code_authors(self.get_author_team(r['authors']))
+                        try:
+                            std_teams[n] = self.code_authors(self.get_author_team(r['authors']))
+                        except KeyError:
+                            # ipni 有些标注为 auct.not_stated 的名称，没有任何命名人信息
+                            # 一般查询结果内，同名的其他名称一定有命名人，可以暂且先 pass 这些名字
+                            pass
                 # 开始比对原命名人与可选学名的命名人的比对结果
                 scores = self.contrast_code(aut_codes, std_teams)
                 # print(scores)
@@ -922,7 +927,6 @@ class BioName:
         else:
             print("\n学名处理参数有误，不存在{}\n".format(self.style))
             return pd.DataFrame(self.names)
-
 
 
 @ifunc
