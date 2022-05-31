@@ -556,6 +556,8 @@ class BioName:
                         r['authorTeam']) for n,
                     r in enumerate(names) if r['authorTeam']}
                 # 开始比对原命名人与可选学名的命名人的比对结果
+                # print('\n', authors, [r['authorTeam'] for r in names])
+                # print('\n', aut_codes, std_teams)
                 scores = self.contrast_code(aut_codes, std_teams)
                 # print(query[-1], scores)
                 name = names[scores[0][1]]
@@ -728,7 +730,7 @@ class BioName:
                     如果无法提取合法的学名，则返回 None
         """
         species_pattern = re.compile(
-            r"(!?\b[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*([×Xx])?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*(.*)")
+            r"(!?\b[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*([×Xx])?\s+([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*(.*)")
         subspecies_pattern = re.compile(
             r"([A-Z\(].*?[^A-Z])?\s*(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)?\s*\b([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)\s*([（A-Z\(].*?[^A-Z])?$")
         try:

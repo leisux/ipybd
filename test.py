@@ -69,6 +69,18 @@ names()
 from ipybd import BioName
 
 latiname = [
+ 'Afzelia xylocarpa (Kurz) Cra',
+ 'Passiflora × alatocaerulea Lindl.',
+ 'Elaeagnus lanceolata Warb. apud',
+ 'Ophiorrhiza fi1ibracteolata Lo',
+ 'Paraphlomis var. coronata (Vaniot) C. Y. Wu et H. W. Li',
+ 'Paraphlomis var. angustifolia (C. Y. Wu) C. Y. Wu et H. W. Li',
+ 'Sapium chihsinianum S．lee',
+ 'Opithandra dalzielii (W.W.S.mit',
+ 'Opithandra dalzielii (W.W.S.mit)',
+ 'Sycopsis salicifolia Li apud Wa',
+ 'Plumeria cv. Acutifolia',
+ 'Phegopteris decursive-pinnata (van Hall)',
  'Eurya handel-mazzettii Hung T. Chang',
  'Saxifraga umbellulata Hook. f. et Thoms. var. pectinata (C. Marq. et Airy Shaw) J. T. Pan',
  'Cerasus pseudocerasus (Lindl.)G.Don',
@@ -133,3 +145,22 @@ table = pd.DataFrame({
     "county":test.county
 })
 table
+
+
+
+# 名称比较
+from ipybd import BioName
+
+test = BioName([
+    'Ammannia baccifera Linn.', 'Ammannia baccifera', 
+    'Asplenium laserpitiifolium', 'Asplenium laserpitiifolium Ching',
+    'Canthium horridum', 'Canthium horridum Bl.Bijdr.',
+    'Hydrocotyle sibthorpioides', 'Hydrocotyle sibthorpioides Lam.',
+    'Pinus massoniana Lanb.', 'Pinus massoniana',
+    'Potentilla discolor Bge.', 'Potentilla discolor',
+    'Senecio scandens Buch.-Ham.', 'Senecio scandens',
+    'Vernonia patula (Dryand.) Merr.', 'Vernonia patula'
+    ])
+
+
+
