@@ -585,6 +585,10 @@ class FormatDataset:
         return get_func
 
     @get_name
+    def name_spell_check(self, *headers, concat=False):
+        return 'stdName', headers, concat, ('nameSpellCheck', 'authorsSpellCheck', 'ipniOrColFamily')
+
+    @get_name
     def get_ipni_name(self, *headers, concat=False):
         return 'ipniName', headers, concat, ('ipniName',
                                              'ipniAuthors', 'ipniFamily')
