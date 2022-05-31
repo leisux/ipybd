@@ -369,11 +369,11 @@ class BioName:
         return publishing_author, publication_year, publication, reference
 
     async def get_name(self, query, session):
-        name = await self.get_col_name(query, session)
+        name = await self.get_ipni_name(query, session)
         if name:
             return name
         else:
-            return await self.get_ipni_name(query, session)
+            return await self.get_col_name(query, session)
 
     # 以下多个方法用于请求相应 API 接口
     # 以获取api返回，并对返回结果的合理性做必要的判断
@@ -617,7 +617,7 @@ class BioName:
         except BaseException:  # 如果异步请求出错，改为正常的 Get 请求以尽可能确保有返回结果
             response = await self.normal_request(url)
         if not response:
-            print(url, "联网超时，请检查网络连接！")
+            print("\n", url, "联网超时，请检查网络连接！")
         return response  # 返回 None 表示网络有问题
 
     async def normal_request(self, url):
