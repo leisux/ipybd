@@ -119,8 +119,9 @@ class BioName:
         """
         cache_mapping = {
             'stdName': {
+                **self.cache['ipni'],
                 **self.cache['col'],
-                **self.cache['ipni']},
+                **self.cache['powo']},
             'colTaxonTree': self.cache['col'],
             'colName': self.cache['col'],
             'colSynonyms': self.cache['col'],
@@ -140,7 +141,7 @@ class BioName:
                 # 注意 stdName 的 col 函数置于元组最后，
                 # 以避免 ipni/powo 中与 col 同名的字段
                 # 被 col 函数解析。
-                'stdName': (self.ipni_name, self.col_name),
+                'stdName': (self.ipni_name, self.powo_name, self.col_name),
                 'colTaxonTree': self.col_taxontree,
                 'colName': self.col_name,
                 'colSynonyms': self.col_synonyms,
@@ -373,7 +374,11 @@ class BioName:
         if name:
             return name
         else:
-            return await self.get_col_name(query, session)
+            name = await self.get_powo_name(query, session)
+            if name:
+                return name
+            else:
+                return await self.get_col_name(query, session)
 
     # 以下多个方法用于请求相应 API 接口
     # 以获取api返回，并对返回结果的合理性做必要的判断
