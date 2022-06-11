@@ -737,7 +737,8 @@ class BioName:
         species_pattern = re.compile(
             r"(!?\b[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*([×Xx])?\s+([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*(.*)")
         subspecies_pattern = re.compile(
-            r"([A-Z\(].*?[^A-Z])?\s*(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)?\s*\b([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)\s*([（A-Z\(].*?[^A-Z])?$")
+            #r"([A-Z\(].*?[^A-Z])?\s*(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)?\s*\b([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)\s*([（A-Z\(].*?[^A-Z])?$")
+            r"(^[A-Z\(\.].*?[^A-Z-\s]\s*(?=$|var.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.))?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*([（A-Z\(].*?[^A-Z-])?$")
         try:
             species_split = species_pattern.findall(raw_name)[0]
         except BaseException:
@@ -763,10 +764,10 @@ class BioName:
             else:
                 platform_rank = Filters.generic
         else:
-            first_authors = subspec_split[0][0]
+            first_authors = subspec_split[0][0].strip()
             taxon_rank = subspec_split[0][1]
             infraspecies = subspec_split[0][2]
-            authors = subspec_split[0][3]
+            authors = subspec_split[0][3].strip()
             platform_rank = Filters.infraspecific
         return genus, species, taxon_rank, infraspecies, authors, first_authors, platform_rank, raw_name
 
