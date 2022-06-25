@@ -12,6 +12,8 @@ import arrow
 import pandas as pd
 import requests
 from tqdm import tqdm
+from thefuzz import fuzz, process
+import unicodedata
 
 from ipybd.api_terms import Filters
 
@@ -362,7 +364,7 @@ class BioName:
         # print(query[-1], genus, family, author)
         return scientific_name, author, family
 
-    def ipni_reference(self,query_result):
+    def ipni_reference(self, query_result):
         publishing_author = query_result['publishingAuthor']
         publication_year = query_result['publicationYear']
         publication = query_result['publication']
@@ -435,14 +437,9 @@ class BioName:
             elif len(names) == 1 or authors == []:
                 name = names[0]
             else:
-                # 提取出API返回的多个名称的命名人序列，并将其编码
-                aut_codes = self.code_authors(authors)
-                std_teams = {
-                    n: self.code_authors(r['author_team'])
-                    for n, r in enumerate(names)
-                }
+                std_teams = [r['author_team'] for r in names]
                 # 开始比对原命名人与可选学名的命名人的比对结果
-                scores = self.contrast_code(aut_codes, std_teams)
+                scores = self.contrast_authors(authors, std_teams)
                 # print(scores)
                 name = names[scores[0][1]]
                 # if std_teams[scores[0][1]] > 10000000000:
@@ -478,27 +475,23 @@ class BioName:
             elif len(names) == 1 or authors == []:
                 name = names[0]
             else:
-                # 提取出API返回的多个名称的命名人序列，并将其编码
-                aut_codes = self.code_authors(authors)
-                std_teams = {}
-                for n, r in enumerate(names):
-                    t = []
-                    for a in r["authorTeam"]:
-                        t.append(a["name"])
-                    if t:
-                        std_teams[n] = self.code_authors(t)
+                std_teams = []
+                for r in enumerate(names):
+                    author_team = [a["name"] for a in r["authorTeam"]]
+                    if author_team:
+                        std_teams.append(author_team)
                     else:
                         # ipni 一些学名的检索返回会有 authorTeam = []
-                        # 但 authors 属性却有合法值的情况，此时可以基于 authors
-                        # 生成可用于比对的 authorTeam，然后再进行编码
+                        # 但 authors 却有值的情况，此时可以基于 authors
+                        # 生成可用于比对的 authorTeam
                         try:
-                            std_teams[n] = self.code_authors(self.get_author_team(r['authors']))
+                            std_teams.append(self.get_author_team(r['authors']))
                         except KeyError:
                             # ipni 有些标注为 auct.not_stated 的名称，没有任何命名人信息
                             # 一般查询结果内，同名的其他名称一定有命名人，可以暂且先 pass 这些名字
-                            pass
+                            std_teams.append([])
                 # 开始比对原命名人与可选学名的命名人的比对结果
-                scores = self.contrast_code(aut_codes, std_teams)
+                scores = self.contrast_authors(authors, std_teams)
                 # print(scores)
                 name = names[scores[0][1]]
                 # if std_teams[scores[0][1]] > 10000000000:
@@ -535,7 +528,7 @@ class BioName:
                     except KeyError:
                         # 如果查询的结果中没有命名人信息,则补充空值
                         # 如果匹配结果只有这一个结果，采用该结果
-                        # 如果匹配结果多余一个，该结果将因 autorTeam 为空排除
+                        # 如果匹配结果有多个，该结果后续将因 autorTeam 为空排除
                         res['author'] = None
                         res['authroTeam'] = []
                     names.append(res)
@@ -554,16 +547,11 @@ class BioName:
                     if n['accepted'] == True:
                         return n
             else:
-                # 提取出API返回的多个名称的命名人序列，并将其编码
-                aut_codes = self.code_authors(authors)
-                std_teams = {
-                    n: self.code_authors(
-                        r['authorTeam']) for n,
-                    r in enumerate(names) if r['authorTeam']}
+                std_teams = [r['authorTeam'] if r['authorTeam'] else [] for r in names]
                 # 开始比对原命名人与可选学名的命名人的比对结果
                 # print('\n', authors, [r['authorTeam'] for r in names])
                 # print('\n', aut_codes, std_teams)
-                scores = self.contrast_code(aut_codes, std_teams)
+                scores = self.contrast_authors(authors, std_teams)
                 # print(query[-1], scores)
                 name = names[scores[0][1]]
                 # if std_teams[scores[0][1]] > 10000000000:
@@ -686,7 +674,8 @@ class BioName:
                 continue
             else:
                 if split_name[2] == "" and split_name[3]:
-                    simple_name = ' '.join([split_name[0], split_name[1], split_name[3]]).strip()
+                    simple_name = ' '.join(
+                        [split_name[0], split_name[1], split_name[3]]).strip()
                 else:
                     simple_name = ' '.join(split_name[:4]).strip()
                 raw2stdname[raw_name] = simple_name, split_name[-2], split_name[4], split_name[-1]
@@ -701,25 +690,33 @@ class BioName:
                 continue
             if pattern == 'simpleName':
                 if split_name[2] == "" and split_name[3]:
-                    simple_name = ' '.join([split_name[0], split_name[1], split_name[3]]).strip()
+                    simple_name = ' '.join(
+                        [split_name[0], split_name[1], split_name[3]]).strip()
                 else:
                     simple_name = ' '.join(split_name[:4]).strip()
                 raw2stdname[raw_name] = simple_name
             elif pattern == 'scientificName':
                 if split_name[2] == "" and split_name[3]:
-                    simple_name = ' '.join([split_name[0], split_name[1], split_name[3]]).strip()
+                    simple_name = ' '.join(
+                        [split_name[0], split_name[1], split_name[3]]).strip()
                 else:
                     simple_name = ' '.join(split_name[:4]).strip()
                 author = split_name[4]
-                raw2stdname[raw_name] = ' '.join([simple_name, author]) if author else simple_name
+                raw2stdname[raw_name] = ' '.join(
+                    [simple_name, author]) if author else simple_name
             elif pattern == 'plantSplitName':
-                raw2stdname[raw_name] = tuple(e if e !='' else None for e in split_name[:5])
+                raw2stdname[raw_name] = tuple(
+                    e if e != '' else None for e in split_name[:5])
             elif pattern == 'fullPlantSplitName':
-                elements = (split_name[0], split_name[1], split_name[5], split_name[2], split_name[3], split_name[4])
-                raw2stdname[raw_name] = tuple(e if e !='' else None for e in elements)
+                elements = (split_name[0], split_name[1], split_name[5],
+                            split_name[2], split_name[3], split_name[4])
+                raw2stdname[raw_name] = tuple(
+                    e if e != '' else None for e in elements)
             elif pattern == 'animalSplitName':
-                elements = (split_name[0], split_name[1], split_name[3], split_name[4])
-                raw2stdname[raw_name] = tuple(e if e !='' else None for e in elements)
+                elements = (split_name[0], split_name[1],
+                            split_name[3], split_name[4])
+                raw2stdname[raw_name] = tuple(
+                    e if e != '' else None for e in elements)
             else:
                 raise ValueError("学名处理参数错误，不存在{}".format(pattern))
         return [raw2stdname[name] for name in self.names]
@@ -735,7 +732,8 @@ class BioName:
                     如果无法提取合法的学名，则返回 None
         """
         species_pattern = re.compile(
-            r"(!?\b[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*([×Xx])?\s+([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*(.*)")
+            #r"(!?\b[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*([×Xx])?\s+([a-zàâäèéêëîïôœùûüÿç][a-zàâäèéêëîïôœùûüÿç-]+)?\s*(.*)")
+            r"(!?\b[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*(×\s+|X\s+|x\s+|×)?([a-zàâäèéêëîïôœùûüÿç][a-zàâäèéêëîïôœùûüÿç-]+)?\s*(.*)")
         subspecies_pattern = re.compile(
             #r"([A-Z\(].*?[^A-Z])?\s*(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)?\s*\b([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)\s*([（A-Z\(].*?[^A-Z])?$")
             r"(^[A-Z\(\.].*?[^A-Z-\s]\s*(?=$|var.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.))?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*([（A-Z\(].*?[^A-Z-])?$")
@@ -749,7 +747,7 @@ class BioName:
         if species_split[1] == "":
             species = species_split[2]
         else:
-            species = " ".join([species_split[1], species_split[2]])
+            species = " ".join(['×', species_split[2]])
         if subspec_split == []:
             authors = species_split[3]
             taxon_rank = ""
@@ -771,89 +769,92 @@ class BioName:
             platform_rank = Filters.infraspecific
         return genus, species, taxon_rank, infraspecies, authors, first_authors, platform_rank, raw_name
 
-    def contrast_code(self, raw_code, std_codes):
+    def contrast_authors(self, author_team, author_teams):
         """ 将一个学名的命名人和一组学名的命名人编码进行比较，以确定最匹配的
 
-        raw_code: 一个学名命名人列表经code_author编码返回的列表
-                  如["Hook. f.", "Thomos."]编码后获得[12113, 141123]
+        author_team: 一个学名命名人列表, 如["Hook. f.", "Thomos."]
 
-        std_code: 一组包含API多个返回结果的值序号及其命名人编码的对应字典
-                  如 {0:[4322], 1:[1234，27685]}
+        author_teams: 一组包含多个学名命名人列表的的列表，一般来自于多个同名拉丁名的命名人
 
         return: 返回一个与原命名人匹配亲近关系排列的list，
-                如[(0, 1）, (1249, 0)]，其中元组首位为该名称的匹配度，
-                值越小越匹配，元组第二个元素是该值在API返回值中的序号
         """
-        for k, authorship in std_codes.items():
-            k_score = []
-            # 计算学名命名人每个人名与待选学名命名人的匹配度
-            for author in raw_code:
-                scores = []
-                for name in authorship:
-                    scores.append(max(author, name) % min(author, name))
-                # 每个人名取匹配度分数最低的分值
-                k_score.append(min(scores))
-            std_codes[k] = (
-                sum(k_score)//len(raw_code)+1)*2**abs(len(raw_code)-len(authorship))
-        # 开始从比对结果中，结果将取命名人偏差最小的API返回结果
-        # std_teams 中可能存在多个最优，而程序无法判定采用哪一个比如原始数据
-        # 命名人为 (A. K. Skvortsov et Borodina) A. J. Li，而 ipni 返回的标准
-        # 名称中存在命名人分别为 A. K. Skvortsov 和 Borodina et A. J. Li 两个
-        # 同名学名，其 std_teams 值都将为最小偏差值 0，
-        # 此时程序将任选一个其实这里也可以考虑将其标识，等再考虑考虑，
-        # 有的时候ipni数据也有可能有错，比如 Phaeonychium parryoides 就存在这
-        # 个问题，但这种情况应该是小比率，对于结果的帅选逻辑，可以修改下方逻辑
-        scores = [(x, y) for y, x in std_codes.items()]
-        scores.sort(key=lambda s: s[0])
-        return scores
+        raw_team = [self.clean_author(author) for author in author_team]
+        s_teams_score = []
+        for n, std_team in enumerate(author_teams):
+            std_team = [self.clean_author(author) for author in std_team]
+            s_team_score = []
+            for r_author in raw_team:
+                match = process.extract(r_author, std_team, scorer=fuzz.token_sort_ratio)
+                try:
+                    best_ratio = max(match, key=lambda v:v[1])                
+                    s_team_score.append(best_ratio[1])
+                except ValueError:
+                    # author_teams 有些参与比对的学名，命名人可能为 []
+                    s_team_score.append(0)
+            s_teams_score.append((sum(s_team_score)/len(s_team_score), n))
+            s_teams_score.sort(key=lambda s:s[0], reverse=True)
+        return s_teams_score
 
-    def code_authors(self, authors):
+    def clean_author(self, author):
+        aut = author.replace(".", " ")
+        aut = aut.replace("-", " ")
+        aut = aut.replace("'", " ")
+        aut = aut.replace("  ", " ")
+        return aut.strip()
+
+    def strip_accents(self, text):
+        """尽最大可能将字符串中衍生的拉丁字母转换为英文字母
+
+        Args:
+            text (str): 需要处理的字符串，比如 'PančićDiklić & V.NikolićØ的'
+
+        Returns:
+            str: 转换后的字符串，注意 text 中某些字符，可能由于无法转换为英文字母而被删除
         """
-        authors: 一个学名命名人的 list
-        return: 返回学名中每个命名人的正整数转码 list
-                该转码是对姓名字母排序信息墒的一维表达
-        """
-        aut_codes = []
-        for aut in authors:
-            aut = aut.replace(".", "")
-            aut = aut.replace("-", " ")
-            code_author = 1
-            for i, letter in enumerate(aut):
-                n = ord(letter)
-                if n == 32:  # 排除空格
-                    code_author = code_author
-                elif aut[i-1] == letter and i != 0:  # 避免前后字母序号相减等于 0
-                    pass
-                elif n < 91:  # 人名中的大写字母
-                    code_author = code_author * (ord(letter)-64)
-                elif aut[i-1] == " " and n > 96:  # 人名之中的小写首字母
-                    code_author = code_author * (ord(letter)-96)
-                else:
-                    code_author = code_author * abs((ord(aut[i-1])-n))
-            aut_codes.append(code_author)
-        return aut_codes
+        # 统一一些组合字符的不同写法，以使其等价，比如 é 和 e\u0301
+        # 这里 normalize 的模式必须设置为 NFD 而非 NFC，否则后续decode
+        # 方法将无法给一些非 ascii 字符分配一个合适的 ascii 字符
+        text = unicodedata.normalize('NFD', text)
+        # 将命名人中的不同字符尽可能转化为 a-ZA-Z
+        # 比如 PančićDiklić & V.Nikolić 转换为 PancicDiklic & V.Nikolic
+        # 注意：字符串中的一些特殊字符可能无法转换，比如字符 Ø， 这些字符将被从字符串中删除
+        ascii_text = text.encode('ascii', 'ignore').decode('utf-8')
+        return ascii_text
+
+    def ascii_authors(self, authors, discard=True):
+        # strip_accents 并不能将所有字符转换为 ascii
+        # 这些字符在返回的结果中会被删除
+        pinyin = {'ß': 'ss', 'æ': 'ae', 'Ø': 'O', 'ø': 'o', 'þ': 'th', 'ð': 'd',
+                  'Ɖ': 'D', 'ł': 'l', 'đ': 'd', 'ı': 'i', 'Р': 'R', 'Т': 'T'}
+        # 先尽可能的将特殊文本转换为大小写英文字母
+        authors = authors.translate(str.maketrans(pinyin))
+        if discard:
+            # 然后再进行字符转换，其中有些字母可能仍然无法转换
+            ascii_authors = self.strip_accents(authors)
+        else:
+            # 如果仍然存在无法转换为英文的字母，则在 authors 中予以保留该字符
+            chars = [self.strip_accents(word) if self.strip_accents(
+                word) else word for word in authors]
+            ascii_authors = ''.join(chars)
+            #print(f'\n 命名人中存在特殊字符，程序目前无法识别 {ascii_authors} \n')
+        return ascii_authors
 
     def get_author_team(self, authors):
         """ 提取学名命名人中，各个命名人的名字
 
         authors: 一个学名的命名人字符串
 
-        return: 返回包含authors 中所有人名list，返回的 list 人名排序不一定与 authors
-                相同，对于 Hook. f. 目前只能提取出 Hook. ，程序仍需进一步完善，不过对于
-                学名之间的人名比较，已经足够用了
+        return: 返回包含authors 中所有人名list
         """
-        p4 = re.compile(
-            r"\b[A-Z][A-Za-z\.-]+\s+[A-Z][A-Za-z\.]+\s+[A-Z][A-Za-z\.]+\s+[A-Z][A-Za-z\.]+")
-        p3 = re.compile(
-            r"\b[A-Z][A-Za-z\.-]+\s+[A-Z][A-Za-z\.]+\s+[A-Z][A-Za-z\.]+")
-        p2 = re.compile(r"\b[A-Z][A-Za-z\.-]+\s+[A-Z][A-Za-z\.]+")
-        p1 = re.compile(r"\b[A-Z][A-Za-z\.-]+")
-        author_team = []
-        for p in (p4, p3, p2, p1):
-            aus = p.findall(authors)
-            author_team = author_team + aus
-            for author in aus:
-                authors = authors.replace(author, "", 1)
+        try:
+            authors = self.ascii_authors(authors)
+        # authors 为空
+        except AttributeError:
+            return None
+        # 命名人可能是有一至多个部分组成，这里通过四种模式猜测可能的名称组成形式
+        p = re.compile(
+            r"(?:^|\(\s*|\s+et\s+|\s+ex\s+|\&\s*|\,\s*|\)\s*|\s+and\s+|\[\s*|\（\s*|\）\s*|\，\s*|\{\s*|\}\s*)([^\s\&\(\)\,\;\.\-\?\，\（\）\[\]\{\}][^\&\(\)\,\;\，\（\）\[\]\{\}]+?(?=\s+ex\s+|\s+et\s+|\s*\&|\s*\,|\s*\)|\s*\(|\s+and\s+|\s+in\s+|\s*\）|\s*\（|\s*\，|\s*\;|\s*\]|\s*\[|\s*\}|\s*\{|\s*$))")
+        author_team = p.findall(authors)
         return author_team
 
     def __call__(self, mark=True):
@@ -1274,7 +1275,7 @@ class HumanName:
         names_mapping = dict.fromkeys(self.names)
         pattern = re.compile(
             r'[\u4e00-\u9fa5\s]*[\u4e00-\u9fa5][\|\d]*|[A-Za-z\(\[][A-Za-z\u00C0-\u00FF\'\.\s\-\]\(\)]*[A-Za-z\u00C0-\u00FF\'\.\]\)][\|\d]*')
-            #r'[\u4e00-\u9fa5\s]*[\u4e00-\u9fa5][\|\d]*|[A-Za-z\(\[][A-Za-z\u00C0-\u00FF\'\s\-\]\(\)]*[,]?[A-Za-z\u00C0-\u00FF\'\.\s\-\]\(\)]*[A-Za-z\u00C0-\u00FF\'\.\]\)][\|\d]*')
+        #r'[\u4e00-\u9fa5\s]*[\u4e00-\u9fa5][\|\d]*|[A-Za-z\(\[][A-Za-z\u00C0-\u00FF\'\s\-\]\(\)]*[,]?[A-Za-z\u00C0-\u00FF\'\.\s\-\]\(\)]*[A-Za-z\u00C0-\u00FF\'\.\]\)][\|\d]*')
         for rec_names in tqdm(names_mapping, desc="人名处理", ascii=True):
             try:
                 # 切分人名
@@ -1787,7 +1788,6 @@ class RadioInput:
         else:
             raise ValueError('unvalid lib!')
 
-
     def format_option(self, std2alias):
         options_mapping = dict.fromkeys(self.column)
         std_titles = sorted(list(std2alias.keys()))
@@ -1867,7 +1867,7 @@ class UniqueID:
 
 @ifunc
 class FillNa:
-    def __init__(self, *columns:pd.Series, value=None, method=None, axis=None, limit=None, downcast=None):
+    def __init__(self, *columns: pd.Series, value=None, method=None, axis=None, limit=None, downcast=None):
         self.df = pd.concat(columns, axis=1)
         self.value = value
         self.method = method
@@ -1896,23 +1896,3 @@ class Url:
 
 if __name__ == "__main__":
     pass
-
-# KEW API beta
-# http://beta.ipni.org/api/1/search?perPage=500&cursor=%2A&q=Glycine+&f=f_generic
-# http://beta.ipni.org/api/1/search?perPage=500&cursor=%2A&q=Lauraceae+&f=f_familial
-# http://beta.ipni.org/api/1/search?perPage=500&cursor=%2A&q=Glycine+max&f=f_specific
-# http://beta.ipni.org/api/1/search?perPage=500&cursor=%2A&q=Thalictrum+aquilegiifolium+var.+sibiricum&f=f_infraspecific
-
-# sp2000.org.cn API V1
-# http://www.sp2000.org.cn/api/family/familyName/familyID/Poaceae/42ad0f57ae46407686d1903fd44aa34c
-# http://www.sp2000.org.cn/api/taxon/familyID/taxonID/F20171000000256/42ad0f57ae46407686d1903fd44aa34c
-# http://www.sp2000.org.cn/api/taxon/scientificName/taxonID/Poaceae%20annua/42ad0f57ae46407686d1903fd44aa34c
-# http://www.sp2000.org.cn/api/taxon/commonName/taxonID/早熟禾/42ad0f57ae46407686d1903fd44aa34c
-# http://www.sp2000.org.cn/api/taxon/species/taxonID/T20171000041825/42ad0f57ae46407686d1903fd44aa34c
-
-
-# sp2000.org.cn API V2
-# http://www.sp2000.org.cn/api/v2/getFamiliesByFamilyName?apiKey=42ad0f57ae46407686d1903fd44aa34c&familyName=Lauraceae&page=1
-# http://www.sp2000.org.cn/api/v2/getSpeciesByFamilyId?apiKey=42ad0f57ae46407686d1903fd44aa34c&familyId=F20171000000256&page=2
-# http://www.sp2000.org.cn/api/v2/getSpeciesByScientificName?apiKey=42ad0f57ae46407686d1903fd44aa34c&scientificName=Rhododendron%20delavayi&page=1
-# http://www.sp2000.org.cn/api/v2/getSpeciesByCommonName?apiKey=42ad0f57ae46407686d1903fd44aa34c&commonName=%E6%97%A9%E7%86%9F%E7%A6%BE&page=1
