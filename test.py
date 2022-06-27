@@ -186,7 +186,7 @@ test = BioName([
     'Canthium horridum Bl.Bijdr.', 'Hydrocotyle sibthorpioides Lam.',
     'Pinus massoniana Lanb.', 'Potentilla discolor Bge.',
     'Senecio scandens Buch.-Ham.', 'Vernonia patula (Dryand.) Merr.',
-    ,'Ficus pumila L.', 'Senecio scandens Buch.-Ham. ex D.Don',
+    'Ficus pumila L.', 'Senecio scandens Buch.-Ham. ex D.Don',
     'Euphorbia thymifolia L.', 'Euonymus japonicus Thunb.', 
     'Mussaenda pubescens Dryand.'
     ])
