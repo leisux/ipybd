@@ -382,6 +382,7 @@ class BioName:
             else:
                 return await self.get_col_name(query, session)
 
+
     # 以下多个方法用于请求相应 API 接口
     # 以获取api返回，并对返回结果的合理性做必要的判断
 
@@ -552,7 +553,6 @@ class BioName:
                 # print('\n', authors, [r['authorTeam'] for r in names])
                 # print('\n', aut_codes, std_teams)
                 scores = self.contrast_authors(authors, std_teams)
-                # print(query[-1], scores)
                 name = names[scores[0][1]]
                 # if std_teams[scores[0][1]] > 10000000000:
                 #   author = ...这里可以继续对最优值进行判断和筛选，毕竟一组值总有最优，
@@ -646,9 +646,9 @@ class BioName:
 
     def build_url(self, api, method, params):
         return '{base}/{method}?{opt}'.format(
-               base=api,
-               method=method,
-               opt=urllib.parse.urlencode(params)
+                base=api,
+                method=method,
+                opt=urllib.parse.urlencode(params)
         )
 
     def _format_kew_query(self, query):
@@ -725,17 +725,15 @@ class BioName:
         """ 将手写学名转成规范格式
 
             raw_name: 各类动植物学名字符串，目前仅支持:
-                      属名 x 种名 种命名人 种下加词 种下命名人
-                      这类学名格式的清洗，
-                      其中杂交符、种命名人、种下命名人均可缺省。
+                        属名 x 种名 种命名人 种下加词 种下命名人
+                        这类学名格式的清洗，
+                        其中杂交符、种命名人、种下命名人均可缺省。
             return: 命名人的各个组成部分构成的元组
                     如果无法提取合法的学名，则返回 None
         """
         species_pattern = re.compile(
-            #r"(!?\b[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*([×Xx])?\s+([a-zàâäèéêëîïôœùûüÿç][a-zàâäèéêëîïôœùûüÿç-]+)?\s*(.*)")
             r"(!?\b[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*(×\s+|X\s+|x\s+|×)?([a-zàâäèéêëîïôœùûüÿç][a-zàâäèéêëîïôœùûüÿç-]+)?\s*(.*)")
         subspecies_pattern = re.compile(
-            #r"([A-Z\(].*?[^A-Z])?\s*(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)?\s*\b([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)\s*([（A-Z\(].*?[^A-Z])?$")
             r"(^[A-Z\(\.].*?[^A-Z-\s]\s*(?=$|var.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.))?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*([（A-Z\(].*?[^A-Z-])?$")
         try:
             species_split = species_pattern.findall(raw_name)[0]
@@ -762,10 +760,14 @@ class BioName:
             else:
                 platform_rank = Filters.generic
         else:
-            first_authors = subspec_split[0][0].strip()
             taxon_rank = subspec_split[0][1]
             infraspecies = subspec_split[0][2]
-            authors = subspec_split[0][3].strip()
+            if infraspecies:
+                first_authors = subspec_split[0][0].strip()
+                authors = subspec_split[0][3].strip()
+            else:
+                first_authors = ''
+                authors = subspec_split[0][0].strip()
             platform_rank = Filters.infraspecific
         return genus, species, taxon_rank, infraspecies, authors, first_authors, platform_rank, raw_name
 
@@ -782,16 +784,20 @@ class BioName:
         s_teams_score = []
         for n, std_team in enumerate(author_teams):
             std_team = [self.clean_author(author) for author in std_team]
-            s_team_score = []
+            score = []
             for r_author in raw_team:
                 match = process.extract(r_author, std_team, scorer=fuzz.token_sort_ratio)
                 try:
-                    best_ratio = max(match, key=lambda v:v[1])                
-                    s_team_score.append(best_ratio[1])
+                    best_ratio = max(match, key=lambda v:v[1])
+                    if r_author.split()[-1][0] in best_ratio[0]:
+                        score.append(best_ratio[1])
+                    else:
+                        score.append(0)
                 except ValueError:
                     # author_teams 有些参与比对的学名，命名人可能为 []
-                    s_team_score.append(0)
-            s_teams_score.append((sum(s_team_score)/len(s_team_score), n))
+                    score.append(0)
+            s_team_score = sum(score)/len(score)
+            s_teams_score.append((s_team_score, n))
             s_teams_score.sort(key=lambda s:s[0], reverse=True)
         return s_teams_score
 
