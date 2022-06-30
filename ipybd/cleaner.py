@@ -382,17 +382,13 @@ class BioName:
             else:
                 return await self.get_col_name(query, session)
 
-
-    # 以下多个方法用于请求相应 API 接口
-    # 以获取api返回，并对返回结果的合理性做必要的判断
-
     async def get_col_name(self, query, session):
         name = await self.check_col_name(query, session)
         if name:
             return query[-1], name, 'col'
 
     async def check_col_name(self, query, session):
-        """ 对 COL 返回对结果逐一进行检查
+        """ 对 COL 返回的结果逐一进行检查
 
         return: 返回最能满足 query 条件的学名 dict
         """
@@ -407,7 +403,7 @@ class BioName:
                     try:
                         if res['scientific_name'] == query[0] and res['accepted_name_info']['author'] != "":
                             # col 返回的结果中，没有 author team，需额外自行添加
-                            # 由于 COL 返回但结果中无学名的命名人，因此只能通过
+                            # 由于 COL 返回的结果中无学名的命名人，因此只能通过
                             # 其接受名的 author 字段获得命名人，但接受名可能与
                             # 检索学名不一致，所以此处暂且只能在确保检索学名为
                             # 接受名后，才能添加命名人。
@@ -430,23 +426,24 @@ class BioName:
                 elif query[1] is Filters.familial and res['family'] == query[0]:
                     return res
             authors = self.get_author_team(query[2])
-            # 如果搜索名称和返回名称不一致，标注后待人工核查
             if names == []:
-                # print("{0} 在中国生物物种名录中可能是异名、不存在或缺乏有效命名人，请手动核实\n".format(query[-1]))
                 return None
-            # 检索只有一个结果或者检索词命名人缺失，默认使用第一个同名结果
-            elif len(names) == 1 or authors == []:
-                name = names[0]
+            # 若检索词命名人缺失，默认使用第一个同名结果
+            elif authors == []:
+                for name in names:
+                    if name['name_status'] == True:
+                        return name
+                return names[0]
             else:
                 std_teams = [r['author_team'] for r in names]
                 # 开始比对原命名人与可选学名的命名人的比对结果
                 scores = self.contrast_authors(authors, std_teams)
                 # print(scores)
-                name = names[scores[0][1]]
-                # if std_teams[scores[0][1]] > 10000000000:
-                #   author = ...这里可以继续对最优值进行判断和筛选，毕竟一
-                # 组值总有最优,但不一定是真符合
-        return name
+                index = self._get_best_name(scores)
+                if index is not None:
+                    return names[index]
+                else:
+                    return None
 
     async def get_ipni_name(self, query, session):
         name = await self.check_ipni_name(query, session)
@@ -468,13 +465,12 @@ class BioName:
                 if res["name"] == query[0]:
                     names.append(res)
             authors = self.get_author_team(query[2])
-            # 如果搜索名称和返回名称不一致，标注后待人工核查
             if names == []:
                 # print(query)
                 return None
-            # 检索只有一个结果，或者检索词缺命名人，默认使用第一个同名结果
-            elif len(names) == 1 or authors == []:
-                name = names[0]
+            # 检索词缺命名人，默认使用第一个同名结果
+            elif authors == []:
+                return names[0]
             else:
                 std_teams = []
                 for r in enumerate(names):
@@ -489,16 +485,14 @@ class BioName:
                             std_teams.append(self.get_author_team(r['authors']))
                         except KeyError:
                             # ipni 有些标注为 auct.not_stated 的名称，没有任何命名人信息
-                            # 一般查询结果内，同名的其他名称一定有命名人，可以暂且先 pass 这些名字
                             std_teams.append([])
                 # 开始比对原命名人与可选学名的命名人的比对结果
                 scores = self.contrast_authors(authors, std_teams)
-                # print(scores)
-                name = names[scores[0][1]]
-                # if std_teams[scores[0][1]] > 10000000000:
-                #   author = ...这里可以继续对最优值进行判断和筛选，毕竟一
-                # 组值总有最优，但不一定是真符合
-        return name
+                index = self._get_best_name(scores)
+                if index is not None:
+                    return names[index]
+                else:
+                    return None
 
     async def get_powo_name(self, query, session):
         """ 从 KEW API 返回的最佳匹配中，获得学名及其科属分类阶元信息
@@ -538,26 +532,21 @@ class BioName:
             if names == []:
                 # print(query)
                 return None
-            # 如果只检索到一个结果，默认使用这个同名结果
-            elif len(names) == 1:
-                name = names[0]
-            # 如果有多个结果，但检索名的命名人缺失，则默认返回第一个accept name
+            # 如果有结果，但检索名的命名人缺失，则默认返回第一个accept name
             elif authors == []:
-                name = names[0]
-                for n in names:
-                    if n['accepted'] == True:
-                        return n
+                for name in names:
+                    if name['accepted'] == True:
+                        return name
+                return names[0]
             else:
                 std_teams = [r['authorTeam'] if r['authorTeam'] else [] for r in names]
                 # 开始比对原命名人与可选学名的命名人的比对结果
-                # print('\n', authors, [r['authorTeam'] for r in names])
-                # print('\n', aut_codes, std_teams)
                 scores = self.contrast_authors(authors, std_teams)
-                name = names[scores[0][1]]
-                # if std_teams[scores[0][1]] > 10000000000:
-                #   author = ...这里可以继续对最优值进行判断和筛选，毕竟一组值总有最优，
-                # 但不一定是真符合
-        return name
+                index = self._get_best_name(scores)
+                if index is not None:
+                    return names[index]
+                else:
+                    return None
 
     async def col_search(self, query, filters, session):
         params = self._build_col_params(query, filters)
@@ -681,53 +670,13 @@ class BioName:
                 raw2stdname[raw_name] = simple_name, split_name[-2], split_name[4], split_name[-1]
         return raw2stdname
 
-    def format_latin_names(self, pattern):
-        raw2stdname = dict.fromkeys(self.names)
-        for raw_name in raw2stdname:
-            split_name = self._format_name(raw_name)
-            if split_name is None:
-                raw2stdname[raw_name] = None
-                continue
-            if pattern == 'simpleName':
-                if split_name[2] == "" and split_name[3]:
-                    simple_name = ' '.join(
-                        [split_name[0], split_name[1], split_name[3]]).strip()
-                else:
-                    simple_name = ' '.join(split_name[:4]).strip()
-                raw2stdname[raw_name] = simple_name
-            elif pattern == 'scientificName':
-                if split_name[2] == "" and split_name[3]:
-                    simple_name = ' '.join(
-                        [split_name[0], split_name[1], split_name[3]]).strip()
-                else:
-                    simple_name = ' '.join(split_name[:4]).strip()
-                author = split_name[4]
-                raw2stdname[raw_name] = ' '.join(
-                    [simple_name, author]) if author else simple_name
-            elif pattern == 'plantSplitName':
-                raw2stdname[raw_name] = tuple(
-                    e if e != '' else None for e in split_name[:5])
-            elif pattern == 'fullPlantSplitName':
-                elements = (split_name[0], split_name[1], split_name[5],
-                            split_name[2], split_name[3], split_name[4])
-                raw2stdname[raw_name] = tuple(
-                    e if e != '' else None for e in elements)
-            elif pattern == 'animalSplitName':
-                elements = (split_name[0], split_name[1],
-                            split_name[3], split_name[4])
-                raw2stdname[raw_name] = tuple(
-                    e if e != '' else None for e in elements)
-            else:
-                raise ValueError("学名处理参数错误，不存在{}".format(pattern))
-        return [raw2stdname[name] for name in self.names]
-
     def _format_name(self, raw_name):
         """ 将手写学名转成规范格式
 
             raw_name: 各类动植物学名字符串，目前仅支持:
-                        属名 x 种名 种命名人 种下加词 种下命名人
+                        属名 x 种名 种命名人 种下等级 种下加词 种下命名人
                         这类学名格式的清洗，
-                        其中杂交符、种命名人、种下命名人均可缺省。
+                        其中杂交符、种命名人、种下等级、种下命名人均可缺省。
             return: 命名人的各个组成部分构成的元组
                     如果无法提取合法的学名，则返回 None
         """
@@ -771,6 +720,61 @@ class BioName:
             platform_rank = Filters.infraspecific
         return genus, species, taxon_rank, infraspecies, authors, first_authors, platform_rank, raw_name
 
+    def format_latin_names(self, pattern):
+        raw2stdname = dict.fromkeys(self.names)
+        for raw_name in raw2stdname:
+            split_name = self._format_name(raw_name)
+            if split_name is None:
+                raw2stdname[raw_name] = None
+                continue
+            if pattern == 'simpleName':
+                if split_name[2] == "" and split_name[3]:
+                    simple_name = ' '.join(
+                        [split_name[0], split_name[1], split_name[3]]).strip()
+                else:
+                    simple_name = ' '.join(split_name[:4]).strip()
+                raw2stdname[raw_name] = simple_name
+            elif pattern == 'scientificName':
+                if split_name[2] == "" and split_name[3]:
+                    simple_name = ' '.join(
+                        [split_name[0], split_name[1], split_name[3]]).strip()
+                else:
+                    simple_name = ' '.join(split_name[:4]).strip()
+                author = split_name[4]
+                raw2stdname[raw_name] = ' '.join(
+                    [simple_name, author]) if author else simple_name
+            elif pattern == 'plantSplitName':
+                raw2stdname[raw_name] = tuple(
+                    e if e != '' else None for e in split_name[:5])
+            elif pattern == 'fullPlantSplitName':
+                elements = (split_name[0], split_name[1], split_name[5],
+                            split_name[2], split_name[3], split_name[4])
+                raw2stdname[raw_name] = tuple(
+                    e if e != '' else None for e in elements)
+            elif pattern == 'animalSplitName':
+                elements = (split_name[0], split_name[1],
+                            split_name[3], split_name[4])
+                raw2stdname[raw_name] = tuple(
+                    e if e != '' else None for e in elements)
+            else:
+                raise ValueError("学名处理参数错误，不存在{}".format(pattern))
+        return [raw2stdname[name] for name in self.names]
+
+    def _get_best_name(self, scores):
+        """
+        scores: 由 contrast_authors 返回的比对结果
+
+        return: 返回最佳匹配名称的序号，如果没有，则返回 None
+        """
+        scores.sort(key=lambda s:s[0], reverse=True)
+        if scores[0][0]:
+            # 这里默认没有得分相同的名字
+            # 但现实可能会存在这种情况
+            # 如果真存在这种情况，就需要去优化 contrast_authors
+            return scores[0][1]
+        else:
+            return None
+
     def contrast_authors(self, author_team, author_teams):
         """ 将一个学名的命名人和一组学名的命名人编码进行比较，以确定最匹配的
 
@@ -798,7 +802,6 @@ class BioName:
                     score.append(0)
             s_team_score = sum(score)/len(score)
             s_teams_score.append((s_team_score, n))
-            s_teams_score.sort(key=lambda s:s[0], reverse=True)
         return s_teams_score
 
     def clean_author(self, author):
