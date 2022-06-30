@@ -5,7 +5,7 @@ with open("README.md", "r", encoding='utf-8') as fh:
 
 setup(
         name = 'ipybd',
-        version = '1.1.8',
+        version = '1.1.9',
         description = 'Powerful data cleaner for biodiversity',
         license = 'GPL-3.0 License',
         author = 'Xu Zhoufeng',
@@ -37,6 +37,8 @@ setup(
             'arrow>=0.16.0',
             'pystache>=0.5.4',
             'pystrich>=0.8',
-            'jsonschema>=2.6.0'
+            'jsonschema>=2.6.0',
+            'thefuzz>=0.19.0',
+            'python-Levenshtein>=0.12.2'
         ]
 )

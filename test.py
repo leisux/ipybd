@@ -212,7 +212,7 @@ authors = [
 ('Anders', 'Andersr'),
 ('Viji', 'Vij'),
 # 镜像
-()'Fiori', 'Firoi',
+('Fiori', 'Firoi'),
 ('Bellie', 'Beille'),
 ('Gordon', 'Godron'),
 ('Czetz', 'Cztez'),
