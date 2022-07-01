@@ -428,10 +428,10 @@ class BioName:
             authors = self.get_author_team(query[2])
             if names == []:
                 return None
-            # 若检索词命名人缺失，默认使用第一个同名结果
+            # 若检索词命名人缺失，默认使用第一个同名接受名
             elif authors == []:
                 for name in names:
-                    if name['name_status'] == True:
+                    if name['name_status'] == 'accepted name':
                         return name
                 return names[0]
             else:
