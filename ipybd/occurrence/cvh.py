@@ -8,8 +8,9 @@ from tqdm import tqdm
 import urllib
 
 
-QUERY_API = 'https://www.cvh.ac.cn/controller/spms/list.php'
-INFO_API = 'https://www.cvh.ac.cn/controller/spms/detail.php'
+QUERY_API = 'https://www.cvh.ac.cn/controller/spms/list.php?stateProvince%5B%5D=广东省%21'
+INFO_API = 'https://www.cvh.ac.cn/controller/spms/detail.php?'
+WEB_URL = 'https://www.cvh.ac.cn/spms/detail.php?'
 
 
 class LinkCVH:
@@ -22,8 +23,6 @@ class LinkCVH:
         for res in results:
             try:
                 self.cache[res.pop('collectionID')] = res
-            except KeyError:
-                self.cache[res.pop('uuid')] = res
             except TypeError:
                 pass
 
@@ -33,7 +32,15 @@ class LinkCVH:
             results.extend(result)
         return results
 
-    def get(self, taxonName=None, family=None, genus=None, country=None,
+    def _supplement_info(self, params, results):
+        del params['offset']
+        keywords = '，'.join(list(params.values()))
+        for result in results:
+            result['references'] = 'id='.join([WEB_URL, result['collectionID']])
+            result['queryKeywords'] = keywords
+        return results
+        
+    def get(self, taxonName=None, family=None, genus=None, country=None, 
             county=None, locality=None, minimumElevation=None, maximumElevation=None,
             recordedBy=None, recordNumber=None, collectedYear=None, institutionCode=None,
             collectionCode=None, identifiedBy=None, dateIdentified=None, withPhoto=False,
@@ -46,6 +53,10 @@ class LinkCVH:
         if self.detail:
             ids = [specimen['collectionID'] for specimen in results]
             results = self.mult_get(INFO_API, {}, headers, ids)
+        # 由于 CVH 返回的结果中不包含小地点和页面的 URL
+        # 这里将查询关键词以及页面 URL 一并组装到表格
+        # 将查询结果以字典形式缓存，缓存的 key 为 CVH 的 uuid/collectionID
+        results = self._supplement_info(params, results)
         if self.enable_cache:
             self.build_cache(results)
         else:
@@ -87,8 +98,12 @@ class LinkCVH:
             response = await self.async_get(url, headers, session)
             self.pbar.update(1)
             result = response['rows']
+            # 将 detail 的结果中 uuid 改名为 collectionID
+            # 以便遵从 DarwinCore ，同时与非 detail 模式下
+            # 返回的页面列表结果保持统一
             try:
-                result['associatedMedia'] = url
+                result['collectionID'] = result['uuid']
+                del result['uuid']
             except TypeError:
                 pass
             return result
@@ -98,7 +113,7 @@ class LinkCVH:
             params['offset'] = page_or_id
         else:
             params['id'] = page_or_id
-        return '{base}?{opt}'.format(
+        return '{base}&{opt}'.format(
                base=api,
                opt=urllib.parse.urlencode(params)
         )
