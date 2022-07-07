@@ -1,5 +1,5 @@
 from enum import Enum
-from ipybd.cleaner import *
+from ipybd.cleaner.cleaner import *
 
 
 class CvhTerms(Enum):

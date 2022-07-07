@@ -17,7 +17,7 @@ from warnings import filterwarnings
 
 filterwarnings('error', category=UserWarning)
 
-from ipybd.cleaner import (AdminDiv, BioName, DateTime, GeoCoordinate,
+from ipybd.cleaner.cleaner import (AdminDiv, BioName, DateTime, GeoCoordinate,
                                 HumanName, Number, RadioInput, UniqueID)
 
 HERE = os.path.dirname(__file__)

@@ -1,6 +1,6 @@
 from ipybd.core import FormatDataset, RestructureTable
 
-from ipybd.cleaner import (
+from ipybd.cleaner.cleaner import (
     ifunc,
     BioName,
     AdminDiv,
@@ -25,10 +25,10 @@ from ipybd.table.model import (
 
 from ipybd.occurrence.cvh import LinkCVH
 
-from ipybd import noi
+from ipybd.occurrence import noi
 
 from ipybd.label.label_maker import Label
 
-from ipybd.api_terms import Filters
+from ipybd.cleaner.api_terms import Filters
 
 from ipybd.lib.noi_occurrence_schema import schema

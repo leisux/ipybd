@@ -15,7 +15,7 @@ from tqdm import tqdm
 from thefuzz import fuzz, process
 import unicodedata
 
-from ipybd.api_terms import Filters
+from ipybd.cleaner.api_terms import Filters
 
 HERE = os.path.dirname(__file__)
 STD_OPTIONS_ALIAS_PATH = os.path.join(HERE, 'lib', 'std_options_alias.json')
@@ -457,7 +457,6 @@ class BioName:
         """
         results = await self.kew_search(query[0], query[1], IPNI_API, session)
         if results is None or results == []:
-            # 查无结果或者未能成功查询，返回带英文问号的结果以被人工核查
             return None
         else:
             names = []
@@ -473,7 +472,7 @@ class BioName:
                 return names[0]
             else:
                 std_teams = []
-                for r in enumerate(names):
+                for r in names:
                     author_team = [a["name"] for a in r["authorTeam"]]
                     if author_team:
                         std_teams.append(author_team)
@@ -525,7 +524,7 @@ class BioName:
                         # 如果匹配结果只有这一个结果，采用该结果
                         # 如果匹配结果有多个，该结果后续将因 autorTeam 为空排除
                         res['author'] = None
-                        res['authroTeam'] = []
+                        res['authorTeam'] = []
                     names.append(res)
             authors = self.get_author_team(query[2])
             # 如果搜索名称和返回名称不一致，标注后待人工核查
@@ -681,21 +680,21 @@ class BioName:
                     如果无法提取合法的学名，则返回 None
         """
         species_pattern = re.compile(
-            r"(!?\b[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*(×\s+|X\s+|x\s+|×)?([a-zàâäèéêëîïôœùûüÿç][a-zàâäèéêëîïôœùûüÿç-]+)?\s*(.*)")
+            r"((?:!×\s?|×\s?|!)?\b[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*(×\s+|X\s+|x\s+|×)?([a-zàâäèéêëîïôœùûüÿç][a-zàâäèéêëîïôœùûüÿç-]+)?\s*(.*)")
         subspecies_pattern = re.compile(
             r"(^[A-Z\(\.].*?[^A-Z-\s]\s*(?=$|var.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.))?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*([（A-Z\(].*?[^A-Z-])?$")
         try:
             species_split = species_pattern.findall(raw_name)[0]
         except BaseException:
             return None
-        subspec_split = subspecies_pattern.findall(species_split[3])
+        subspec_split = subspecies_pattern.findall(species_split[3])[0]
 
         genus = species_split[0]
         if species_split[1] == "":
             species = species_split[2]
         else:
             species = " ".join(['×', species_split[2]])
-        if subspec_split == []:
+        if subspec_split[2] == "":
             authors = species_split[3]
             taxon_rank = ""
             infraspecies = ""
@@ -709,14 +708,18 @@ class BioName:
             else:
                 platform_rank = Filters.generic
         else:
-            taxon_rank = subspec_split[0][1]
-            infraspecies = subspec_split[0][2]
-            if infraspecies:
-                first_authors = subspec_split[0][0].strip()
-                authors = subspec_split[0][3].strip()
+            taxon_rank = subspec_split[1]
+            infraspecies = subspec_split[2]
+            if infraspecies != species:
+                first_authors = subspec_split[0].strip()
+                authors = subspec_split[3].strip()
             else:
+                authors = subspec_split[0].strip()
+                if authors:
+                    pass
+                else:
+                    authors = subspec_split[3].strip()
                 first_authors = ''
-                authors = subspec_split[0][0].strip()
             platform_rank = Filters.infraspecific
         return genus, species, taxon_rank, infraspecies, authors, first_authors, platform_rank, raw_name
 

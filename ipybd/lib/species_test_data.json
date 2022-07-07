@@ -1,0 +1,145 @@
+// https://powo.science.kew.org/api/2/search?perPage=500&cursor=%2A&q=Senecio+scandens&f=f_infraspecific
+// 物种及种下接受名
+{
+    "scientificNameID": "NOINAME:A503123023212",
+    "isAcceptedName": true,
+    "kingdom": "Plantae",
+    "chineseKingdomName":"植物界",
+    "phylum": "Angiosperm",
+    "chinesePhylumName": "被子植物门",
+    "family": "Asteraceae",
+    "chineseFamilyName": "菊科",
+    "scientificName": "Senecio scandens",
+    "scientificNameAuthorship": "Buch.-Ham. ex D.Don",
+    "chineseName": "千里光",
+    "pinYin": "",
+    "vernacularName": [
+        "别名1",
+        "别名2",
+        "别名3"
+    ],
+    "taxonRank": "Species",
+    "reference": "https://noi.link/NOINAME:A503123023212",
+    "ipniNameLsid": "urn:lsid:ipni.org:names:247478-1",
+    "ipniPublicationLsid": "urn:lsid:ipni.org:publications:1048-2",
+    "publication": "Prodr. Fl. Nepal.",
+    "namePublishedInYear": 1825,
+    "namePublishedIn": "Prodr. Fl. Nepal. 178. 1825 [26 Jan-1 Feb 1825] ",
+    "bhlLink": "http://www.biodiversitylibrary.org/openurl?ctx_ver=Z39.88-2004&rft.date=1825&rft.spage=178&rft_id=http://www.biodiversitylibrary.org/bibliography/86&rft_val_fmt=info:ofi/fmt:kev:mtx:book&url_ver=z39.88-2004",
+    "protectedStatus": {
+        "iucnStatus": "LC",
+        "preservedStatus": "I",
+        "invasiveStatus": "IV",
+        "citesStatus": "II"
+    },
+    "associatedMedia": [
+        {
+            "thumbnail": "https://d2seqvvyy3b8p2.cloudfront.net/bf6ac942e38f9b740abb3807d344a52b.jpg",
+            "fullsize": "https://d2seqvvyy3b8p2.cloudfront.net/ad91364a9fb78502c5fccc8caf3ece43.jpg",
+            "rightsHolder": "Xu Zhoufeng"
+        },
+        {
+            "thumbnail": "https://d2seqvvyy3b8p2.cloudfront.net/dea00e68e5de18edb5e0d406cd9dec96.jpg",
+            "fullsize": "https://d2seqvvyy3b8p2.cloudfront.net/a2bb47decc33726521124baeeaac9885.jpg",
+            "rightsHolder": "Xu Zhoufeng"
+        },
+        {
+            "thumbnail": "https://d2seqvvyy3b8p2.cloudfront.net/b4bbc336a1fffed4947e399db8708a07.jpg",
+            "fullsize": "https://d2seqvvyy3b8p2.cloudfront.net/2e5f9e780b7523aa7db6d16384ad0010.jpg",
+            "rightsHolder": "徐洲锋"
+        }
+    ]
+}
+// 物种及种下异名
+{
+    "scientificNameID": "NOINAME:A503123023234",
+    "isAcceptedName": false,
+    "kingdom": "Plantae",
+    "chineseKingdomName":"植物界",
+    "phylum": "Angiosperm",
+    "chinesePhylumName": "被子植物门",
+    "family": "Asteraceae",
+    "chineseFamilyName": "菊科",
+    "scientificName": "Senecio scandens",
+    "scientificNameAuthorship": "Wall.",
+    "taxonRank": "Species",
+    "acceptedNameUsage": {
+        "scientificNameID": "NOINAME:A503123023212",
+        "isAcceptedName": true,
+        "kingdom": "Plantae",
+        "chineseKingdomName":"植物界",
+        "phylum": "Angiosperm",
+        "chinesePhylumName": "被子植物门",
+        "family": "Asteraceae",
+        "chineseFamilyName": "菊科",
+        "scientificNameAuthorship": "Buch.-Ham. ex D.Don",
+        "scientificName": "Senecio scandens",
+        "chineseName": "千里光",
+        "reference": "https://noi.link/NOINAME:A503123023212"
+    },
+    "reference": "https://noi.link/NOINAME:A503123023234",
+    "ipniNameLsid": "urn:lsid:ipni.org:names:247480-1",
+    "namePublishedInYear": 1831,
+    "namePublishedIn": "Numer. List [Wallich] n. 3120. 1831 ",
+    "publication": "Numer. List [Wallich]",
+    "ipniPublicationLsid": "urn:lsid:ipni.org:publications:1092-2",
+    "bhlLink": "http://www.biodiversitylibrary.org/openurl?ctx_ver=Z39.88-2004&rft.date=1825&rft.spage=178&rft_id=http://www.biodiversitylibrary.org/bibliography/86&rft_val_fmt=info:ofi/fmt:kev:mtx:book&url_ver=z39.88-2004"
+}
+
+// 科名
+{
+    "scientificNameID": "NOINAME:A504",
+    "isAcceptedName": false,
+    "scientificNameAuthorship": "Giseke",
+    "kingdom": "Plantae",
+    "chineseKingdomName":"植物界",
+    "phylum": "Angiosperm",
+    "chinesePhylumName": "被子植物门",
+    "family": "Compositae",
+    "scientificName": "Compositae",
+    "chineseName": "菊科",
+    "rank": "Family",
+    "acceptedNameUsage": {
+        "scientificNameID": "NOINAME:A503",
+        "isAcceptedName": true,
+        "kingdom": "Plantae",
+        "chineseKingdomName":"植物界",
+        "phylum": "Angiosperm",
+        "chinesePhylumName": "被子植物门",
+        "family": "Asteraceae",
+        "chineseFamilyName": "菊科",
+        "scientificNameAuthorship": "Bercht. & J.Presl",
+        "scientificName": "Asteraceae",
+        "chineseName": "菊科",
+        "reference": "https://noi.link/NOINAME:A503"
+    },
+    "reference": "https://noi.link/NOINAME:A504",
+    "ipniNameLsid": "urn:lsid:ipni.org:names:77126669-1",
+    "namePublishedInYear": 1792,
+    "namePublishedIn": "Prael. Ord. Nat. Pl. 538. 1792",
+    "publication": "Prael. Ord. Nat. Pl.",
+    "ipniPublicationLsid": "urn:lsid:ipni.org:publications:18141-2",
+    "bhlLink": "http://www.biodiversitylibrary.org/openurl?ctx_ver=Z39.88-2004&rft.date=1825&rft.spage=178&rft_id=http://www.biodiversitylibrary.org/bibliography/86&rft_val_fmt=info:ofi/fmt:kev:mtx:book&url_ver=z39.88-2004"
+}
+
+// 属名
+{
+    "scientificNameID": "NOINAME:A5031230",
+    "isAcceptedName": true,
+    "kingdom": "Plantae",
+    "chineseKingdomName":"植物界",
+    "phylum": "Angiosperm",
+    "chinesePhylumName": "被子植物门",
+    "family": "Asteraceae",
+    "scientificName": "Senecio",
+    "scientificNameAuthorship": "L.",
+    "chineseName": "千里光属",
+    "rank": "Genus",
+    "reference": "https://noi.link/NOINAME:A5031230",
+    "ipniNameLsid": "urn:lsid:ipni.org:names:325904-2",
+    "namePublishedInYear": 1753,
+    "namePublishedIn": "Sp. Pl. 2: 866. 1753 [1 May 1753] ; Gen. Pl. ed. 5, 373. 1754",
+    "publication": "Sp. Pl.",
+    "ipniPublicationLsid": "urn:lsid:ipni.org:publications:1071-2",
+    "bhlLink": "http://www.biodiversitylibrary.org/openurl?ctx_ver=Z39.88-2004&rft.date=1753&rft.spage=866&rft.volume=2&rft_id=http://www.biodiversitylibrary.org/bibliography/669&rft_val_fmt=info:ofi/fmt:kev:mtx:book&url_ver=z39.88-2004"
+}
