@@ -88,8 +88,8 @@ class BioName:
         result_len = len(list(results.values())[0])
         for name in self.querys:
             if mark:
-                # 无法格式化的/检索无结果的原值，用英文!标注
-                if self.querys[name] is None or name not in results:
+                # 无法格式化的/检索无结果/检索失败，用英文!标注
+                if self.querys[name] is None or results[name] is None or name not in results:
                     try:
                         results[name] = ["".join(["!", name])]
                     except TypeError:
@@ -99,8 +99,9 @@ class BioName:
                             # 如果 name 不是 None, 说明检索词有错误
                             results[name] = ["".join(["!", str(name)])]
                     results[name].extend([None]*(result_len - 1))
+
             else:
-                if self.querys[name] is None or name not in results:
+                if self.querys[name] is None or results[name] is None or name not in results:
                     results[name] = [None] * result_len
             results[name] = tuple(results[name])
         return [results[w] for w in self.names]
@@ -248,6 +249,7 @@ class BioName:
         for res in results:
             try:
                 self.cache[res[-1]][res[0]] = res[1]
+            # 如果检索失败，则不写入缓存
             except TypeError:
                 pass
 
@@ -277,13 +279,12 @@ class BioName:
 
             powo 接口获得的图片有缩略图和原图 url
             每个名字的图片有且仅有三张
-            返回的 iamges 是由三个 url 构成的元组
+            返回的 iamges 通常是由最多三个 url 构成的元组
         """
         try:
             images = [image['fullsize'] for image in query_result['images']]
-        except KeyError:
-            # 如果结果中没有 images 信息
-            # 抛出值错误异常供调用程序捕获
+        except (KeyError, TypeError):
+            # 如果结果中没有 images 信息，或者检索结果为空
             raise ValueError
         return images
 
@@ -294,6 +295,9 @@ class BioName:
             # 如果没有名称处理，默认将本名称作为接受名返回
             # 有些名字可能属于 unsolved 状态，也会被作为接受名返回
             pass
+        except TypeError:
+            # 检索结果为空，则没有接受名处理
+            return None,
         try:
             return " ".join([query_result['name'], query_result['author']]),
         except (KeyError, TypeError):
@@ -301,10 +305,13 @@ class BioName:
             return query_result['name'],
 
     def powo_name(self, query_result):
-        scientific_name = query_result["name"]
-        author = query_result["author"]
-        family = query_result['family']
-        return scientific_name, author, family
+        if query_result:
+            scientific_name = query_result["name"]
+            author = query_result["author"]
+            family = query_result['family']
+            return scientific_name, author, family
+        else:
+            return None, None, None
 
     def col_synonyms(self, query_result):
         try:
@@ -313,7 +320,7 @@ class BioName:
                 in query_result['accepted_name_info']['Synonyms']
             ]
             return synonyms
-        except KeyError:
+        except (KeyError, TypeError):
             raise ValueError
 
     def col_taxontree(self, query_result):
@@ -339,6 +346,8 @@ class BioName:
                 _class = query_result['class']
                 phylum = query_result['phylum']
                 kingdom = query_result['kingdom']
+        except TypeError:
+            return None, None, None, None, None, None
         return genus, family, order, _class, phylum, kingdom
 
     def col_name(self, query_result):
@@ -355,36 +364,44 @@ class BioName:
                 family = query_result['family']
                 author = None
                 scientific_name = family
+        except TypeError:
+            return None, None, None
         return scientific_name, author, family
 
     def ipni_name(self, query_result):
-        scientific_name = query_result["name"]
-        author = query_result["authors"]
-        family = query_result['family']
-        # print(query[-1], genus, family, author)
+        try:
+            scientific_name = query_result["name"]
+            author = query_result["authors"]
+            family = query_result['family']
+            # print(query[-1], genus, family, author)
+        except TypeError:
+            return None, None, None
         return scientific_name, author, family
 
     def ipni_reference(self, query_result):
-        publishing_author = query_result['publishingAuthor']
-        publication_year = query_result['publicationYear']
-        publication = query_result['publication']
-        reference = query_result['reference']
+        try:
+            publishing_author = query_result['publishingAuthor']
+            publication_year = query_result['publicationYear']
+            publication = query_result['publication']
+            reference = query_result['reference']
+        except TypeError:
+            return None, None, None, None
         return publishing_author, publication_year, publication, reference
 
     async def get_name(self, query, session):
         name = await self.get_ipni_name(query, session)
-        if name:
+        if name and name[1]:
             return name
         else:
             name = await self.get_powo_name(query, session)
-            if name:
+            if name and name[1]:
                 return name
             else:
                 return await self.get_col_name(query, session)
 
     async def get_col_name(self, query, session):
         name = await self.check_col_name(query, session)
-        if name:
+        if name or name is None:
             return query[-1], name, 'col'
 
     async def check_col_name(self, query, session):
@@ -394,8 +411,8 @@ class BioName:
         """
         results = await self.col_search(query[0], query[1], session)
         # print(results)
-        if results is None or results == []:
-            return None
+        if not results:
+            return results
         else:
             names = []
             for num, res in enumerate(results):
@@ -447,7 +464,7 @@ class BioName:
 
     async def get_ipni_name(self, query, session):
         name = await self.check_ipni_name(query, session)
-        if name:
+        if name or name is None:
             return query[-1], name, 'ipni'
 
     async def check_ipni_name(self, query, session):
@@ -456,8 +473,8 @@ class BioName:
         return: 返回最满足 query 条件的学名 dict
         """
         results = await self.kew_search(query[0], query[1], IPNI_API, session)
-        if results is None or results == []:
-            return None
+        if not results:
+            return results
         else:
             names = []
             for res in results:
@@ -484,6 +501,7 @@ class BioName:
                             std_teams.append(self.get_author_team(r['authors']))
                         except KeyError:
                             # ipni 有些标注为 auct.not_stated 的名称，没有任何命名人信息
+                            r['authors'] = None
                             std_teams.append([])
                 # 开始比对原命名人与可选学名的命名人的比对结果
                 scores = self.contrast_authors(authors, std_teams)
@@ -501,7 +519,7 @@ class BioName:
             return：raw_name, scientificName, family, genus
         """
         name = await self.check_powo_name(query, session)
-        if name:
+        if name or name is None:
             return query[-1], name, 'powo'
 
     async def check_powo_name(self, query, session):
@@ -510,9 +528,9 @@ class BioName:
         return: 返回最满足 query 条件的学名 dict
         """
         results = await self.kew_search(query[0], query[1], POWO_API, session)
-        if results is None or results == []:
+        if not results:
             # 查无结果或者未能成功查询，返回带英文问号的结果以被人工核查
-            return None
+            return results
         else:
             names = []
             for res in results:
@@ -581,7 +599,11 @@ class BioName:
         resp = await self.async_request(self.build_url(api, 'search', params), session)
         try:
             return resp['results']
-        except (TypeError, KeyError):
+        except TypeError:
+            # 网络中断，返回 False
+            return False
+        except KeyError:
+            # 检索不到，返回 None
             return None
 
     async def async_request(self, url, session):
@@ -654,6 +676,9 @@ class BioName:
             return filters.value['kew']
 
     def build_querys(self):
+        """
+        return: simple_name, taxonRank, authors, raw_name
+        """
         raw2stdname = dict.fromkeys(self.names)
         for raw_name in raw2stdname:
             split_name = self._format_name(raw_name)
@@ -708,19 +733,24 @@ class BioName:
             else:
                 platform_rank = Filters.generic
         else:
-            taxon_rank = subspec_split[1]
             infraspecies = subspec_split[2]
             if infraspecies != species:
+                taxon_rank = subspec_split[1]
                 first_authors = subspec_split[0].strip()
                 authors = subspec_split[3].strip()
+                platform_rank = Filters.infraspecific
             else:
+                # 原变种等种下加词和种加词一致的，种下和种命名人一致
+                # 这里将其作为种一级的名称进行处理
                 authors = subspec_split[0].strip()
                 if authors:
                     pass
                 else:
                     authors = subspec_split[3].strip()
-                first_authors = ''
-            platform_rank = Filters.infraspecific
+                taxon_rank = ""
+                first_authors = ""
+                infraspecies  = ""
+                platform_rank = Filters.specific
         return genus, species, taxon_rank, infraspecies, authors, first_authors, platform_rank, raw_name
 
     def format_latin_names(self, pattern):
@@ -737,6 +767,14 @@ class BioName:
                 else:
                     simple_name = ' '.join(split_name[:4]).strip()
                 raw2stdname[raw_name] = simple_name
+            elif pattern == 'apiName':
+                if split_name[2] == "" and split_name[3]:
+                    simple_name = ' '.join(
+                        [split_name[0], split_name[1], split_name[3]]).strip()
+                else:
+                    simple_name = ' '.join(split_name[:4]).strip()
+                author = split_name[4]
+                raw2stdname[raw_name] = (simple_name, author) if author else (simple_name, None)
             elif pattern == 'scientificName':
                 if split_name[2] == "" and split_name[3]:
                     simple_name = ' '.join(
