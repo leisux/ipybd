@@ -608,7 +608,7 @@ class FormatDataset:
     @get_name
     def get_ipni_name(self, *headers, concat=False):
         return 'ipniName', headers, concat, ('ipniName', 'ipniAuthors',
-                                             'ipniFamily', 'ipniLsid')
+                                             'ipniFamily', 'ipniNameLsid')
 
     @get_name
     def get_ipni_reference(self, *headers, concat=False):
@@ -620,7 +620,7 @@ class FormatDataset:
     @get_name
     def get_powo_name(self, *headers, concat=False):
         return 'powoName', headers, concat, ('powoName', 'powoAuthors',
-                                             'powoFamily', 'ipniLsid')
+                                             'powoFamily', 'ipniNameLsid')
 
     @get_name
     def get_powo_images(self, *headers, concat=False):
