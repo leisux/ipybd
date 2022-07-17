@@ -309,9 +309,10 @@ class BioName:
             scientific_name = query_result["name"]
             author = query_result["author"]
             family = query_result['family']
-            return scientific_name, author, family
+            ipni_lsid = query_result['fqId']
+            return scientific_name, author, family, ipni_lsid
         else:
-            return None, None, None
+            return None, None, None, None
 
     def col_synonyms(self, query_result):
         try:
@@ -352,6 +353,7 @@ class BioName:
 
     def col_name(self, query_result):
         try:  # 种及种下检索结果
+            col_name_code = query_result['name_code']
             family = query_result['accepted_name_info']['taxonTree']['family']
             author = query_result['accepted_name_info']['author']
             scientific_name = query_result['scientific_name']
@@ -365,28 +367,40 @@ class BioName:
                 author = None
                 scientific_name = family
         except TypeError:
-            return None, None, None
-        return scientific_name, author, family
+            return None, None, None, None
+        return scientific_name, author, family, col_name_code
 
     def ipni_name(self, query_result):
         try:
             scientific_name = query_result["name"]
             author = query_result["authors"]
             family = query_result['family']
+            ipni_lsid = query_result['fqId']
             # print(query[-1], genus, family, author)
         except TypeError:
-            return None, None, None
-        return scientific_name, author, family
+            return None, None, None, None
+        return scientific_name, author, family, ipni_lsid
 
     def ipni_reference(self, query_result):
         try:
-            publishing_author = query_result['publishingAuthor']
-            publication_year = query_result['publicationYear']
-            publication = query_result['publication']
-            reference = query_result['reference']
+            result = []
+            keys = ['publishingAuthor', 'publication', 'referenceCollation', 'publicationYear', 'publicationYearNote', 'referenceRemarks', 'reference', 'bhlLink']
+            for key in keys:
+                try:
+                    info = query_result[key]
+                    if info != 'not_stated':
+                        result.append(str(info).strip())
+                    else:
+                        result.append(None)
+                except KeyError:
+                    result.append(None)
+            try:
+                result.append(query_result['linkedPublication']['fqId'])
+            except KeyError:
+                result.append(None)
         except TypeError:
-            return None, None, None, None
-        return publishing_author, publication_year, publication, reference
+            return None, None, None, None, None, None, None, None, None
+        return result
 
     async def get_name(self, query, session):
         name = await self.get_ipni_name(query, session)

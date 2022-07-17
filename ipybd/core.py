@@ -567,17 +567,24 @@ class FormatDataset:
         def get_func(self, *args, **kwargs):
             get_action, headers, concat, new_headers = func(
                 self, *args, **kwargs)
-            if len(headers) > 1:
-                names = self.merge_columns(list(headers), " ")
-            else:
-                names = self.df[headers[0]]
             try:
-                if get_action in ['simpleName', 'apiName', 'scientificName', 'plantSplitName', 'fullPlantSplitName', 'animalSplitName']:
-                    results = self.bioname.format_latin_names(get_action)
+                if self.name_cache ==  headers:
+                    pass
                 else:
-                    results = self.bioname.get(get_action)
+                    self.name_cache = headers
+                    if len(headers) > 1:
+                        names = self.merge_columns(list(headers), " ")
+                    else:
+                        names = self.df[headers[0]]
+                    self.bioname = BioName(names)
             except AttributeError:
+                self.name_cache = headers
+                if len(headers) > 1:
+                    names = self.merge_columns(list(headers), " ")
+                else:
+                    names = self.df[headers[0]]
                 self.bioname = BioName(names)
+            finally:
                 if get_action in ['simpleName', 'apiName', 'scientificName', 'plantSplitName', 'fullPlantSplitName', 'animalSplitName']:
                     results = self.bioname.format_latin_names(get_action)
                 else:
@@ -600,18 +607,20 @@ class FormatDataset:
 
     @get_name
     def get_ipni_name(self, *headers, concat=False):
-        return 'ipniName', headers, concat, ('ipniName',
-                                             'ipniAuthors', 'ipniFamily')
+        return 'ipniName', headers, concat, ('ipniName', 'ipniAuthors',
+                                             'ipniFamily', 'ipniLsid')
 
     @get_name
     def get_ipni_reference(self, *headers, concat=False):
-        return 'ipniReference', headers, concat, (
-            'publishingAuthor', 'publicationYear', 'publication', 'reference')
+        return 'ipniReference', headers, concat, ('publishingAuthor',
+            'publication', 'referenceCollation', 'publicationYear',
+            'publicationYearNote', 'referenceRemarks', 'reference',
+            'bhlLink', 'ipniPublicationLsid')
 
     @get_name
     def get_powo_name(self, *headers, concat=False):
-        return 'powoName', headers, concat, ('powoName',
-                                             'powoAuthors', 'powoFamily')
+        return 'powoName', headers, concat, ('powoName', 'powoAuthors',
+                                             'powoFamily', 'ipniLsid')
 
     @get_name
     def get_powo_images(self, *headers, concat=False):
@@ -629,8 +638,8 @@ class FormatDataset:
 
     @get_name
     def get_col_name(self, *headers, concat=False):
-        return 'colName', headers, concat, ('colName',
-                                            'colAuthors', 'colFamily')
+        return 'colName', headers, concat, ('colName', 'colAuthors',
+                                            'colFamily', 'colCode')
 
     @get_name
     def get_col_synonyms(self, *headers, concat=False):
