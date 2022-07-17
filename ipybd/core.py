@@ -514,7 +514,7 @@ class FormatDataset:
         except PermissionError:
             print("\n提醒：使用系统管理员权限运行终端，iPybd 可记录转换历史！\n")
             pass
-        
+
     def to_excel(self, path):
         writer = pd.ExcelWriter(path, engine='openpyxl')
                             # 下面原由的这段代码，应该是 xlsxwriter 的engine 参数，
@@ -572,10 +572,16 @@ class FormatDataset:
             else:
                 names = self.df[headers[0]]
             try:
-                results = self.bioname.get(get_action)
+                if get_action in ['simpleName', 'apiName', 'scientificName', 'plantSplitName', 'fullPlantSplitName', 'animalSplitName']:
+                    results = self.bioname.format_latin_names(get_action)
+                else:
+                    results = self.bioname.get(get_action)
             except AttributeError:
                 self.bioname = BioName(names)
-                results = self.bioname.get(get_action)
+                if get_action in ['simpleName', 'apiName', 'scientificName', 'plantSplitName', 'fullPlantSplitName', 'animalSplitName']:
+                    results = self.bioname.format_latin_names(get_action)
+                else:
+                    results = self.bioname.get(get_action)
             if concat and results:
                 new_columns = pd.DataFrame(results)
                 new_columns.columns = new_headers
@@ -583,6 +589,10 @@ class FormatDataset:
             else:
                 return results
         return get_func
+
+    @get_name
+    def format_latin_names(self, *headers, pattern, new_headers, concat=False):
+        return pattern, headers, concat, new_headers
 
     @get_name
     def name_spell_check(self, *headers, concat=False):
