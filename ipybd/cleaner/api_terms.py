@@ -48,10 +48,19 @@ class Publication(Enum):
     tl2_number = "tl2 number"
 
 class Filters(Enum):
-    familial = {"kew":"f_familial", "col":"getFamiliesByFamilyName"}
-    infrafamilial = {"kew":"f_infrafamilial"}
-    generic = {"kew":"f_generic", "col":"getSpeciesByScientificName"}
-    infrageneric = {"kew":"f_infrageneric"}
-    specific = {"kew":"f_specific", "col":"getSpeciesByScientificName"}
-    infraspecific = {"kew":"f_infraspecific", "col":"getSpeciesByScientificName"}
-    commonname = {"col":"getSpeciesByCommonName"}
+    familial = {"kew":"f_familial", "col":"getFamiliesByFamilyName", "tropicos":"Search"}
+    infrafamilial = {"kew":"f_infrafamilial", "tropicos":"Search"}
+    generic = {"kew":"f_generic", "col":"getSpeciesByScientificName", "tropicos":"Search"}
+    infrageneric = {"kew":"f_infrageneric", "tropicos":"Search"}
+    specific = {"kew":"f_specific", "col":"getSpeciesByScientificName", "tropicos":"Search"}
+    infraspecific = {"kew":"f_infraspecific", "col":"getSpeciesByScientificName", "tropicos":"Search"}
+    commonname = {"col":"getSpeciesByCommonName", "tropicos":"Search"}
+    acceptedname = {"tropicos": 'AcceptedNames'}
+    synonyms = {"tropicos": "Synonyms"}
+    distributions = {"tropicos": "Distributions"}
+    references = {"tropicos": "References"}
+    images = {"tropicos": "Images"}
+    highertaxa = {"tropicos": "HigherTaxa"}
+    specimens = {"tropicos": "Specimens"}
+    chromosome = {"tropicos": "ChromosomeCounts"}
+

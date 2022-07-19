@@ -606,6 +606,14 @@ class FormatDataset:
         return 'stdName', headers, concat, ('nameSpellCheck', 'nameAuthors', 'mixFamily')
 
     @get_name
+    def get_tropicos_accepted(self, *headers, concat=False):
+        return 'tropicosAccepted', headers, concat, ('tropicosAccepted',)
+
+    @get_name
+    def get_tropicos_name(self, *headers, concat=False):
+        return 'tropicosName', headers, concat, ('tropicosName', 'tropicosAuthors',
+                                             'tropicosFamily', 'tropicosNameId')
+    @get_name
     def get_ipni_name(self, *headers, concat=False):
         return 'ipniName', headers, concat, ('ipniName', 'ipniAuthors',
                                              'ipniFamily', 'ipniNameLsid')

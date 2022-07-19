@@ -24,6 +24,7 @@ ADMIN_DIV_LIB_PATH = os.path.join(HERE, 'lib', 'chinese_admin_div.json')
 SP2000_API = 'http://www.sp2000.org.cn/api/v2'
 IPNI_API = 'http://beta.ipni.org/api/1'
 POWO_API = 'http://www.plantsoftheworldonline.org/api/2'
+TROPICOS_API = 'http://services.tropicos.org/Name'
 
 
 def ifunc(obj):
@@ -55,7 +56,7 @@ class BioName:
     def __init__(self, names: Union[list, pd.Series, tuple], style='scientificName'):
         self.names = names
         self.querys = {}
-        self.cache = {'ipni': {}, 'col': {}, 'powo': {}}
+        self.cache = {'ipni': {}, 'col': {}, 'powo': {}, 'tropicosName': {}, 'tropicosAccepted':{}, 'tropicosSynonyms':{}}
         self.style = style
 
     def get(self, action, typ=list, mark=False):
@@ -132,7 +133,12 @@ class BioName:
             'ipniReference': self.cache['ipni'],
             'powoName': self.cache['powo'],
             'powoAccepted': self.cache['powo'],
-            'powoImages': self.cache['powo']}
+            'powoImages': self.cache['powo'],
+            'tropicosName': self.cache['tropicosName'],
+            'tropicosAccepted': self.cache['tropicosAccepted'],
+            'tropicosSynonyms': self.cache['tropicosSynonyms']
+
+        }
         results = {}
         cache = cache_mapping[action]
         if cache:
@@ -152,7 +158,9 @@ class BioName:
                 'ipniReference': self.ipni_reference,
                 'powoName': self.powo_name,
                 'powoAccepted': self.powo_accepted,
-                'powoImages': self.powo_images
+                'powoImages': self.powo_images,
+                'tropicosName': self.tropicos_name,
+                'tropicosAccepted': self.tropicos_accepted
             }
             # 如果存在缓存，则直接从缓存数据中提取结果
             # 如果没有缓存，则先生成缓存，再取数据
@@ -176,7 +184,7 @@ class BioName:
             if not need_querys:
                 # 如果没有缓存，所有检索词执行一次 web 搜索
                 search_terms = self.querys
-        # 未防止 search_terms 不存在，这里的条件判断应放置在后面
+        # 为防止 search_terms 不存在，这里的条件判断应放置在后面
         if not need_querys and search_terms:
             # 若need_querys 是 None, 说明 web 请求是首次发起，执行一次递归检索
             # 若search_terms 并非 self.querys，说明 get 请求是由程序本身自动发起
@@ -232,7 +240,10 @@ class BioName:
             'ipniReference': self.get_ipni_name,
             'powoName': self.get_powo_name,
             'powoAccepted': self.get_powo_name,
-            'powoImages': self.get_powo_name
+            'powoImages': self.get_powo_name,
+            'tropicosName': self.get_tropicos_name,
+            'tropicosAccepted': self.get_tropicos_accepted
+
         }
         self.pbar = tqdm(total=len(search_terms), desc=action, ascii=True)
         loop = asyncio.new_event_loop()
@@ -261,6 +272,7 @@ class BioName:
                     self.querys[rawname],
                     session
                 )
+                # query 值为 None 的将不参与web get
                 for rawname in search_terms if self.querys[rawname]
             ]
             return await asyncio.gather(*tasks)
@@ -402,6 +414,78 @@ class BioName:
             return None, None, None, None, None, None, None, None, None
         return result
 
+    def tropicos_name(self, query_result):
+        if query_result:
+            scientific_name = query_result['ScientificName']
+            author = query_result['Author']
+            family = query_result['Family']
+            name_id = query_result['NameId']
+            return scientific_name, author, family, name_id
+        else:
+            return None, None, None, None
+
+    def tropicos_accepted(self, query_result):
+        try:
+            return query_result[0]['AcceptedName']['ScientificNameWithAuthors'],
+        except TypeError:
+            return None,
+
+    def build_url(self, api, method, params):
+        return '{base}/{method}?{opt}'.format(
+                base=api,
+                method=method,
+                opt=urllib.parse.urlencode(params)
+        )
+
+    def build_querys(self):
+        """
+        return: simple_name, Filters(platform_rank), authors, raw_name
+        """
+        raw2stdname = dict.fromkeys(self.names)
+        for raw_name in raw2stdname:
+            split_name = self._format_name(raw_name)
+            if split_name is None:
+                raw2stdname[raw_name] = None
+                continue
+            else:
+                if split_name[2] == "" and split_name[3]:
+                    simple_name = ' '.join(
+                        [split_name[0], split_name[1], split_name[3]]).strip()
+                else:
+                    simple_name = ' '.join(split_name[:4]).strip()
+                raw2stdname[raw_name] = simple_name, split_name[-2], split_name[4], split_name[-1]
+        return raw2stdname
+
+
+    async def async_request(self, url, session):
+        try:
+            while True:
+                # print(url)
+                async with session.get(url, timeout=60) as resp:
+                    if resp.status == 429:
+                        await asyncio.sleep(3)
+                    else:
+                        response = await resp.json()
+                        # print(response)
+                        break
+        except BaseException:  # 如果异步请求出错，改为正常的 Get 请求以尽可能确保有返回结果
+            response = await self.normal_request(url)
+        if not response:
+            print("\n", url, "联网超时，请检查网络连接！")
+        return response  # 返回 None 表示网络有问题
+
+    async def normal_request(self, url):
+        try:
+            while True:
+                rps = requests.get(url)
+                # print(rps.status_code)
+                if rps.status_code == 429:
+                    await asyncio.sleep(3)
+                else:
+                    return rps.json()
+        except BaseException:
+            return None
+
     async def get_name(self, query, session):
         name = await self.get_ipni_name(query, session)
         if name and name[1]:
@@ -412,6 +496,73 @@ class BioName:
                 return name
             else:
                 return await self.get_col_name(query, session)
+
+
+    async def get_tropicos_accepted(self, query, session):
+        name = await self.check_tropicos_name(query, session)
+        if name is None:
+            return query[-1], None, 'tropicosAccepted'
+        else:
+            api = '/'.join([TROPICOS_API, str(name['NameId'])])
+            accepted_name = await self.tropicos_search(api, '', Filters.acceptedname, session)
+            if accepted_name or accepted_name is None:
+                return query[-1], accepted_name, 'tropicosAccepted'
+
+    async def get_tropicos_name(self, query, session):
+        name = await self.check_tropicos_name(query, session)
+        if name or name is None:
+            return query[-1], name, 'tropicosName'
+
+    async def check_tropicos_name(self, query, session):
+        names = await self.tropicos_search(TROPICOS_API, query[0], query[1], session)
+        if not names:
+            return names
+        else:
+            authors = self.get_author_team(query[2])
+            # 如果有结果，但检索名的命名人缺失，则默认返回第一个accept name
+            if authors == []:
+                for name in names:
+                    if name['NomenclatureStatusName'] in ["nom. cons.", "Legitimate"]:
+                        return name
+                return names[0]
+            else:
+                for name in names:
+                    try:
+                        name['authorTeam'] = self.get_author_team(name['Author'])
+                    except:
+                        name['Author'] = None
+                        name['authorTeam'] = []
+                std_teams = [r['authorTeam'] if r['authorTeam'] else [] for r in names]
+                # 开始比对原命名人与可选学名的命名人的比对结果
+                scores = self.contrast_authors(authors, std_teams)
+                index = self._get_best_name(scores)
+                if index is not None:
+                    return names[index]
+                else:
+                    return None
+
+    async def tropicos_search(self, api, query, filters, session):
+        params = self._build_tropicos_params(query, filters)
+        url = self.build_url(api, filters.value['tropicos'], params)
+        resp = await self.async_request(url, session)
+        try:
+            resp[0]['Error']
+            return None
+        except KeyError:
+            return resp
+        except TypeError:
+            return False
+
+    def _build_tropicos_params(self, query, filters):
+        params = {}
+        if filters in [Filters.familial, Filters.infrafamilial, Filters.generic, Filters.infrageneric, Filters.specific, Filters.infraspecific]:
+            params['name'] = query
+            params['type'] = 'exact'
+        else:
+            pass
+        params['apikey'] = '48304127-1eae-4a64-8f4a-5a35d95b65ce'
+        params['format'] = 'json'
+        return params
 
     async def get_col_name(self, query, session):
         name = await self.check_col_name(query, session)
@@ -475,6 +626,45 @@ class BioName:
                     return names[index]
                 else:
                     return None
+
+    async def col_search(self, query, filters, session):
+        params = self._build_col_params(query, filters)
+        url = self.build_url(SP2000_API, filters.value['col'], params)
+        # print(url)
+        resp = await self.async_request(url, session)
+        try:
+            if resp['code'] == 200:
+                try:
+                    # 先尝试返回种及种下物种的信息
+                    return resp['data']['species']
+                except KeyError:
+                    # 出错后，确定可以返回科的信息
+                    return resp['data']['familes']
+            elif resp['code'] == 400:
+                print("\n参数不合法：{0}\n".format(url))
+                return None
+            elif resp['code'] == 401:
+                print("\n密钥错误：{0}\n".format(url))
+                return None
+            else:
+                return None
+        except KeyError:
+            print("\nInternal Server Error: {0}\n".format(url))
+            return False
+        except TypeError:
+            print("\n网络中断:{0}\n".format(url))
+            return False
+
+    def _build_col_params(self, query, filters):
+        params = {'apiKey': '42ad0f57ae46407686d1903fd44aa34c'}
+        if filters is Filters.familial:
+            params['familyName'] = query
+        elif filters is Filters.commonname:
+            params['commonName'] = query
+        else:
+            params['scientificName'] = query
+        params['page'] = 1
+        return params
 
     async def get_ipni_name(self, query, session):
         name = await self.check_ipni_name(query, session)
@@ -579,35 +769,6 @@ class BioName:
                 else:
                     return None
 
-    async def col_search(self, query, filters, session):
-        params = self._build_col_params(query, filters)
-        url = self.build_url(SP2000_API, filters.value['col'], params)
-        # print(url)
-        resp = await self.async_request(url, session)
-        # print(resp)
-        try:
-            if resp['code'] == 200:
-                try:
-                    # 先尝试返回种及种下物种的信息
-                    return resp['data']['species']
-                except KeyError:
-                    # 出错后，确定可以返回科的信息
-                    return resp['data']['familes']
-            elif resp['code'] == 400:
-                print("\n参数不合法：{0}\n".format(url))
-                return None
-            elif resp['code'] == 401:
-                print("\n密钥错误：{0}\n".format(url))
-                return None
-            else:
-                return None
-        except KeyError:
-            print("\nInternal Server Error: {0}\n".format(url))
-            return None
-        except TypeError:
-            print("\n返回类型错误:{0}\n".format(url))
-            return None
-
     async def kew_search(self, query, filters, api, session):
         params = self._build_kew_params(query, filters)
         resp = await self.async_request(self.build_url(api, 'search', params), session)
@@ -620,46 +781,6 @@ class BioName:
             # 检索不到，返回 None
             return None
 
-    async def async_request(self, url, session):
-        try:
-            while True:
-                # print(url)
-                async with session.get(url, timeout=60) as resp:
-                    if resp.status == 429:
-                        await asyncio.sleep(3)
-                    else:
-                        response = await resp.json()
-                        # print(response)
-                        break
-        except BaseException:  # 如果异步请求出错，改为正常的 Get 请求以尽可能确保有返回结果
-            response = await self.normal_request(url)
-        if not response:
-            print("\n", url, "联网超时，请检查网络连接！")
-        return response  # 返回 None 表示网络有问题
-
-    async def normal_request(self, url):
-        try:
-            while True:
-                rps = requests.get(url)
-                # print(rps.status_code)
-                if rps.status_code == 429:
-                    await asyncio.sleep(3)
-                else:
-                    return rps.json()
-        except BaseException:
-            return None
-
-    def _build_col_params(self, query, filters):
-        params = {'apiKey': '42ad0f57ae46407686d1903fd44aa34c'}
-        if filters is Filters.familial:
-            params['familyName'] = query
-        elif filters is Filters.commonname:
-            params['commonName'] = query
-        else:
-            params['scientificName'] = query
-        params['page'] = 1
-        return params
-
     def _build_kew_params(self, query, filters):
         params = {'perPage': 500, 'cursor': '*'}
         if query:
@@ -667,13 +788,6 @@ class BioName:
         if filters:
             params['f'] = self._format_kew_filters(filters)
         return params
-
-    def build_url(self, api, method, params):
-        return '{base}/{method}?{opt}'.format(
-                base=api,
-                method=method,
-                opt=urllib.parse.urlencode(params)
-        )
 
     def _format_kew_query(self, query):
         if isinstance(query, dict):
@@ -688,25 +802,6 @@ class BioName:
             return ",".join(terms)
         else:
             return filters.value['kew']
-
-    def build_querys(self):
-        """
-        return: simple_name, taxonRank, authors, raw_name
-        """
-        raw2stdname = dict.fromkeys(self.names)
-        for raw_name in raw2stdname:
-            split_name = self._format_name(raw_name)
-            if split_name is None:
-                raw2stdname[raw_name] = None
-                continue
-            else:
-                if split_name[2] == "" and split_name[3]:
-                    simple_name = ' '.join(
-                        [split_name[0], split_name[1], split_name[3]]).strip()
-                else:
-                    simple_name = ' '.join(split_name[:4]).strip()
-                raw2stdname[raw_name] = simple_name, split_name[-2], split_name[4], split_name[-1]
-        return raw2stdname
 
     def _format_name(self, raw_name):
         """ 将手写学名转成规范格式
@@ -848,6 +943,13 @@ class BioName:
                 match = process.extract(r_author, std_team, scorer=fuzz.token_sort_ratio)
                 try:
                     best_ratio = max(match, key=lambda v:v[1])
+                    # 这里要求一个命名人的姓的首字母，必须要在比对的名称之中
+                    # 否则即便匹配对比较高，也不会认为是同一个人
+                    # 比如 Regel Wall. 与 Regel 匹配度就会被强制转为 0
+                    # 主要是因为不管是中西方人名，命名人的姓都是非常重要的
+                    # 通常不应该丢失，这里需要注意的可能有一些中国命名人的姓
+                    # 是写在前面的,不过中文名字各部分一般不会省略，因此不影响
+                    # 判断
                     if r_author.split()[-1][0] in best_ratio[0]:
                         score.append(best_ratio[1])
                     else:
