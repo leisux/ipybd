@@ -460,6 +460,9 @@
         "体高",
         "HEIGHT"
     ],
+    "heightInMeters": [
+        "HEIGHTINMETERS"
+    ],
     "heightOfNest": [
         "巢高",
         "离地高度",
@@ -713,6 +716,7 @@
         "海拔高值",
         "海拔（高）",
         "海拔(高)",
+        "海拔",
         "MAXALTITUDE",
         "MAXIMUMELEVATIONINMETERS"
     ],
@@ -1142,6 +1146,7 @@
         "变种命名人",
         "种下加词命名人",
         "种下等级定名人",
+        "种下等级命名人",
         "学名作者",
         "AUTHOR",
         "AUTHORITY",
