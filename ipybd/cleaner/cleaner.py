@@ -17,9 +17,9 @@ import unicodedata
 
 from ipybd.cleaner.api_terms import Filters
 
-HERE = os.path.dirname(__file__)
-STD_OPTIONS_ALIAS_PATH = os.path.join(HERE, 'lib', 'std_options_alias.json')
-ADMIN_DIV_LIB_PATH = os.path.join(HERE, 'lib', 'chinese_admin_div.json')
+PARENT_PATH = os.path.dirname(os.path.dirname(__file__))
+STD_OPTIONS_ALIAS_PATH = os.path.join(PARENT_PATH, 'lib', 'std_options_alias.json')
+ADMIN_DIV_LIB_PATH = os.path.join(PARENT_PATH, 'lib', 'chinese_admin_div.json')
 
 SP2000_API = 'http://www.sp2000.org.cn/api/v2'
 IPNI_API = 'http://beta.ipni.org/api/1'
@@ -814,7 +814,7 @@ class BioName:
                     如果无法提取合法的学名，则返回 None
         """
         species_pattern = re.compile(
-            r"((?:!×\s?|×\s?|!)?\b[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*(×\s+|X\s+|x\s+|×)?([a-zàâäèéêëîïôœùûüÿç][a-zàâäèéêëîïôœùûüÿç-]+)?\s*(.*)")
+            r"((?:!×\s?|×\s?|!)?[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*(×\s+|X\s+|x\s+|×)?([a-zàâäèéêëîïôœùûüÿç][a-zàâäèéêëîïôœùûüÿç-]+)?\s*(.*)")
         subspecies_pattern = re.compile(
             r"(^[\"\'A-Z\(\.].*?[^A-Z-\s]\s*(?=$|var.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.))?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form|cv\.|cultivar\.)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*([\"\'（A-Z\(].*?[^A-Z-])?$")
         try:
