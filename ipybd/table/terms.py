@@ -23,6 +23,7 @@ class CvhTerms(Enum):
     生境 = '$habitat'
     科 = '$family'
     拉丁名 = '$scientificName'
+    属__种__定名人__种下等级__种下加词__种下等级定名人 = BioName([('$genus', '$specificEpithet', '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' '), '$拉丁名'], style='fullPlantSplitName')
     中文名 = '$vernacularName'
     鉴定人 = HumanName('$identifiedBy')
     鉴定日期 = DateTime('$dateIdentified')
@@ -80,7 +81,7 @@ class OccurrenceTerms(Enum):
     fieldNotes = '$fieldNotes'
     fundedBy = '$fundedBy'
     # Location
-    country__province__city__county = AdminDiv(['$higherGeography', ('$country', '$province', '$city', '$county', '::')])
+    country__province__city__county = AdminDiv([('$country', '$province', '$city', '$county', '::'), '$higherGeography'])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     _minimumElevationInMeters = Number('$minimumElevationInMeters')
@@ -224,7 +225,7 @@ class KingdoniaPlantTerms(Enum):
     eventDate = DateTime('$eventDate', 'datetime')
     _individualCount = Number('$individualCount', None, int)
     individualCount = FillNa('$individualCount', 0)
-    country__stateProvince__city__county = AdminDiv(['$higherGeography', ('$country', '$province', '$city', '$county', '::')])
+    country__stateProvince__city__county = AdminDiv([('$country', '$province', '$city', '$county', '::'), '$higherGeography'])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     _habitat = '$habitat'
     habitat = FillNa('$habitat', '无')
@@ -291,7 +292,7 @@ class HerbLabelTerms(Enum):
     decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     minimumElevationInMeters = Number('$minimumElevationInMeters', None, int)
     maximumElevationInMeters = Number('$maximumElevationInMeters', None, int)
-    country__province__city__county = AdminDiv(['$higherGeography', ('$country', '$province', '$city', '$county', '::')])
+    country__province__city__county = AdminDiv([('$country', '$province', '$city', '$county', '::'), '$higherGeography'])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     habitat = '$habitat'
     individualCount = Number('$individualCount', None, int)
@@ -339,7 +340,7 @@ class NsiiTerms(Enum):
     habitat = '$habitat'
     fundedBy = '$fundedBy'
     # Location
-    country__province__city__county = AdminDiv(['$higherGeography', ('$country', '$province', '$city', '$county', '::')])
+    country__province__city__county = AdminDiv([('$country', '$province', '$city', '$county', '::'), '$higherGeography'])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     _minimumElevationInMeters = Number('$minimumElevationInMeters')
