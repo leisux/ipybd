@@ -23,7 +23,6 @@ class CvhTerms(Enum):
     生境 = '$habitat'
     科 = '$family'
     拉丁名 = '$scientificName'
-    属__种__定名人__种下等级__种下加词__种下等级定名人 = BioName([('$genus', '$specificEpithet',  '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' '), '$拉丁名'], style='fullPlantSplitName')
     中文名 = '$vernacularName'
     鉴定人 = HumanName('$identifiedBy')
     鉴定日期 = DateTime('$dateIdentified')
