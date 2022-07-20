@@ -1,4 +1,4 @@
-`ipybd` 是一款由 `Python` 开发的中文生物多样性数据清洗、统计与分析框架。当前的 `ipybd` 版本实现了一个**通用**的生物多样性数据提取、转换、装载框架，它可以显著提升数据平台、数据管理机构、数据使用者对不同来源、不同格式、不同品质、不同规范的数据集进行统一的**批量化**清洗转换与整合利用的能力，从而大幅降低数据处理的门槛和成本，提高数据分析前的数据处理品质和效率。目前 `ipybd` 已经具备了以下一些能力：
+`ipybd` 是一款由 `Python` 开发的中文生物多样性数据清洗、统计与分析框架。当前的 `ipybd` 版本实现了一个**通用**的生物多样性数据整合框架，它可以显著提升数据平台、数据管理机构、数据使用者对不同来源、不同格式、不同品质、不同规范的数据集进行统一的**批量化**清洗转换与整合利用的能力，从而大幅降低数据处理的门槛和成本，提高数据分析前的数据处理品质和效率。目前 `ipybd` 已经具备了以下一些能力：
 
 ## 一、概述
 
@@ -95,13 +95,17 @@ Out:
 }
 ```
 
-除了上述示例中的`powoName`参数，目前`BioName`的`get`关键字总共有 9 个，它们的作用分别是：
+除了上述示例中的`powoName`参数，目前`BioName`的`get`关键字总共有 11 个，它们的作用分别是：
 
 + `'powoName'`: 获取 powo 平台相应学名的科属地位、学名简写和命名人信息；
 
 + `'powoImages'`: 获取 powo 平台相应学名的物种图片地址，每个物种返回三张图片地址；
 
 + `'powoAccepted'`: 获取 powo 平台相应学名的接受名；
+
++ `'tropicosName'`: 获取 tropicos.org 平台相应的学名；
+
++ `'tropicosAccepted'`: 或缺 tropicos.org 平台相应的接受名；
 
 + `'ipniName'`: 获取 ipni 平台相应学名的科属地位、学名简写和命名人信息；
 
@@ -211,21 +215,27 @@ Out:
 
 如上所示，不同数据表的学名表示方式时常会有差异，而通过诸如`get_ipni_name`这样的实例方法可以大幅提高数据处理的便捷性和灵活性。目前 `FormatDataset` 实例共支持以下几种学名处理方法：
 
-+ `get_powo_name`: 获取 powo 平台相应学名的科属地位、学名简写和命名人信息；
++ `get_powo_name`: 获取 powo 平台相应学名的科名、学名简写、命名人、ipniLsid；
 
 + `get_powo_images`: 获取 powo 平台相应学名的物种图片地址，每个物种返回三张图片地址；
 
++ `get_tropicos_Name`: 获取 tropicos.org 平台相应学名的科名、学名简写、命名人、nameid；
+
++ `get_tropicos_Accepted`: 或缺 tropicos.org 平台相应的接受名；
+
 + `get_powo_accepted`: 获取 powo 平台相应学名的接受名；
 
-+ `get_ipni_name`: 获取 ipni 平台相应学名的科属地位、学名简写和命名人信息；
++ `get_ipni_name`: 获取 ipni 平台相应学名的科名、学名简写、命名人、ipniLsid；
 
 + `get_ipni_reference`: 获取 ipni 平台相应学名的发表文献信息；
 
-+ `get_col_name`: 获取相应学名在中国生物物种名录中的科属地位、学名简写和命名人信息；
++ `get_col_name`: 获取相应学名在中国生物物种名录中相应学名的科名、学名简写、命名人、namecode；
 
 + `get_col_taxontree`: 获取相应学名在中国生物物种名录中的完整的分类学阶元信息；
 
-+ `get_col_synonyms`: 获取相应学名在中国生物物种名录中的异名信息。
++ `get_col_synonyms`: 获取相应学名在中国生物物种名录中的异名信息;
+  
++ `format_latin_name`: 规范物种学名格式。
 
 如果在使用这些方法时，并不希望程序直接返回结果，而是想直接将查询结果写入`collections`数据表，请求时可以将`concat`参数设置为`True`:
 
@@ -1569,5 +1579,6 @@ plt.show()
 
 ## 八、特别声明
 
-1. Ipybd 遵从 GNU General Public License v3.0 许可    
-2. 本软件由 NSII 资助，© 徐洲锋-中国科学院华南植物园
+1. iPybd 遵从 GNU General Public License v3.0 许可，© 徐洲锋-中国科学院华南植物园。
+2. 本项目的顺利开展受到了中国科学院华南植物园（SCBG）、中国国家标本资源平台（nsii.org.cn）支持
+
