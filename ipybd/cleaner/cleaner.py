@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import re
+import unicodedata
 import urllib
 from datetime import date
 from types import FunctionType, MethodType
@@ -11,11 +12,9 @@ import aiohttp
 import arrow
 import pandas as pd
 import requests
-from tqdm import tqdm
-from thefuzz import fuzz, process
-import unicodedata
-
 from ipybd.cleaner.api_terms import Filters
+from thefuzz import fuzz, process
+from tqdm import tqdm
 
 PARENT_PATH = os.path.dirname(os.path.dirname(__file__))
 STD_OPTIONS_ALIAS_PATH = os.path.join(PARENT_PATH, 'lib', 'std_options_alias.json')
@@ -374,10 +373,12 @@ class BioName:
                 scientific_name = query_result['genus']
                 author = None
                 family = query_result['family']
+                col_name_code = None
             except KeyError:  # 科的检索结果
                 family = query_result['family']
                 author = None
                 scientific_name = family
+                col_name_code = None
         except TypeError:
             return None, None, None, None
         return scientific_name, author, family, col_name_code

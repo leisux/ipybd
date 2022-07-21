@@ -235,7 +235,7 @@ Out:
 
 + `get_col_synonyms`: 获取相应学名在中国生物物种名录中的异名信息;
   
-+ `format_latin_name`: 规范物种学名格式。
++ `format_scientificname`: 规范物种学名格式。
 
 如果在使用这些方法时，并不希望程序直接返回结果，而是想直接将查询结果写入`collections`数据表，请求时可以将`concat`参数设置为`True`:
 
