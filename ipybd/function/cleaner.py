@@ -12,7 +12,7 @@ import aiohttp
 import arrow
 import pandas as pd
 import requests
-from ipybd.cleaner.api_terms import Filters
+from ipybd.function.api_terms import Filters
 from thefuzz import fuzz, process
 from tqdm import tqdm
 

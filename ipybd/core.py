@@ -16,8 +16,8 @@ from tqdm import tqdm
 
 filterwarnings('error', category=UserWarning)
 
-from ipybd.cleaner.cleaner import (AdminDiv, BioName, DateTime, GeoCoordinate,
-                                   HumanName, Number, RadioInput, UniqueID)
+from ipybd.function.cleaner import (AdminDiv, BioName, DateTime, GeoCoordinate,
+                                    HumanName, Number, RadioInput, UniqueID)
 
 HERE = os.path.dirname(__file__)
 STD_TERMS_ALIAS_PATH = os.path.join(HERE, 'lib', 'std_fields_alias.json')
