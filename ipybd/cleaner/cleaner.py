@@ -128,6 +128,7 @@ class BioName:
             'colTaxonTree': self.cache['col'],
             'colName': self.cache['col'],
             'colSynonyms': self.cache['col'],
+            'colAccepted': self.cache['col'],
             'ipniName': self.cache['ipni'],
             'ipniReference': self.cache['ipni'],
             'powoName': self.cache['powo'],
@@ -153,6 +154,7 @@ class BioName:
                 'colTaxonTree': self.col_taxontree,
                 'colName': self.col_name,
                 'colSynonyms': self.col_synonyms,
+                'colAccepted': self.col_accepted,
                 'ipniName': self.ipni_name,
                 'ipniReference': self.ipni_reference,
                 'powoName': self.powo_name,
@@ -235,6 +237,7 @@ class BioName:
             'colTaxonTree': self.get_col_name,
             'colName': self.get_col_name,
             'colSynonyms': self.get_col_name,
+            'colAccepted': self.get_col_name,
             'ipniName': self.get_ipni_name,
             'ipniReference': self.get_ipni_name,
             'powoName': self.get_powo_name,
@@ -325,6 +328,14 @@ class BioName:
         else:
             return None, None, None, None
 
+    def col_accepted(self, query_result):
+        try:
+            scientific_name = query_result['accepted_name_info']['scientificName']
+            author = query_result['accepted_name_info']['author']
+            return ' '.join([scientific_name, author]),
+        except (KeyError, TypeError):
+            return None,
+
     def col_synonyms(self, query_result):
         try:
             synonyms = [
@@ -366,7 +377,7 @@ class BioName:
         try:  # 种及种下检索结果
             col_name_code = query_result['name_code']
             family = query_result['accepted_name_info']['taxonTree']['family']
-            author = query_result['accepted_name_info']['author']
+            author = query_result['author']
             scientific_name = query_result['scientific_name']
         except KeyError:
             try:  # 属的检索结果
@@ -581,23 +592,15 @@ class BioName:
             return results
         else:
             names = []
-            for num, res in enumerate(results):
+            for res in results:
                 if query[1] is Filters.specific or query[1] is Filters.infraspecific:
-                    try:
-                        if res['scientific_name'] == query[0] and res['accepted_name_info']['author'] != "":
-                            # col 返回的结果中，没有 author team，需额外自行添加
-                            # 由于 COL 返回的结果中无学名的命名人，因此只能通过
-                            # 其接受名的 author 字段获得命名人，但接受名可能与
-                            # 检索学名不一致，所以此处暂且只能在确保检索学名为
-                            # 接受名后，才能添加命名人。
-                            # 因此对于 col 虽有数据，但却是异名的名字，会返回None
-                            if res['name_status'] == 'accepted name':
-                                results[num]['author_team'] = self.get_author_team(
-                                    res['accepted_name_info']['author'])
-                                names.append(res)
-                    # COL 可能 'accepted_name_info' 属性为None
-                    except TypeError:
-                        continue
+                    if res['scientific_name'] == query[0]:
+                        try:
+                            res['author_team'] = self.get_author_team(res['author'])
+                        except KeyError:
+                            res['author_team'] = None
+                        finally:
+                            names.append(res)
                 # col 接口目前尚无属一级的内容返回，这里先取属下种及种
                 # 下一级的分类阶元返回。
                 elif query[1] is Filters.generic:

@@ -5,6 +5,7 @@ import json
 import os
 import re
 from types import FunctionType, MethodType
+from warnings import filterwarnings
 
 import numpy as np
 import pandas as pd
@@ -13,12 +14,10 @@ from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.shortcuts import prompt
 from tqdm import tqdm
 
-from warnings import filterwarnings
-
 filterwarnings('error', category=UserWarning)
 
 from ipybd.cleaner.cleaner import (AdminDiv, BioName, DateTime, GeoCoordinate,
-                                HumanName, Number, RadioInput, UniqueID)
+                                   HumanName, Number, RadioInput, UniqueID)
 
 HERE = os.path.dirname(__file__)
 STD_TERMS_ALIAS_PATH = os.path.join(HERE, 'lib', 'std_fields_alias.json')
@@ -652,6 +651,10 @@ class FormatDataset:
     @get_name
     def get_col_synonyms(self, *headers, concat=False):
         return 'colSynonyms', headers, concat, ('colSynonyms',)
+
+    @get_name
+    def get_col_accepted(self, *headers, concat=False):
+        return 'colSynonyms', headers, concat, ('colAccepted',)
 
     def drop_and_concat_columns(func):
         def format_func(self, *args, **kwargs):
