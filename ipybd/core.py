@@ -597,7 +597,7 @@ class FormatDataset:
         return get_func
 
     @get_name
-    def format_scientificname(self, *headers, pattern, new_headers, concat=False):
+    def format_scientificname(self, *headers, pattern, new_headers=None, concat=False):
         return pattern, headers, concat, new_headers
 
     @get_name
