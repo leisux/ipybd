@@ -89,7 +89,7 @@ class BioName:
         for name in self.querys:
             if mark:
                 # 无法格式化的/检索无结果/检索失败，用英文!标注
-                if self.querys[name] is None or results[name] is None or name not in results:
+                if self.querys[name] is None or name not in results or results[name] is None:
                     try:
                         results[name] = ["".join(["!", name])]
                     except TypeError:
@@ -101,7 +101,7 @@ class BioName:
                     results[name].extend([None]*(result_len - 1))
 
             else:
-                if self.querys[name] is None or results[name] is None or name not in results:
+                if self.querys[name] is None or name not in results or results[name] is None:
                     results[name] = [None] * result_len
             results[name] = tuple(results[name])
         return [results[w] for w in self.names]
@@ -389,7 +389,7 @@ class BioName:
                 family = query_result['family']
                 author = None
                 scientific_name = family
-                col_name_code = None
+                col_name_code = query_result['record_id']
         except TypeError:
             return None, None, None, None
         return scientific_name, author, family, col_name_code
