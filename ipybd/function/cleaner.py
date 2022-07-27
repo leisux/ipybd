@@ -22,8 +22,8 @@ ADMIN_DIV_LIB_PATH = os.path.join(PARENT_PATH, 'lib', 'chinese_admin_div.json')
 
 SP2000_API = 'http://www.sp2000.org.cn/api/v2'
 IPNI_API = 'http://beta.ipni.org/api/1'
-POWO_API = 'http://www.plantsoftheworldonline.org/api/2'
-TROPICOS_API = 'http://services.tropicos.org/Name'
+POWO_API = 'https://powo.science.kew.org/api/2'
+TROPICOS_API = 'https://services.tropicos.org/Name'
 
 
 def ifunc(obj):
@@ -438,7 +438,9 @@ class BioName:
 
     def tropicos_accepted(self, query_result):
         try:
-            return query_result[0]['AcceptedName']['ScientificNameWithAuthors'],
+            return query_result['AcceptedName']['ScientificNameWithAuthors'],
+        except KeyError:
+            return query_result['ScientificNameWithAuthors'],
         except TypeError:
             return None,
 
@@ -514,16 +516,20 @@ class BioName:
         name = await self.check_tropicos_name(query, session)
         if name is None:
             return query[-1], None, 'tropicosAccepted'
-        else:
+        elif name:
             api = '/'.join([TROPICOS_API, str(name['NameId'])])
             accepted_name = await self.tropicos_search(api, '', Filters.acceptedname, session)
-            if accepted_name or accepted_name is None:
-                return query[-1], accepted_name, 'tropicosAccepted'
+            if accepted_name:
+                return query[-1], accepted_name[0], 'tropicosAccepted'
+            elif accepted_name is None:
+                # 如果查无处理结果，返回默认值
+                return query[-1], name, 'tropicosAccepted' 
 
     async def get_tropicos_name(self, query, session):
         name = await self.check_tropicos_name(query, session)
         if name or name is None:
             return query[-1], name, 'tropicosName'
+
 
     async def check_tropicos_name(self, query, session):
         names = await self.tropicos_search(TROPICOS_API, query[0], query[1], session)
@@ -535,6 +541,9 @@ class BioName:
             if authors == []:
                 for name in names:
                     if name['NomenclatureStatusName'] in ["nom. cons.", "Legitimate"]:
+                        return name
+                for name in names:
+                    if name['NomenclatureStatusName'] == "No opinion":
                         return name
                 return names[0]
             else:
