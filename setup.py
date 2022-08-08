@@ -15,7 +15,7 @@ setup(
         long_description=long_description,
         long_description_content_type="text/markdown",
         package_data = {
-            '':['lib/*.py', 'lib/*.json', 'label/*.py', 'label/*.mustache', 'label/*.css', 'occurrence/*.py', 'table/*.py']
+            '':['function/*.py','lib/*.py', 'lib/*.json', 'label/*.py', 'label/*.mustache', 'label/*.css', 'occurrence/*.py', 'table/*.py']
             },
         platforms = 'any',
         python_requires=">=3.6.1, <3.10",
