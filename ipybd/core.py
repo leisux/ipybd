@@ -621,7 +621,7 @@ class FormatDataset:
     def get_ipni_reference(self, *headers, concat=False):
         return 'ipniReference', headers, concat, ('publishingAuthor',
             'publication', 'referenceCollation', 'publicationYear',
-            'publicationYearNote', 'referenceRemarks', 'reference',
+            'publicationYearNote', 'referenceRemarks', 'citationReference',
             'bhlLink', 'ipniPublicationLsid')
 
     @get_name

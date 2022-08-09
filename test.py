@@ -6,9 +6,11 @@ noi = NoiOccurrence(
 noi.write_json()
 
 
+from enum import Enum
+
 # Model Test
 from ipybd import imodel
-from enum import Enum
+
 
 @imodel
 class MyCollection(Enum):
@@ -148,8 +150,9 @@ table = CVH(r"C:\Users\xu_zh\OneDrive\PDP\iherbarium\标签推荐模版ss.xlsx")
 
 
 
-from ipybd import AdminDiv
 import pandas as pd
+
+from ipybd import AdminDiv
 
 admindiv = [
     "内蒙古阿左旗贺兰山南寺沟",
@@ -182,6 +185,10 @@ table
 from ipybd import BioName
 
 test = BioName([
+    'Rottlera',
+    'Actinotinus sinensis Oliv.', 'Furcaria thalictroides (L.) Desv.',
+    'Furcaria surattensis (Linn.) Kostel.', 'Furcaria cavanillesii Kostel.',
+    'Aalius Rumph. ex Kuntze', 'Asparagopsis (Kunth) Kunth',
     'Ammannia baccifera Linn.', 'Asplenium laserpitiifolium Ching',
     'Canthium horridum Bl.Bijdr.', 'Hydrocotyle sibthorpioides Lam.',
     'Pinus massoniana Lanb.', 'Potentilla discolor Bge.',

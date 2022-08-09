@@ -1301,6 +1301,7 @@
     "verbatimElevation": [
         "海拔原始记录",
         "原始海拔记录",
+        "海拔区间",
         "VERBATIMELEVATION",
         "ELEVATION"
     ],
