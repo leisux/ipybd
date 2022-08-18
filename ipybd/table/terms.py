@@ -31,6 +31,7 @@ class CvhTerms(Enum):
     decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     经度 = '$decimalLongitude'
     纬度 = '$decimalLatitude'
+    minimumElevationInMeters__maximumElevationInMeters = {'$verbatimElevation': '-'}
     _海拔 = Number('$minimumElevationInMeters')
     _海拔高 = Number('$maximumElevationInMeters')
     海拔__海拔高 = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
@@ -85,9 +86,11 @@ class OccurrenceTerms(Enum):
     country__province__city__county = AdminDiv([('$country', '$province', '$city', '$county', '::'), '$higherGeography'])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
+    _minimumElevationInMeters__maximumElevationInMeters = {'$verbatimElevation': '-'}
     _minimumElevationInMeters = Number('$minimumElevationInMeters')
     _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
+    _minimumDepthInMeters__maximumDepthInMeters = {'$verbatimDepth': '-'}
     _minimumDepthInMeters = Number('$minimumDepthInMeters')
     _maximumDepthInMeters = Number('$maximumDepthInMeters')
     minimumDepthInMeters__maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters')
@@ -178,6 +181,7 @@ class NoiOccurrenceTerms(Enum):
     verbatimElevation = '$verbatimElevation'
     geodeticDatum = RadioInput('$geodeticDatum', 'geodeticDatum')
     georeferenceProtocol = '$georeferenceProtocol'
+    _minimumDepthInMeters__maximumDepthInMeters = {'$verbatimDepth': '-'}
     _minimumDepthInMeters = Number('$minimumDepthInMeters')
     _maximumDepthInMeters = Number('$maximumDepthInMeters')
     minimumDepthInMeters__maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters')
@@ -234,6 +238,7 @@ class KingdoniaPlantTerms(Enum):
     decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     decimalLatitude = FillNa('$decimalLatitude', 0)
     decimalLongitude = FillNa('$decimalLongitude', 0)
+    _minimumElevationInMeters__maximumElevationInMeters = {'$verbatimElevation': '-'}
     _minimumElevationInMeters = Number('$minimumElevationInMeters')
     _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
@@ -291,8 +296,10 @@ class HerbLabelTerms(Enum):
     recordNumber = '$recordNumber'
     eventDate = DateTime('$eventDate', 'date')
     decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
-    minimumElevationInMeters = Number('$minimumElevationInMeters', None, int)
-    maximumElevationInMeters = Number('$maximumElevationInMeters', None, int)
+    _minimumElevationInMeters__maximumElevationInMeters = {'$verbatimElevation': '-'}
+    _minimumElevationInMeters = Number('$minimumElevationInMeters')
+    _maximumElevationInMeters = Number('$maximumElevationInMeters')
+    minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     country__province__city__county = AdminDiv([('$country', '$province', '$city', '$county', '::'), '$higherGeography'])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     habitat = '$habitat'
@@ -344,9 +351,11 @@ class NsiiTerms(Enum):
     country__province__city__county = AdminDiv([('$country', '$province', '$city', '$county', '::'), '$higherGeography'])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
+    _minimumElevationInMeters__maximumElevationInMeters = {'$verbatimElevation': '-'}
     _minimumElevationInMeters = Number('$minimumElevationInMeters')
     _maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
+    _minimumDepthInMeters__maximumDepthInMeters = {'$verbatimDepth': '-'}
     _minimumDepthInMeters = Number('$minimumDepthInMeters')
     _maximumDepthInMeters = Number('$maximumDepthInMeters')
     minimumDepthInMeters__maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters')

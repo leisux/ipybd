@@ -716,7 +716,6 @@
         "海拔高值",
         "海拔（高）",
         "海拔(高)",
-        "海拔",
         "MAXALTITUDE",
         "MAXIMUMELEVATIONINMETERS"
     ],
@@ -1120,6 +1119,14 @@
         "获取方法",
         "SAMPLINGPROTOCOL"
     ],
+    "verbatimIdentification": [
+        "学名",
+        "原始鉴定",
+        "鉴定名称",
+        "鉴定",
+        "鉴定名",
+        "VERBATIMIDENTIFICATION"
+    ],
     "scientificName": [
         "学名",
         "鉴定名称",
@@ -1287,8 +1294,8 @@
     "verbatimCoordinates": [
         "原始坐标",
         "坐标的原始记录",
-        "经纬度",
         "经纬度坐标",
+        "经纬度",
         "经/纬度",
         "地理坐标",
         "GPS",
@@ -1302,8 +1309,10 @@
         "海拔原始记录",
         "原始海拔记录",
         "海拔区间",
-        "VERBATIMELEVATION",
-        "ELEVATION"
+        "海拔",
+        "ALT",
+        "ELEVATION",
+        "VERBATIMELEVATION"
     ],
     "verbatimEventDate": [
         "日期原始记录",
