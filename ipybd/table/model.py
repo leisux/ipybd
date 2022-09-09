@@ -13,7 +13,7 @@ from ipybd.table.terms import *
 
 
 def imodel(enum_model):
-    def __init__(self, *args, fields_mapping=False, cut=True, fcol=False, **kwargs):
+    def __init__(self, *args, fields_mapping=False, cut=True, fcol=None, **kwargs):
         super(self.__class__, self).__init__(
             *args, fields_mapping=fields_mapping, cut=cut, fcol=fcol, **kwargs)
 
@@ -145,9 +145,6 @@ class CVH(RestructureTable):
     def __init__(self, *args, **kwargs):
         super(CVH, self).__init__(
             *args, fields_mapping=True, cut=True, fcol=None, **kwargs)
-        self.merge_columns(['种下等级', '种下加词'], ' ', new_header='种下等级')
-        self.df['拉丁名'] = pd.Series(self.merge_columns(['属', '种', '种下等级'], ' '))
-        self._re_range_columns(self.cut)
 
     def btk_collectors2cvh(self):
         recordedby = list(self.df["采集人"])
