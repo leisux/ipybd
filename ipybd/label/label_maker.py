@@ -40,11 +40,10 @@ class Label(RestructureTable):
 
     def to_dict(self):
         records = list(self.df.to_dict(orient='records'))
-        for i, record in enumerate(records):
-            c = record.copy()
-            for key, value in c.items():
+        for record in records:
+            for key, value in record.items():
                 # null value fill ""
-                if not pd.Series(value).any():
+                if pd.isnull(value):
                     record[key] = ""
         return records
 
