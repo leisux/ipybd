@@ -16,6 +16,7 @@ from ipybd.function.api_terms import Filters
 from thefuzz import fuzz, process
 from tqdm import tqdm
 
+
 PARENT_PATH = os.path.dirname(os.path.dirname(__file__))
 STD_OPTIONS_ALIAS_PATH = os.path.join(PARENT_PATH, 'lib', 'std_options_alias.json')
 ADMIN_DIV_LIB_PATH = os.path.join(PARENT_PATH, 'lib', 'chinese_admin_div.json')
@@ -250,14 +251,14 @@ class BioName:
         self.pbar = tqdm(total=len(search_terms), desc=action, ascii=True)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        self.sema = asyncio.Semaphore(500, loop=loop)
+        self.sema = asyncio.Semaphore(500)
         tasks = self.build_tasks(get_action[action], search_terms)
         results = loop.run_until_complete(tasks)
         # 修复 Windows 下出现的 RuntimeErro: Event loop is closed
         # 为什么注销 close 会管用，我也没完全搞清楚
         # 猜测可能是 asyncio 会自动关闭 loop
         # 暂且先这样吧！
-        #loop.close()
+        # loop.close()
         self.pbar.close()
         for res in results:
             try:
@@ -1765,9 +1766,11 @@ class Number:
             typ = 'Int64'
         else:
             typ = self.typ
+        import warnings
+        warnings.filterwarnings('error')
         try:
             return pd.DataFrame(new_column, dtype=typ)
-        except ValueError:
+        except (ValueError, TypeError, Warning):
             # 解决数据列中混入某些字符串无法转 Int64 等数据类型的问题。
             return pd.DataFrame(new_column)
 
