@@ -558,12 +558,11 @@ class FormatDataset:
             self.df.columns = [header + '_' if duplicates[j] else header for j, header in enumerate(self.df.columns)]
 
     def to_excel(self, path):
-        writer = pd.ExcelWriter(path, engine='openpyxl')
-                            # 下面原由的这段代码，应该是 xlsxwriter 的engine 参数，
-                            # 使用 openpyxl报错具体原因待确实，先隐去处理
-                            #engine_kwargs={"options":{'strngs_to_urls':False}})
-        self.df.to_excel(writer, index=False)
-        writer.save()
+        with pd.ExcelWriter(path, engine='openpyxl') as writer:
+            # 下面原由的这段代码，应该是 xlsxwriter 的engine 参数，
+            # 使用 openpyxl报错具体原因待确实，先隐去处理
+            #engine_kwargs={"options":{'strngs_to_urls':False}})
+            self.df.to_excel(writer, index=False)
 
     def save_data(self, path):
         if path.endswith('.xlsx'):
