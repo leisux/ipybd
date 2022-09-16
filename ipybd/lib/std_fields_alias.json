@@ -1340,12 +1340,19 @@
         "分类阶元原始记载",
         "VERBATIMTAXONRANK"
     ],
+    "vernacularKingdomName": [
+        "界中文名",
+        "中文界名",
+        "VERNACULARKINGDOMNAME",
+        "CHINESEKINGDOMNAME"
+    ],
     "vernaculaFamilyName": [
         "中文科名",
         "科中文名",
         "科名",
         "FAMILYNAMEZH",
         "FAMILY_C",
+        "CHINESEFAMILYNAME",
         "VERNACULAFAMILYNAME"
     ],
     "vernacularGenusName": [
@@ -1354,6 +1361,7 @@
         "属名",
         "GENUSNAMEZH",
         "GENUS_C",
+        "CHINESEGENUSNAME",
         "VERNACULARGENUSNAME"
     ],
     "vernacularName": [

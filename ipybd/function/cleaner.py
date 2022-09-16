@@ -524,7 +524,7 @@ class BioName:
                 return query[-1], accepted_name[0], 'tropicosAccepted'
             elif accepted_name is None:
                 # 如果查无处理结果，返回默认值
-                return query[-1], name, 'tropicosAccepted' 
+                return query[-1], name, 'tropicosAccepted'
 
     async def get_tropicos_name(self, query, session):
         name = await self.check_tropicos_name(query, session)

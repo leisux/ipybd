@@ -18,6 +18,7 @@ from ipybd.core import RestructureTable
 from ipybd.label.herb_label import HerbLabel
 from ipybd.table.terms import HerbLabelTerms
 from pystrich.code128 import Code128Encoder
+import warnings
 
 HERE = os.path.dirname(__file__)
 
@@ -83,7 +84,10 @@ class Label(RestructureTable):
                             labels.append(HerbLabel(r))
                             del r['code_path']
                             r['catalogNumber'] = code
-                            new_table = new_table.append(r, ignore_index=True)
+                            with warnings.catch_warnings():
+                                warnings.simplefilter("ignore")
+                                new_table = new_table.append(r, ignore_index=True)
+                            # new_table = pd.concat([new_table, pd.DataFrame(list(r.items()))], ignore_index=True)
                             num += 1
                     else:
                         if r['catalogNumber'] != "" and r['duplicatesOfLabel'] == 1:
@@ -129,7 +133,10 @@ class Label(RestructureTable):
                         labels.append(HerbLabel(r))
                         del r['code_path']
                         r['catalogNumber'] = code
-                        new_table = new_table.append(r, ignore_index=True)
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore")
+                            new_table = new_table.append(r, ignore_index=True)
+                        # new_table = pd.concat([new_table, pd.DataFrame(list(r.items()))], ignore_index=True)
                         num += 1
                 else:
                     if r['catalogNumber'] != "" and self.repeat == 1:
