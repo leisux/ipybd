@@ -8,7 +8,7 @@ from tqdm import tqdm
 import urllib
 
 
-QUERY_API = 'https://www.cvh.ac.cn/controller/spms/list.php?stateProvince%5B%5D=广东省%21'
+QUERY_API = 'https://www.cvh.ac.cn/controller/spms/list.php?stateProvince%5B%5D=云南省%21'
 INFO_API = 'https://www.cvh.ac.cn/controller/spms/detail.php?'
 WEB_URL = 'https://www.cvh.ac.cn/spms/detail.php?'
 
@@ -70,7 +70,7 @@ class LinkCVH:
         self.pbar = tqdm(total=len(pages_or_ids), desc='列表数据获取', ascii=True)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        self.sema = asyncio.Semaphore(50, loop=loop)
+        self.sema = asyncio.Semaphore(50)
         tasks = self.build_tasks(api, params, headers, pages_or_ids)
         results = loop.run_until_complete(tasks)
         # 修复 Windows 下出现的 RuntimeErro: Event loop is closed

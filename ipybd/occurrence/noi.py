@@ -110,7 +110,7 @@ class Link:
     def add(self):
         self.pbar = tqdm(total=len(self.datas), desc="注册数据", ascii=True)
         loop = asyncio.get_event_loop()
-        self.sem = asyncio.Semaphore(100, loop=loop)
+        self.sem = asyncio.Semaphore(100)
         tasks = self.build_tasks()
         resp = loop.run_until_complete(tasks)
         loop.close()
