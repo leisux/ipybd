@@ -18,7 +18,6 @@ from ipybd.core import RestructureTable
 from ipybd.label.herb_label import HerbLabel
 from ipybd.table.terms import HerbLabelTerms
 from pystrich.code128 import Code128Encoder
-import warnings
 
 HERE = os.path.dirname(__file__)
 
@@ -26,7 +25,7 @@ HERE = os.path.dirname(__file__)
 class Label(RestructureTable):
     columns_model = HerbLabelTerms
 
-    def __init__(self, io, repeat=1):
+    def __init__(self, io, repeat=0):
         """
         io: CSV/Excel file path
         repeat: A positive integer indicating the number of copies of
@@ -69,7 +68,7 @@ class Label(RestructureTable):
             prefix, num, num_length = self.barcode_analyzer(start_code)
             # creat a new DataFrame, and add new record to this DataFrame
             # that with new code Number and new duplicate records
-            new_table = pd.DataFrame()
+            new_table = []
         if self.repeat == 0:
             for r in records:
                 try:
@@ -84,10 +83,7 @@ class Label(RestructureTable):
                             labels.append(HerbLabel(r))
                             del r['code_path']
                             r['catalogNumber'] = code
-                            with warnings.catch_warnings():
-                                warnings.simplefilter("ignore")
-                                new_table = new_table.append(r, ignore_index=True)
-                            # new_table = pd.concat([new_table, pd.DataFrame(list(r.items()))], ignore_index=True)
+                            new_table.append(r)
                             num += 1
                     else:
                         if r['catalogNumber'] != "" and r['duplicatesOfLabel'] == 1:
@@ -110,7 +106,7 @@ class Label(RestructureTable):
                         labels.append(HerbLabel(r))
                         del r['code_path']
                         r['catalogNumber'] = code
-                        new_table = new_table.append(r, ignore_index=True)
+                        new_table.append(r)
                         num += 1
                     else:
                         if r['catalogNumber'] != "":
@@ -133,10 +129,7 @@ class Label(RestructureTable):
                         labels.append(HerbLabel(r))
                         del r['code_path']
                         r['catalogNumber'] = code
-                        with warnings.catch_warnings():
-                            warnings.simplefilter("ignore")
-                            new_table = new_table.append(r, ignore_index=True)
-                        # new_table = pd.concat([new_table, pd.DataFrame(list(r.items()))], ignore_index=True)
+                        new_table.append(r)
                         num += 1
                 else:
                     if r['catalogNumber'] != "" and self.repeat == 1:
@@ -152,6 +145,7 @@ class Label(RestructureTable):
         # this table can be used to import to other herbarium systems
         if start_code:
             resort_columns = list(self.df.columns)
+            new_table = pd.DataFrame(new_table)
             new_table = new_table.reindex(columns=resort_columns)
             new_table.to_excel(os.path.join(
                 self.path, "DarwinCore_Specimens.xlsx"), index=False)
