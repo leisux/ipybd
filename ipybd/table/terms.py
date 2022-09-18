@@ -23,9 +23,9 @@ class CvhTerms(Enum):
     小地点_ = ('$locality', '$mountain', '$waterBody', ',')
     生境_ = '$habitat'
     科_ = '$family'
-    属__种__定名人__种下等级__种下加词__种下等级定名人_ = BioName([('$genus', '$specificEpithet', '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' '), '$scientificName'], style='fullPlantSplitName')
+    属__种__定名人__种下等级__种下加词__种下等级定名人_ = BioName(['$scientificName', ('$genus', '$specificEpithet', '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='fullPlantSplitName')
     种下等级 = ('$种下等级', '$种下加词', ' ')
-    拉丁名___ = ['$scientificName', ('$属', '$种', '$定名人', '$种下等级', '$种下等级定名人', ' ')]
+    拉丁名__ = ('$属', '$种', '$定名人', '$种下等级', '$种下等级定名人', ' ')
     中文名_ = '$vernacularName'
     鉴定人_ = HumanName('$identifiedBy')
     鉴定日期_ = DateTime('$dateIdentified')
@@ -307,7 +307,7 @@ class HerbLabelTerms(Enum):
     habit_ = RadioInput('$habit', 'habit')
     family_ = '$family'
     vernacularName_ = '$vernacularName'
-    genus__specificEpithet__taxonRank__infraspecificEpithet__scientificNameAuthorship_ = BioName([('$genus', '$specificEpithet',  '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' '), '$scientificName'], style='plantSplitName')
+    genus__specificEpithet__taxonRank__infraspecificEpithet__scientificNameAuthorship_ = BioName(['$scientificName', ('$genus', '$specificEpithet',  '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='plantSplitName')
     identifiedBy_ = HumanName('$identifiedBy')
     dateIdentified_ = DateTime('$dateIdentified', 'date')
     flower_ = '$flower'
