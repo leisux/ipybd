@@ -7,6 +7,7 @@ import urllib
 from datetime import date
 from types import FunctionType, MethodType
 from typing import Union
+import warnings
 
 import aiohttp
 import arrow
@@ -1766,11 +1767,11 @@ class Number:
             typ = 'Int64'
         else:
             typ = self.typ
-        import warnings
-        warnings.filterwarnings('error')
         try:
-            return pd.DataFrame(new_column, dtype=typ)
-        except (ValueError, TypeError, Warning):
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                return pd.DataFrame(new_column, dtype=typ)
+        except (ValueError, TypeError):
             # 解决数据列中混入某些字符串无法转 Int64 等数据类型的问题。
             return pd.DataFrame(new_column)
 
