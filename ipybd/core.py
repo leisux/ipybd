@@ -86,7 +86,6 @@ class FormatDataset:
                      列合并 (raw1, raw2, raw3, (sp1,sp2)):new_field
                      其中 raw 为原列名，new 为新列名，sp 为列合并或分割的分隔符
         """
-        print(mapping)
         for org_field, new_field in mapping.items():
             # 只修改列名
             if isinstance(org_field, str):
