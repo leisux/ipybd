@@ -73,7 +73,7 @@ class FormatDataset:
 
     def __init__(self, *args, **kwargs):
         self.df = self.read_data(*args, **kwargs)
-        self.original_fields_mapping = dict.fromkeys(self.df.columns)
+        self.fields_manual_mapping = dict.fromkeys(self.df.columns)
         self.raw_columns = tuple(self.df.columns)
         self.size = self.df.size
 
@@ -86,6 +86,7 @@ class FormatDataset:
                      列合并 (raw1, raw2, raw3, (sp1,sp2)):new_field
                      其中 raw 为原列名，new 为新列名，sp 为列合并或分割的分隔符
         """
+        print(mapping)
         for org_field, new_field in mapping.items():
             # 只修改列名
             if isinstance(org_field, str):
@@ -311,19 +312,19 @@ class FormatDataset:
 
     def __mapping_clean(self, org_field):
         try:
-            del self.original_fields_mapping[org_field]
+            del self.fields_manual_mapping[org_field]
             return []
         except KeyError:  # 字段在之前已经删除，或者被用于拆分或合并
             relax_field = []
             del_field = None
-            for field in self.original_fields_mapping:
+            for field in self.fields_manual_mapping:
                 if isinstance(field, tuple) and org_field in field:
                     del_field = field
                     relax_field = list(field[:1])
                     relax_field.remove(org_field)
                     break
             if del_field:
-                del self.original_fields_mapping[del_field]
+                del self.fields_manual_mapping[del_field]
             return relax_field
 
     def __unmapped_columns2std(self, unmapped_fields: list):
@@ -337,7 +338,7 @@ class FormatDataset:
             数字之间的标点符号，为数据列按照映射关系进行拆分或合并的分隔符号；
             拆分表达式 = 号之前只能有一个列名序号，合并表达式 = 号之后只能有一
             个标准列名序号。
-            手动处理获得得最新映射关系将被存储在 self.original_fields_mapping 中。
+            手动处理获得得最新映射关系将被存储在 self.fields_manual_mapping 中。
 
         return: 返回尚未被手动处理的列名序列
         """
@@ -354,7 +355,7 @@ class FormatDataset:
         # 如果忽略所有，这些列名将映射到自身
         if expression.strip() == "0":
             for field in unmapped_fields:
-                self.original_fields_mapping[field] = field
+                self.fields_manual_mapping[field] = field
             return None
         p_raw2std = re.compile(r"([dlroa]?)\s*(\d+)([^\d]*)")
         elements = p_raw2std.findall(expression)
@@ -388,11 +389,11 @@ class FormatDataset:
                 )
             if separators == ():
                 # 如果合并的列名只有一个，为一对一映射
-                self.original_fields_mapping.update(
+                self.fields_manual_mapping.update(
                     {fields2merge[0]: std_field})
             else:
                 fields2merge.append(separators)
-                self.original_fields_mapping.update(
+                self.fields_manual_mapping.update(
                     {tuple(fields2merge): std_field})
         # 单个列名分拆为多个标准列名
         elif elements[0][-1].strip() == "=" and elements[-1][-1].strip() == "":
@@ -419,9 +420,9 @@ class FormatDataset:
                 for spl in elements[1:-1]
             )
             field2split.append(splitters)
-            self.original_fields_mapping.update(
+            self.fields_manual_mapping.update(
                 {tuple(field2split): std_fields})
-            # print(self.original_fields_mapping)
+            # print(self.fields_manual_mapping)
         else:
             print("\n录入的表达式有误，请重新输入\n")
         return unmapped_fields
@@ -453,7 +454,7 @@ class FormatDataset:
                 # 并将映射错误的原始列名写入无对应关系的列名序列内
                 for raw_field in raw_fields:
                     try:
-                        del self.original_fields_mapping[raw_field]
+                        del self.fields_manual_mapping[raw_field]
                     except KeyError:
                         pass
                     if type(raw_field) == tuple:
@@ -467,8 +468,8 @@ class FormatDataset:
             unmapped_fields = self.__unmapped_columns2std(unmapped_fields)
 
     def __check_duplicate_mapping(self):
-        mapping_fields = list(self.original_fields_mapping.values())
-        for v in self.original_fields_mapping.values():
+        mapping_fields = list(self.fields_manual_mapping.values())
+        for v in self.fields_manual_mapping.values():
             if type(v) == tuple:
                 mapping_fields.remove(v)
                 mapping_fields.extend(v)
@@ -477,7 +478,7 @@ class FormatDataset:
             # 重复对应或者无对应的字段，都会作为无效映射
             if mapping_fields.count(std_field) > 1 or std_field is None:
                 raw_fields = []
-                for rawfield, map_field in self.original_fields_mapping.items():
+                for rawfield, map_field in self.fields_manual_mapping.items():
                     if std_field == map_field:
                         raw_fields.append(rawfield)
                     # 被手动拆分的字段，也可能与其他映射字段存在冲突
@@ -489,7 +490,7 @@ class FormatDataset:
     def __auto2std_field(self, raw_field):
         # 首先找出表格列名中使用标准名称的列名
         if raw_field in FormatDataset.std_field_alias:
-            self.original_fields_mapping[raw_field] = raw_field
+            self.fields_manual_mapping[raw_field] = raw_field
         else:
             # 如果列名用的不是标准名子，逐个比较别名库，找到对应的标准名称
             std_options = []
@@ -497,9 +498,9 @@ class FormatDataset:
                 if raw_field.upper() in v:
                     std_options.append(k)
             if len(std_options) == 1:
-                self.original_fields_mapping[raw_field] = std_options[0]
+                self.fields_manual_mapping[raw_field] = std_options[0]
             elif len(std_options) == 0:
-                self.original_fields_mapping[raw_field] = None
+                self.fields_manual_mapping[raw_field] = None
             # 如果有多个标准名与该列名对应，咨询用户，让其手动确定需要对应哪一个
             else:
                 print(
@@ -510,10 +511,10 @@ class FormatDataset:
                     self._prt_items(2, std_options)
                     choice2std = input("\n请从潜在对应中选择一个，都不是录入 0：")
                     if choice2std.strip() == "0":
-                        self.original_fields_mapping[raw_field] = None
+                        self.fields_manual_mapping[raw_field] = None
                         break
                     try:
-                        self.original_fields_mapping[raw_field] = std_options[int(
+                        self.fields_manual_mapping[raw_field] = std_options[int(
                             choice2std)-1]
                         break
                     except (IndexError, ValueError):
@@ -524,7 +525,7 @@ class FormatDataset:
 
             这个过程中不对数据表进行任何实际操作
         """
-        for raw_field in tqdm(self.original_fields_mapping, desc="列名映射", ascii=True):
+        for raw_field in tqdm(self.fields_manual_mapping, desc="列名映射", ascii=True):
             self.__auto2std_field(raw_field)
         invalid_mapping = self.__check_duplicate_mapping()
         self._stdfields = tuple(FormatDataset.std_field_alias.keys())
@@ -534,9 +535,9 @@ class FormatDataset:
             self.__manual2std_fields(invalid_mapping)
             invalid_mapping = self.__check_duplicate_mapping()
         # 完成的映射，存储于私人模板之中，避免用户日后再次执行映
-        # print(self.original_fields_mapping)
+        # print(self.fields_manual_mapping)
         json_template = {str(k): str(v)
-                         for k, v in self.original_fields_mapping.items()}
+                         for k, v in self.fields_manual_mapping.items()}
         # 防止 ipybd 运行没有获得系统管理员权限，写入文件被拒而被终止
         try:
             with open(PERSONAL_TEMPLATE_PATH, "w", encoding="utf-8") as pt:
@@ -788,15 +789,23 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
 
     def rebuild_table(self):
         if self.fields_mapping is False:
-            for key in self.original_fields_mapping:
-                self.original_fields_mapping[key] = key
+            for key in self.fields_manual_mapping:
+                self.fields_manual_mapping[key] = key
         elif self.__check_old_mapping():
             # 如果开启字段映射，会自动将数据表头映射至dwc字段名
             self.build_mapping_template()
         # 对表格按照定义的枚举Terms进行重塑
         new_columns = self.rebuild_columns()
-        # 对枚举中尚未定义的列按照人工给定的映射关系进行重塑
-        self.table_mapping(self.original_fields_mapping)
+        for header in self.fields_manual_mapping:
+            # 如果原表格一些未被模型使用的列名与模型定义的新列名重复
+            # 这些列名实际上应该已经被模型增加了_ 后缀, 如果对原列名进行处理
+            # 则会直接修改模型新增的同名列, 从而导致最终结果与预期不一致
+            # 因此这里将保留现有数据列,不再对这些列名按照手动映射的关系进行重塑
+            if header in new_columns:
+                pass
+            else:
+                # 对枚举中尚未定义的列按照人工给定的映射关系进行重塑
+                self.table_mapping(self.fields_manual_mapping)
         self._re_range_columns(new_columns)
 
     def __check_old_mapping(self):
@@ -836,7 +845,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
                     except NameError:
                         old_mapping[eval(column)] = old_mapping[column]
                     del old_mapping[column]
-            self.original_fields_mapping = old_mapping
+            self.fields_manual_mapping = old_mapping
             return False
         else:
             return True
@@ -883,7 +892,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
                 # 通过 ipybd 内置类处理数据
                 new_cols = func(*cols, **kwargs)()
                 # 唯一性标识，可以传递多列进行重复比较
-                # 但并不会删除其他参与运算但列，只会更换第一列
+                # 但并不会删除其他参与运算的列，只会更换第一列
                 if func.__name__ == 'UniqueID':
                     cols_name[:] = [cols_name[0]]
             else:
@@ -892,7 +901,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
             new_cols.columns = fields_name
             if inplace:
                 self.df.drop(cols_name, axis=1, inplace=True)
-                self.df = pd.concat([self.df, new_cols], axis=1)
+                self.concat_and_rename_columns(new_cols)
                 new_columns.extend(fields_name)
             else:
                 # 首先从 self.df 中删除现有 df 中相关的数据列, 并将这些数据列暂存
@@ -907,7 +916,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
                 except KeyError:
                     # 如果是直接使用 df 相关数据列参与新列的运算, 则不做任何处理
                     pass
-                # 然后将新数据列的列名与已有列名进行比较, 如果重复, 原列名添加 _
+                # 然后将新数据列的列名与已有列名进行比较, 如果与原来列名重复, 原列名添加 _
                 self.df = pd.concat([self.df, org_columns], axis=1)
                 self.concat_and_rename_columns(new_cols)
                 # 由于 org_columns_name 可能在合成用于直接运算的 cols_name 时
@@ -1015,7 +1024,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
                 else:
                     pass
 
-        self.original_fields_mapping.update(new_fields_mapping)
+        self.fields_manual_mapping.update(new_fields_mapping)
 
 
 
@@ -1240,41 +1249,41 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
         org_fields = []
         # 如果 ReStructureTable 已经与 FormatDataset 一致，
         # 则直接用原始表中与之对应列
-        if param in self.original_fields_mapping.values():
+        if param in self.fields_manual_mapping.values():
             key = self.__get_key(param)
             column_names.append(key)
             org_fields.append(key) if isinstance(key, str) else org_fields.extend(key[:-1])
-            del self.original_fields_mapping[column_names[0]]
+            del self.fields_manual_mapping[column_names[0]]
         # 对于ReStructureTable与 FormatDataset 不一致的字段转换，
         # 综合比较后以前者为主修改后者，前者未覆盖的则依据后者处理。
         else:
             if isinstance(param, str):
                 param = (param,)
             for n, clm in enumerate(param):
-                for field in list(self.original_fields_mapping.values()):
+                for field in list(self.fields_manual_mapping.values()):
                     # param 元素能和相应原始字段一一对应
                     if type(field) == str and clm == field:
                         key = self.__get_key(field)
                         column_names.append(key)
                         org_fields.append(key) if isinstance(key, str) else org_fields.extend(key[:-1])
-                        del self.original_fields_mapping[self.__get_key(field)]
+                        del self.fields_manual_mapping[self.__get_key(field)]
                     # param 元素是待拆分字段的组成部分
                     # 则先对原始字段进行拆分
                     elif type(field) == tuple and clm in field:
                         key = self.__get_key(field)
                         self.split_column(key[0], list(key[1]), field, inplace)
-                        del self.original_fields_mapping[self.__get_key(field)]
+                        del self.fields_manual_mapping[self.__get_key(field)]
                         for header in field:
                             if header != clm:
-                                self.original_fields_mapping.update(
+                                self.fields_manual_mapping.update(
                                     {header: header})
                         column_names.append(clm)
                         org_fields.append(key[0])
                 if len(column_names) < n + 1:
-                    # self.original_fields_mapping 记录了尚未被模型使用的原始
+                    # self.fields_manual_mapping 记录了尚未被模型使用的原始
                     # 字段到标准字段的映射关系。对于需要进行多次映射处理的字段，
-                    # self.original_fields_mapping 只会记录字段的首次映射关系，
-                    # 因此若 self.original_fields_mapping 无法找到 clm，
+                    # self.fields_manual_mapping 只会记录字段的首次映射关系，
+                    # 因此若 self.fields_manual_mapping 无法找到 clm，
                     # 则进一步寻找现有实际表格字段名self.df.columns,
                     # 因此对于一些泛化模型，如果泛化的字段首次映射时已经被
                     # 处理为一个定制字段名，则后续模型需要再次处理它，
@@ -1303,6 +1312,6 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
             return org_fields, column_names
 
     def __get_key(self, value):
-        for k, v in self.original_fields_mapping.items():
+        for k, v in self.fields_manual_mapping.items():
             if v == value or v == value[:-1]:
                 return k
