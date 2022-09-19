@@ -232,8 +232,8 @@ class Label(RestructureTable):
     def encoder(self, barcode):
         if platform.system() == 'Windows':
             code = Code128Encoder(
-                barcode, options={'ttf_font': 'arial.ttf', 'ttf_fontsize': 32})
+                barcode, options={'ttf_font': 'arial.ttf', 'ttf_fontsize': 24})
         else:
             code = Code128Encoder(
-                barcode, options={'ttf_font': 'Arial', 'ttf_fontsize': 32})
+                barcode, options={'ttf_font': 'Arial', 'ttf_fontsize': 24})
         code.save(os.path.join(self.path, 'barcodes', barcode+".png"))
