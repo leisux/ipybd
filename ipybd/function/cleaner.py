@@ -152,7 +152,7 @@ class BioName:
                 # 注意 stdName 的 col 函数置于元组最后，
                 # 以避免 ipni/powo 中与 col 同名的字段
                 # 被 col 函数解析。
-                'stdName': (self.ipni_name, self.powo_name, self.col_name),
+                'stdName': (self.ipni_name, self.powo_name, self.tropicos_name, self.col_name),
                 'colTaxonTree': self.col_taxontree,
                 'colName': self.col_name,
                 'colSynonyms': self.col_synonyms,
@@ -511,8 +511,11 @@ class BioName:
             if name and name[1]:
                 return name
             else:
-                return await self.get_col_name(query, session)
-
+                name = await self.get_tropicos_name(query, session)
+                if name and name[1]:
+                    return name
+                else:
+                    return await self.get_col_name(query, session)
 
     async def get_tropicos_accepted(self, query, session):
         name = await self.check_tropicos_name(query, session)
@@ -880,53 +883,68 @@ class BioName:
                 infraspecies  = ""
                 platform_rank = Filters.specific
         return genus, species, taxon_rank, infraspecies, authors, first_authors, platform_rank, raw_name
+    
+    def built_blank_name(self, pattern):
+        if pattern == 'simpleName':
+            return None
+        elif pattern == 'apiName':
+            return [None, None]
+        elif pattern == 'scientificName':
+            return None
+        elif pattern == 'plantSplitName':
+            return [None, None, None, None, None]
+        elif pattern == 'fullPlantSplitName':
+            return [None, None, None, None, None, None]
+        elif pattern == 'animalSplitName':
+            return [None, None, None, None]
+        else:
+            raise ValueError("学名处理参数错误，不存在{}".format(pattern))
+
+
+    def built_name_style(self, split_name, pattern):
+        if split_name is None:
+            return self.built_blank_name(pattern)
+        if pattern == 'simpleName':
+            if split_name[2] == "" and split_name[3]:
+                simple_name = ' '.join(
+                    [split_name[0], split_name[1], split_name[3]]).strip()
+            else:
+                simple_name = ' '.join(split_name[:4]).strip()
+            return simple_name
+        elif pattern == 'apiName':
+            if split_name[2] == "" and split_name[3]:
+                simple_name = ' '.join(
+                    [split_name[0], split_name[1], split_name[3]]).strip()
+            else:
+                simple_name = ' '.join(split_name[:4]).strip()
+            author = split_name[4]
+            return (simple_name, author) if author else (simple_name, None)
+        elif pattern == 'scientificName':
+            if split_name[2] == "" and split_name[3]:
+                simple_name = ' '.join(
+                    [split_name[0], split_name[1], split_name[3]]).strip()
+            else:
+                simple_name = ' '.join(split_name[:4]).strip()
+            author = split_name[4]
+            return ' '.join([simple_name, author]) if author else simple_name
+        elif pattern == 'plantSplitName':
+            return tuple(e if e != '' else None for e in split_name[:5])
+        elif pattern == 'fullPlantSplitName':
+            elements = (split_name[0], split_name[1], split_name[5],
+                        split_name[2], split_name[3], split_name[4])
+            return tuple(e if e != '' else None for e in elements)
+        elif pattern == 'animalSplitName':
+            elements = (split_name[0], split_name[1],
+                        split_name[3], split_name[4])
+            return tuple(e if e != '' else None for e in elements)
+        else:
+            raise ValueError("学名处理参数错误，不存在{}".format(pattern))
 
     def format_latin_names(self, pattern):
         raw2stdname = dict.fromkeys(self.names)
         for raw_name in raw2stdname:
             split_name = self._format_name(raw_name)
-            if split_name is None:
-                raw2stdname[raw_name] = None
-                continue
-            if pattern == 'simpleName':
-                if split_name[2] == "" and split_name[3]:
-                    simple_name = ' '.join(
-                        [split_name[0], split_name[1], split_name[3]]).strip()
-                else:
-                    simple_name = ' '.join(split_name[:4]).strip()
-                raw2stdname[raw_name] = simple_name
-            elif pattern == 'apiName':
-                if split_name[2] == "" and split_name[3]:
-                    simple_name = ' '.join(
-                        [split_name[0], split_name[1], split_name[3]]).strip()
-                else:
-                    simple_name = ' '.join(split_name[:4]).strip()
-                author = split_name[4]
-                raw2stdname[raw_name] = (simple_name, author) if author else (simple_name, None)
-            elif pattern == 'scientificName':
-                if split_name[2] == "" and split_name[3]:
-                    simple_name = ' '.join(
-                        [split_name[0], split_name[1], split_name[3]]).strip()
-                else:
-                    simple_name = ' '.join(split_name[:4]).strip()
-                author = split_name[4]
-                raw2stdname[raw_name] = ' '.join(
-                    [simple_name, author]) if author else simple_name
-            elif pattern == 'plantSplitName':
-                raw2stdname[raw_name] = tuple(
-                    e if e != '' else None for e in split_name[:5])
-            elif pattern == 'fullPlantSplitName':
-                elements = (split_name[0], split_name[1], split_name[5],
-                            split_name[2], split_name[3], split_name[4])
-                raw2stdname[raw_name] = tuple(
-                    e if e != '' else None for e in elements)
-            elif pattern == 'animalSplitName':
-                elements = (split_name[0], split_name[1],
-                            split_name[3], split_name[4])
-                raw2stdname[raw_name] = tuple(
-                    e if e != '' else None for e in elements)
-            else:
-                raise ValueError("学名处理参数错误，不存在{}".format(pattern))
+            raw2stdname[raw_name] = self.built_name_style(split_name, pattern)
         return [raw2stdname[name] for name in self.names]
 
     def _get_best_name(self, scores):
@@ -1101,8 +1119,6 @@ class BioName:
                     return pd.DataFrame([[None, None, None, None, None]] * len(self.names))
             else:
                 results = self.format_latin_names(pattern="plantSplitName")
-                if set(results) == {None}:
-                    results = [[None, None, None, None, None]] * len(results)
                 return pd.DataFrame(results)
         elif self.style == 'fullPlantSplitName':
             # 该模式在这里刻意不提供在线名称比对
@@ -1110,13 +1126,9 @@ class BioName:
             # 但进行要素全拆分，有的时候又是必须，
             # 所以这里暂时只将其作为一个拆分功能，供用户进行学名拆分
             results = self.format_latin_names(pattern="fullPlantSplitName")
-            if set(results) == {None}:
-                results = [[None, None, None, None, None, None]] * len(results)
             return pd.DataFrame(results)
         elif self.style == 'animalSplitName':
             results = self.format_latin_names(pattern="animalSplitName")
-            if set(results) == {None}:
-                results = [[None, None, None, None]] * len(results)
             return pd.DataFrame(results)
         else:
             print("\n学名处理参数有误，不存在{}\n".format(self.style))
