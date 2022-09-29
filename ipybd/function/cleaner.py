@@ -527,6 +527,7 @@ class BioName:
                 # 如果查无处理结果，返回默认值
                 return query[-1], name, 'tropicosAccepted'
 
+
     async def get_tropicos_name(self, query, session):
         name = await self.check_tropicos_name(query, session)
         if name or name is None:
@@ -579,7 +580,10 @@ class BioName:
     def _build_tropicos_params(self, query, filters):
         params = {}
         if filters in [Filters.familial, Filters.infrafamilial, Filters.generic, Filters.infrageneric, Filters.specific, Filters.infraspecific]:
-            params['name'] = query
+            # tropicos 可能对 "." 字符无法正常获取
+            # 这里需要对学名种的点字符替换为 ASCII 十六进制编码
+            # 否则将会返回 404 错误
+            params['name'] = query.replace('.', '%2e')
             params['type'] = 'exact'
         else:
             pass
