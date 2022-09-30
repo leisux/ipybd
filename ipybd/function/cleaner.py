@@ -884,26 +884,26 @@ class BioName:
                 platform_rank = Filters.specific
         return genus, species, taxon_rank, infraspecies, authors, first_authors, platform_rank, raw_name
     
-    def built_blank_name(self, pattern):
+    def fill_blank_name(self, pattern):
         if pattern == 'simpleName':
             return None
         elif pattern == 'apiName':
-            return [None, None]
+            return None, None
         elif pattern == 'scientificName':
             return None
         elif pattern == 'plantSplitName':
-            return [None, None, None, None, None]
+            return None, None, None, None, None
         elif pattern == 'fullPlantSplitName':
-            return [None, None, None, None, None, None]
+            return None, None, None, None, None, None
         elif pattern == 'animalSplitName':
-            return [None, None, None, None]
+            return None, None, None, None
         else:
             raise ValueError("学名处理参数错误，不存在{}".format(pattern))
 
 
     def built_name_style(self, split_name, pattern):
         if split_name is None:
-            return self.built_blank_name(pattern)
+            return self.fill_blank_name(pattern)
         if pattern == 'simpleName':
             if split_name[2] == "" and split_name[3]:
                 simple_name = ' '.join(
