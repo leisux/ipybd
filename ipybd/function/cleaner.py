@@ -1069,7 +1069,7 @@ class BioName:
         """
         if self.style == 'scientificName':
             choose = input(
-                "\n是否执行拼写检查，在线检查将基于 sp2000.org.cn、ipni.org 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
+                "\n是否执行拼写检查，在线检查将基于 IPNI、POWO、Tropicos、COL China 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
             if choose.strip() == 'y':
                 results = self.get('stdName', mark=mark)
                 if results:
@@ -1086,7 +1086,7 @@ class BioName:
                 return pd.DataFrame(self.format_latin_names(pattern="scientificName"))
         elif self.style == 'simpleName':
             choose = input(
-                "\n是否执行拼写检查，在线检查将基于 sp2000.org.cn、ipni.org 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
+                "\n是否执行拼写检查，在线检查将基于 IPNI、POWO、Tropicos、COL China 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
             if choose.strip() == 'y':
                 results = self.get('stdName', mark=mark)
                 if results:
@@ -1103,7 +1103,7 @@ class BioName:
                 return pd.DataFrame(self.format_latin_names(pattern="simpleName"))
         elif self.style == 'plantSplitName':
             choose = input(
-                "\n是否执行拼写检查，在线检查将基于 sp2000.org.cn、ipni.org 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
+                "\n是否执行拼写检查，在线检查将基于 IPNI、POWO、Tropicos、COL China 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
             if choose.strip() == 'y':
                 results = self.get('stdName', mark=mark)
                 if results:
