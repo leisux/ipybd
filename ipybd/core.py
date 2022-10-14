@@ -609,7 +609,7 @@ class FormatDataset:
             get_action, headers, concat, new_headers = func(
                 self, *args, **kwargs)
             try:
-                if self.name_cache ==  headers:
+                if self.name_cache == headers:
                     pass
                 else:
                     self.name_cache = headers
@@ -626,7 +626,7 @@ class FormatDataset:
                     names = self.df[headers[0]]
                 self.bioname = BioName(names)
             finally:
-                if get_action in ['simpleName', 'apiName', 'scientificName', 'plantSplitName', 'fullPlantSplitName', 'animalSplitName']:
+                if isinstance(get_action, str) and get_action in ['simpleName', 'apiName', 'scientificName', 'plantSplitName', 'fullPlantSplitName', 'animalSplitName']:
                     results = self.bioname.format_latin_names(get_action)
                 else:
                     results = self.bioname.get(get_action)
@@ -641,10 +641,14 @@ class FormatDataset:
     @get_name
     def format_scientificname(self, *headers, pattern, new_headers=None, concat=False):
         return pattern, headers, concat, new_headers
+    
+    @get_name
+    def get_native_name(self, *headers, lib:'Series', new_header=('nativeName', 'nativeAuthor'), concat=False):
+        return lib, headers, concat, new_header
 
     @get_name
     def name_spell_check(self, *headers, concat=False):
-        return 'stdName', headers, concat, ('nameSpellCheck', 'nameAuthors', 'mixFamily')
+        return 'stdName', headers, concat, ('nameSpellCheck', 'nameAuthors', 'mixFamily', 'mixCode')
 
     @get_name
     def get_tropicos_accepted(self, *headers, concat=False):

@@ -1,4 +1,5 @@
 import asyncio
+from email.errors import NoBoundaryInMultipartDefect
 import json
 import os
 import re
@@ -57,14 +58,17 @@ class BioName:
     def __init__(self, names: Union[list, pd.Series, tuple], style='scientificName'):
         self.names = names
         self.querys = {}
-        self.cache = {'ipni': {}, 'col': {}, 'powo': {}, 'tropicosName': {}, 'tropicosAccepted':{}, 'tropicosSynonyms':{}}
+        self.cache = {'ipni': {}, 'col': {}, 'powo': {}, 'tropicosName': {}, 'tropicosAccepted': {}, 'tropicosSynonyms': {}}
         self.style = style
 
     def get(self, action, typ=list, mark=False):
         if self.querys == {}:
             self.querys = self.build_querys()
+        if isinstance(action, str):
         # results 只包含有检索有结果的
-        results = self.__build_cache_and_get_results(action)
+            results = self.__build_cache_and_get_results(action)
+        else:
+            results = self.native_get(self.querys, action)
         if results:
             if typ is list:
                 return self._results2list(results, mark)
@@ -111,7 +115,7 @@ class BioName:
     # 以下多个方法用于组装 get 协程
     # 跟踪协程的执行，并将执行结果生成缓存
 
-    def __build_cache_and_get_results(self, action, need_querys=None):
+    def __build_cache_and_get_results(self, action, leftover_querys=None):
         """ 构建查询缓存、返回查询结果
 
         action: 要进行的查询操作描述字符串
@@ -139,13 +143,12 @@ class BioName:
             'tropicosName': self.cache['tropicosName'],
             'tropicosAccepted': self.cache['tropicosAccepted'],
             'tropicosSynonyms': self.cache['tropicosSynonyms']
-
         }
         results = {}
         cache = cache_mapping[action]
         if cache:
-            if need_querys:
-                names = need_querys
+            if leftover_querys:
+                names = leftover_querys
             else:
                 names = self.querys
             action_func = {
@@ -163,7 +166,8 @@ class BioName:
                 'powoAccepted': self.powo_accepted,
                 'powoImages': self.powo_images,
                 'tropicosName': self.tropicos_name,
-                'tropicosAccepted': self.tropicos_accepted
+                'tropicosAccepted': self.tropicos_accepted,
+                # 'tropicosSynonyms': self.tropicos_synonyms
             }
             # 如果存在缓存，则直接从缓存数据中提取结果
             # 如果没有缓存，则先生成缓存，再取数据
@@ -184,12 +188,12 @@ class BioName:
                     # 则不写入 results
                     pass
         else:
-            if not need_querys:
+            if not leftover_querys:
                 # 如果没有缓存，所有检索词执行一次 web 搜索
                 search_terms = self.querys
         # 为防止 search_terms 不存在，这里的条件判断应放置在后面
-        if not need_querys and search_terms:
-            # 若need_querys 是 None, 说明 web 请求是首次发起，执行一次递归检索
+        if not leftover_querys and search_terms:
+            # 若leftover_querys 是 None, 说明 web 请求是首次发起，执行一次递归检索
             # 若search_terms 并非 self.querys，说明 get 请求是由程序本身自动发起
             # 执行结束后，将不再继续执行递归
             self.web_get(action, search_terms)
@@ -559,7 +563,7 @@ class BioName:
                     except:
                         name['Author'] = None
                         name['authorTeam'] = []
-                std_teams = [r['authorTeam'] if r['authorTeam'] else [] for r in names]
+                std_teams = [r['authorTeam'] for r in names]
                 # 开始比对原命名人与可选学名的命名人的比对结果
                 scores = self.contrast_authors(authors, std_teams)
                 index = self._get_best_name(scores)
@@ -616,7 +620,7 @@ class BioName:
                         try:
                             res['author_team'] = self.get_author_team(res['author'])
                         except KeyError:
-                            res['author_team'] = None
+                            res['author_team'] = []
                         finally:
                             names.append(res)
                 # col 接口目前尚无属一级的内容返回，这里先取属下种及种
@@ -782,7 +786,7 @@ class BioName:
                         return name
                 return names[0]
             else:
-                std_teams = [r['authorTeam'] if r['authorTeam'] else [] for r in names]
+                std_teams = [r['authorTeam'] for r in names]
                 # 开始比对原命名人与可选学名的命名人的比对结果
                 scores = self.contrast_authors(authors, std_teams)
                 index = self._get_best_name(scores)
@@ -801,6 +805,54 @@ class BioName:
             return False
         except KeyError:
             # 检索不到，返回 None
+            return None
+    
+    def native_get(self, querys, names):
+        """
+            querys: build_querys 形成的待查询名称及其解构信息组成的字典
+            names: 由学名组成的 Series, 用于被比较和提取
+            return: 返回 None, 检索结果会直接写入 self.cache
+        """
+        results = {} 
+        for query in tqdm(querys.values()):
+            if query is None:
+                continue
+            homonyms = names[names.str.startswith(query[0])]
+            if not homonyms.empty:
+                name = self.check_native_name(query, homonyms)
+                if name:
+                    results[query[-1]] = name 
+                else:
+                    continue
+            else:
+                continue
+        return results
+
+    def check_native_name(self, query, similar_names):
+        author_teams = []
+        homonym = []
+        for name in similar_names:
+            split_name = self._format_name(name)
+            name = self.built_name_style(split_name, 'apiName')
+            if name[0] == query[0]:
+                author_team = self.get_author_team(name[1])
+                author_teams.append(author_team)
+                homonym.append(name)
+            else:
+                continue
+        if homonym:
+            org_author_team = self.get_author_team(query[2])
+            # 如果查询名称有命名人, 或者匹配名称没有命名人, 返回匹配但同名结果第一个
+            if not org_author_team:
+                return homonym[0]
+            # 如果查询名称和可匹配名称均不缺少命名人, 进行命名人比较，确定最优
+            scores = self.contrast_authors(org_author_team, author_teams)
+            index = self._get_best_name(scores) 
+            if index is not None:
+                return homonym[index]
+            else:
+                return None
+        else:
             return None
 
     def _build_kew_params(self, query, filters):
@@ -900,7 +952,6 @@ class BioName:
         else:
             raise ValueError("学名处理参数错误，不存在{}".format(pattern))
 
-
     def built_name_style(self, split_name, pattern):
         if split_name is None:
             return self.fill_blank_name(pattern)
@@ -965,11 +1016,11 @@ class BioName:
     def contrast_authors(self, author_team, author_teams):
         """ 将一个学名的命名人和一组学名的命名人编码进行比较，以确定最匹配的
 
-        author_team: 一个学名命名人列表, 如["Hook. f.", "Thomos."]
+        author_team: 一个学名命名人列表, 如["Hook. f.", "Thomos."], 不可以为 []
 
-        author_teams: 一组包含多个学名命名人列表的的列表，一般来自于多个同名拉丁名的命名人
+        author_teams: 一组包含多个学名命名人列表的的列表，一般来自于多个同名拉丁名的命名人, 可以为 [[]], 不可以为 None
 
-        return: 返回一个与原命名人匹配亲近关系排列的list，
+        return: 返回一个与原命名人匹配亲近关系排列的list
         """
         raw_team = [self.clean_author(author) for author in author_team]
         s_teams_score = []
@@ -1047,13 +1098,13 @@ class BioName:
 
         authors: 一个学名的命名人字符串
 
-        return: 返回包含authors 中所有人名list
+        return: 返回包含authors 中所有人名list 或 []
         """
         try:
             authors = self.ascii_authors(authors)
         # authors 为空
         except AttributeError:
-            return None
+            return []
         # 命名人可能是有一至多个部分组成，这里通过四种模式猜测可能的名称组成形式
         p = re.compile(
             r"(?:^|\(\s*|\s+et\s+|\s+ex\s+|\&\s*|\,\s*|\)\s*|\s+and\s+|\[\s*|\（\s*|\）\s*|\，\s*|\{\s*|\}\s*)([^\s\&\(\)\,\;\.\-\?\，\（\）\[\]\{\}][^\&\(\)\,\;\，\（\）\[\]\{\}]+?(?=\s+ex\s+|\s+et\s+|\s*\&|\s*\,|\s*\)|\s*\(|\s+and\s+|\s+in\s+|\s*\）|\s*\（|\s*\，|\s*\;|\s*\]|\s*\[|\s*\}|\s*\{|\s*$))")
