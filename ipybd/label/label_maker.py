@@ -158,7 +158,7 @@ class Label(RestructureTable):
         """
         count = 0
         page_num = columns * rows
-        label_height = int((page_height - rows + 1)/rows)
+        label_height = (page_height - (rows - 1)*0.5)/rows
         labels = self.mustachify(start_code)
         renderer = pystache.Renderer()
         tpl_path = os.path.join(HERE, template + '.mustache')
@@ -182,13 +182,13 @@ class Label(RestructureTable):
     page-break-after: always;\n\
   }\n\
   article:nth-child(n) {\n  \
-    border-right: 1px dashed rgb(230, 230, 230);\n\
+    border-right: 0.5mm dashed rgb(230, 230, 230);\n\
   }\n\
   article:nth-child("+str(columns)+"n) {\n  \
     border-right: None\n\
   }\n\
   article:nth-child(n+"+str(columns+1)+") {\n  \
-    border-top: 1px dashed rgb(230, 230, 230);\n\
+    border-top: 0.5mm dashed rgb(230, 230, 230);\n\
   }\n\
   article:nth-child("+str(page_num)+"n) {\n  \
     page-break-after: always;\n\
