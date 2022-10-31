@@ -102,6 +102,7 @@
         "地级市",
         "地区",
         "自治州",
+        "市名",
         "CITY"
     ],
     "class": [
@@ -152,6 +153,7 @@
     "country": [
         "国家",
         "国别",
+        "国名",
         "采集国家",
         "采集国",
         "COUNTRY_LABEL",
@@ -168,6 +170,7 @@
         "县/区",
         "县",
         "区",
+        "县名",
         "COUNTY_LABEL",
         "产地2",
         "MUNICIPALITY",
@@ -994,6 +997,7 @@
         "自治区/省",
         "省自治区",
         "州省",
+        "省名",
         "PROVINCE",
         "STATE_PROVINCE",
         "STATEPROVINCE_LABEL",
