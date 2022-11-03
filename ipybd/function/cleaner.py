@@ -1161,7 +1161,7 @@ class BioName:
                     return pd.DataFrame(
                         [
                             self._format_name(name[0].strip())[:4] + (name[1],)
-                            if name[1] else self._format_name(name[0].strip())[:5]
+                            if name[1] else self.built_name_style(self._format_name(name[0].strip()), 'plantSplitName')
                             if name[0] else (None, None, None, None, None)
                             for name in results
                         ]
