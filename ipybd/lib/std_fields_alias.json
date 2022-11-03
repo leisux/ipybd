@@ -934,8 +934,9 @@
         "种质库编号",
         "KUN-L",
         "序列号",
-        "SERIALNUMBER",
         "玻片号",
+        "分类号",
+        "SERIALNUMBER",
         "OTHERCATALOGNUMBERS"
     ],
     "ownerInstitutionCode": [
