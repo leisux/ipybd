@@ -305,6 +305,7 @@ class HerbLabelTerms(Enum):
     habitat_ = '$habitat'
     individualCount_ = Number('$individualCount', None, int)
     habit_ = RadioInput('$habit', 'habit')
+    vernacularFamilyName_ = '$vernacularFamilyName'
     family_ = '$family'
     vernacularName_ = '$vernacularName'
     genus__specificEpithet__taxonRank__infraspecificEpithet__scientificNameAuthorship_ = BioName(['$scientificName', ('$genus', '$specificEpithet',  '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='plantSplitName')
