@@ -297,9 +297,9 @@ class HerbLabelTerms(Enum):
     eventDate_ = DateTime('$eventDate', 'date')
     decimalLatitude__decimalLongitude_ = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     _minimumElevationInMeters__maximumElevationInMeters = {'$verbatimElevation': '-'}
-    minimumElevationInMeters_ = Number('$minimumElevationInMeters')
-    maximumElevationInMeters = Number('$maximumElevationInMeters')
-    minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
+    minimumElevationInMeters_ = Number('$minimumElevationInMeters', typ=int)
+    maximumElevationInMeters = Number('$maximumElevationInMeters', typ=int)
+    # minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     country__province__city__county_ = AdminDiv([('$country', '$province', '$city', '$county', '::'), '$higherGeography'])
     locality_ = ('$locality', '$mountain', '$waterBody', ',')
     habitat_ = '$habitat'
