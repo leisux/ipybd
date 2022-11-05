@@ -1,4 +1,8 @@
 {
+    "isShared": [
+        "是否已经共享",
+        "是否已共享"
+    ],
     "acceptedNameUsage": [
         "接受名",
         "拉丁接受名",
@@ -989,6 +993,7 @@
         "PRESERVEDTIME"
     ],
     "previousIdentifications": [
+        "历史鉴定",
         "之前的鉴定信息",
         "PREVIOUSIDENTIFICATIONS"
     ],
