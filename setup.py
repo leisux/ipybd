@@ -18,7 +18,7 @@ setup(
             '':['function/*.py','lib/*.py', 'lib/*.json', 'label/*.py', 'label/*.mustache', 'label/*.css', 'occurrence/*.py', 'table/*.py']
             },
         platforms = 'any',
-        python_requires=">=3.6.1, <3.10",
+        python_requires=">=3.6.1, <3.12",
         keywords = (
             'biodiversity',
             'scientificName',
