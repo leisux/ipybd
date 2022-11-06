@@ -40,7 +40,7 @@ class CvhTerms(Enum):
     胸径_ = '$DBH'
     树皮_ = '$stem'
     叶_ = '$leaf'
-    花_ = '$flower'
+    花_ = '$reproductiveOrgans'
     果实_ = '$fruit'
     寄主_ = '$host'
     备注2_ = '$organismRemarks'
@@ -114,9 +114,9 @@ class OccurrenceTerms(Enum):
     root = '$root'
     stem = '$stem'
     leaf = '$leaf'
-    flower = '$flower'
+    flower = '$reproductiveOrgans'
     fruit = '$fruit'
-    seed = '$seed'
+    seed = '$propagulum'
     # Organism of Aves
     weightInGrams = Number('$weightInGrams')
     bodyLengthInMillimeters = Number('$bodyLengthInMillimeters')
@@ -255,11 +255,11 @@ class KingdoniaPlantTerms(Enum):
     identifiedByID = FillNa('$identifiedByID', '0')
     _identifications = ('$scientificName', '$identifiedByID', '$identifiedBy',  '$dateIdentified', '$typeStatus', 'l')
     identifications = ('$identifications', 'l')
-    花 = '$flower'
+    花 = "reproductiveOrgans"
     叶 = '$leaf'
     茎 = '$stem'
     果实 = '$fruit'
-    种子 = '$seed'
+    种子 = '$propagulum'
     根 = '$root'
     不定根 = '$rhizoids'
     #孢子囊（群）= '$孢子囊（群）')
@@ -311,15 +311,13 @@ class HerbLabelTerms(Enum):
     genus__specificEpithet__taxonRank__infraspecificEpithet__scientificNameAuthorship_ = BioName(['$scientificName', ('$genus', '$specificEpithet',  '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='plantSplitName')
     identifiedBy_ = HumanName('$identifiedBy')
     dateIdentified_ = DateTime('$dateIdentified', 'date')
-    flower_ = '$flower'
+    flower_ = '$reproductiveOrgans'
     leaf_ = '$leaf'
     stem_ = '$stem'
     fruit_ = '$fruit'
-    seed_ = '$seed'
+    seed_ = '$propagulum'
     root_ = '$root'
     rhizoids_ = '$rhizoids'
-    # 孢子囊 = '$孢子囊（群）')
-    # 孢子叶 = '$孢子叶（球）')
     frequency_ = RadioInput('$frequency', 'frequency')
     DBH_ = Number('$DBH')
     height_ = '$height'

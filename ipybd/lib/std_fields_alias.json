@@ -1,4 +1,15 @@
 {
+    "protectedStatusOfChina":[
+        "国保等级",
+        "重点保护等级",
+        "国家保护等级",
+        "国家重点保护等级",
+        "国家重点保护",
+        "国家重点",
+        "国重",
+        "国家重点植物保护等级",
+        "PROTECTEDSTATUSOFCHINA"
+    ],
     "isShared": [
         "是否已经共享",
         "是否已共享"
@@ -343,12 +354,14 @@
         "陷阱号",
         "FIELDNUMBER"
     ],
-    "flower": [
+    "reproductiveOrgans": [
+        "生殖器官",
         "花",
         "花朵",
         "花部",
         "花（孢子）",
-        "FLOWER"
+        "FLOWER",
+        "REPRODUCTIVEORGANS"
     ],
     "footprintSRS": [
         "地理形状WKT的空间参考系",
@@ -1178,10 +1191,12 @@
         "学名ID",
         "SCIENTIFICNAMEID"
     ],
-    "seed": [
+    "propagulum":[
+        "繁殖体",
         "种质",
         "种子",
-        "SEED"
+        "SEED",
+        "PROPAGULUM"
     ],
     "seedMaterialSample": [
         "种质材料",
