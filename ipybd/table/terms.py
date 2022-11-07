@@ -26,7 +26,7 @@ class CvhTerms(Enum):
     属__种__定名人__种下等级__种下加词__种下等级定名人_ = BioName(['$scientificName', ('$genus', '$specificEpithet', '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='fullPlantSplitName')
     种下等级 = ('$种下等级', '$种下加词', ' ')
     拉丁名__ = ('$属', '$种', '$定名人', '$种下等级', '$种下等级定名人', ' ')
-    中文名_ = '$vernacularName'
+    中文名_ = '$chineseName'
     鉴定人_ = HumanName('$identifiedBy')
     鉴定日期_ = DateTime('$dateIdentified')
     纬度__经度_ = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
@@ -35,7 +35,7 @@ class CvhTerms(Enum):
     maximumElevationInMeters_ = Number('$maximumElevationInMeters')
     海拔__海拔高 = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     备注_ = '$occurrenceRemarks'
-    习性_ = RadioInput('$habit', 'habit')
+    习性_ = RadioInput('$lifeForm', 'lifeForm')
     体高_ = '$height'
     胸径_ = '$DBH'
     树皮_ = '$stem'
@@ -71,7 +71,7 @@ class OccurrenceTerms(Enum):
     lifeStage = RadioInput('$lifeStage', 'lifeStage')
     sex = RadioInput('$sex', 'sex')
     behavior = '$behavior'
-    habit = RadioInput('$habit', 'habit')
+    lifeForm = RadioInput('$lifeForm', 'lifeForm')
     establishmentMeans = RadioInput('$establishmentMeans', 'establishmentMeans')
     molecularMaterialSample = RadioInput('$molecularMaterialSample', 'molecularMaterialSample')
     # Event
@@ -103,7 +103,7 @@ class OccurrenceTerms(Enum):
     _class  = '$class'
     order = '$order'
     family = '$family'
-    vernacularName = '$vernacularName'
+    chineseName = '$chineseName'
     # Identification
     scientificName = BioName(['$scientificName', ('$genus', '$specificEpithet', '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='scientificName')
     typeStatus = RadioInput('$typeStatus', 'typeStatus')
@@ -114,7 +114,7 @@ class OccurrenceTerms(Enum):
     root = '$root'
     stem = '$stem'
     leaf = '$leaf'
-    flower = '$reproductiveOrgans'
+    reproductiveOrgans = '$reproductiveOrgans'
     fruit = '$fruit'
     seed = '$propagulum'
     # Organism of Aves
@@ -191,7 +191,8 @@ class NoiOccurrenceTerms(Enum):
     Location = ('$countryCode', '$country', '$province', '$city', '$county', '$locality', '$decimalLatitude', '$decimalLongitude', '$minimumElevationInMeters', '$maximumElevationInMeters', '$verbatimElevation', '$minimumDepthInMeters', '$maximumDepthInMeters', '$geodeticDatum', '$georeferenceProtocol', '$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters', 'd')
 
     # Idnetification Object
-    vernacularName = '$vernacularName'
+    # vernacularName 现已更名为 chineseName
+    vernacularName = '$chineseName'
     scientificName = BioName(['$scientificName', ('$genus', '$specificEpithet', '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')])
     identifiedBy = HumanName('$identifiedBy')
     dateIdentified = DateTime('$dateIdentified', 'utc')
@@ -234,7 +235,7 @@ class KingdoniaPlantTerms(Enum):
     locality_ = ('$locality', '$mountain', '$waterBody', ',')
     habitat_ = '$habitat'
     habitat = FillNa('$habitat', '无')
-    habit_ = RadioInput('$habit', 'habit')
+    habit_ = RadioInput('$lifeForm', 'lifeForm')
     decimalLatitude__decimalLongitude_ = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     decimalLatitude = FillNa('$decimalLatitude', 0)
     decimalLongitude = FillNa('$decimalLongitude', 0)
@@ -304,14 +305,14 @@ class HerbLabelTerms(Enum):
     locality_ = ('$locality', '$mountain', '$waterBody', ',')
     habitat_ = '$habitat'
     individualCount_ = Number('$individualCount', None, int)
-    habit_ = RadioInput('$habit', 'habit')
-    vernacularFamilyName_ = '$vernacularFamilyName'
+    lifeForm_ = RadioInput('$lifeForm', 'lifeForm')
+    familyChineseName_ = '$familyChineseName'
     family_ = '$family'
-    vernacularName_ = '$vernacularName'
+    chineseName= '$chineseName'
     genus__specificEpithet__taxonRank__infraspecificEpithet__scientificNameAuthorship_ = BioName(['$scientificName', ('$genus', '$specificEpithet',  '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='plantSplitName')
     identifiedBy_ = HumanName('$identifiedBy')
     dateIdentified_ = DateTime('$dateIdentified', 'date')
-    flower_ = '$reproductiveOrgans'
+    reproductiveOrgans_ = '$reproductiveOrgans'
     leaf_ = '$leaf'
     stem_ = '$stem'
     fruit_ = '$fruit'
@@ -322,7 +323,7 @@ class HerbLabelTerms(Enum):
     DBH_ = Number('$DBH')
     height_ = '$height'
     temporaryIdentification_ = '$temporaryIdentification'
-    dialectName_ = '$dialectName'
+    vernacularName_ = '$vernacularName'
     molecularMaterialSample_ = '$molecularMaterialSample'
     seedMaterialSample_ = '$seedMaterialSample'
     livingMaterialSample_ = '$livingMaterialSample'
@@ -367,7 +368,7 @@ class NsiiTerms(Enum):
     class_  = '$class'
     order_ = '$order'
     family_ = '$family'
-    vernacularName_ = '$vernacularName'
+    chineseName_ = '$chineseName'
     # Identification
     scientificName_ = BioName(['$scientificName', ('$genus', '$specificEpithet', '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')])
     typeStatus_ = RadioInput('$typeStatus', 'typeStatus')

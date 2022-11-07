@@ -249,14 +249,6 @@
         "经度十进制",
         "DECIMALLONGITUDE"
     ],
-    "dialectName": [
-        "当地名称",
-        "地方名",
-        "当地名",
-        "当地俗名",
-        "LOCAL_NAME",
-        "DIALECTNAME"
-    ],
     "disposition": [
         "库存状态",
         "保藏状态",
@@ -453,11 +445,12 @@
         "岩石地层群名称",
         "GROUP"
     ],
-    "habit": [
+    "lifeForm": [
         "植物习性",
         "习性",
         "生活型",
-        "HABIT"
+        "HABIT",
+        "LIFEFORM"
     ],
     "habitat": [
         "生活环境",
@@ -1196,6 +1189,7 @@
         "种质",
         "种子",
         "SEED",
+        "PROPAGULA",
         "PROPAGULUM"
     ],
     "seedMaterialSample": [
@@ -1365,38 +1359,57 @@
         "分类阶元原始记载",
         "VERBATIMTAXONRANK"
     ],
-    "vernacularKingdomName": [
+    "phylumChineseName": [
+        "门中文名",
+        "中文门名",
+        "PHYLUMCHINESENAME"
+    ],
+    "KingdomChineseName": [
         "界中文名",
         "中文界名",
         "VERNACULARKINGDOMNAME",
-        "CHINESEKINGDOMNAME"
+        "CHINESEKINGDOMNAME",
+        "KINGDOMCHINESENAME"
     ],
-    "vernacularFamilyName": [
+    "familyChineseName": [
         "中文科名",
         "科中文名",
         "科名",
         "FAMILYNAMEZH",
         "FAMILY_C",
         "CHINESEFAMILYNAME",
-        "VERNACULARFAMILYNAME"
+        "VERNACULARFAMILYNAME",
+        "FAMILYCHINESENAME"
     ],
-    "vernacularGenusName": [
+    "genusChineseName": [
         "中文属名",
         "属中文名",
         "属名",
         "GENUSNAMEZH",
         "GENUS_C",
         "CHINESEGENUSNAME",
-        "VERNACULARGENUSNAME"
+        "VERNACULARGENUSNAME",
+        "GENUSCHINESENAME"
     ],
-    "vernacularName": [
-        "CHINESENAME",
-        "CNNAME",
+    "chineseName": [
         "中文名",
         "中文种名",
         "中名",
+        "俗名",
         "种中文名",
+        "CNNAME",
         "COMMONNAME",
+        "CHINESENAME"
+    ],
+    "vernacularName": [
+        "中文别名",
+        "当地名称",
+        "地方名",
+        "当地名",
+        "当地俗名",
+        "LOCAL_NAME",
+        "DIALECTNAME",
+        "DIALECTALNAME",
         "VERNACULARNAME"
     ],
     "waterBody": [
