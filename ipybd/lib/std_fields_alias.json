@@ -107,7 +107,7 @@
         "CATALOGNUMBER"
     ],
     "category": [],
-    "city": [
+    "prefecture": [
         "市",
         "州/市",
         "市/州",
@@ -118,7 +118,8 @@
         "地区",
         "自治州",
         "市名",
-        "CITY"
+        "CITY",
+        "PREFECTURE"
     ],
     "class": [
         "纲",
@@ -353,6 +354,7 @@
         "花部",
         "花（孢子）",
         "FLOWER",
+        "FLOWERS",
         "REPRODUCTIVEORGANS"
     ],
     "footprintSRS": [
@@ -1085,8 +1087,12 @@
         "资源关系ID",
         "RESOURCERELATIONSHIPID"
     ],
-    "rhizoids": [
+    "adventitiousRoot": [
         "不定根",
+        "ADVENTITIOUSROOT"
+    ],
+    "rhizoids": [
+        "假根",
         "RHIZOIDS"
     ],
     "rightsHolder": [
@@ -1141,6 +1147,9 @@
         "鉴定名称",
         "鉴定",
         "鉴定名",
+        "临时鉴定",
+        "野外鉴定",
+        "TEMPORARYIDENTIFICATION",
         "VERBATIMIDENTIFICATION"
     ],
     "scientificName": [
@@ -1189,6 +1198,7 @@
         "种质",
         "种子",
         "SEED",
+        "SEEDS",
         "PROPAGULA",
         "PROPAGULUM"
     ],
@@ -1283,11 +1293,6 @@
         "分类学状态",
         "分类状态",
         "TAXONOMICSTATUS"
-    ],
-    "temporaryIdentification": [
-        "临时鉴定",
-        "野外鉴定",
-        "TEMPORARYIDENTIFICATION"
     ],
     "thumbnails": [
         "缩略图",

@@ -16,9 +16,9 @@ class CvhTerms(Enum):
     份数_ = Number('$individualCount', None, int)
     国家_ = '$country'
     province = '$province'
-    city = '$city'
-    #国家__province__city__区县 = AdminDiv(('$country', '$province', '$city', '$county', '::'))
-    省市_ = ('$province', '$city', ',')
+    prefecture = '$prefecture'
+    #国家__province__prefecture__区县 = AdminDiv(('$country', '$province', '$prefecture', '$county', '::'))
+    省市_ = ('$province', '$prefecture', ',')
     区县_ = '$county'
     小地点_ = ('$locality', '$mountain', '$waterBody', ',')
     生境_ = '$habitat'
@@ -82,7 +82,7 @@ class OccurrenceTerms(Enum):
     fieldNotes = '$fieldNotes'
     fundedBy = '$fundedBy'
     # Location
-    country__province__city__county = AdminDiv([('$country', '$province', '$city', '$county', '::'), '$higherGeography'])
+    country__province__prefecture__county = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     _minimumElevationInMeters__maximumElevationInMeters = {'$verbatimElevation': '-'}
@@ -169,9 +169,10 @@ class NoiOccurrenceTerms(Enum):
     countryCode = '$countryCode'
     country = '$country'
     province = '$province'
-    city = '$city'
+    # 等模型改过来后， city 后续需要改为 prefecture
+    city = '$prefecture'
     county = '$county'
-    #country__province__city__county = AdminDiv(('$country', '$province', '$city', '$county', '::'))
+    #country__province__prefecture__county = AdminDiv(('$country', '$province', '$prefecture', '$county', '::'))
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     # _minimumElevationInMeters__maximumElevationInMeters = {'$verbatimElevation': '-'}
@@ -188,7 +189,7 @@ class NoiOccurrenceTerms(Enum):
     minimumDistanceAboveSurfaceInMeters = Number('$minimumDistanceAboveSurfaceInMeters')
     maximumDistanceAboveSurfaceInMeters = Number('$maximumDistanceAboveSurfaceInMeters')
     minimumDistanceAboveSurfaceInMeters__maximumDistanceAboveSurfaceInMeters = Number('$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters')
-    Location = ('$countryCode', '$country', '$province', '$city', '$county', '$locality', '$decimalLatitude', '$decimalLongitude', '$minimumElevationInMeters', '$maximumElevationInMeters', '$verbatimElevation', '$minimumDepthInMeters', '$maximumDepthInMeters', '$geodeticDatum', '$georeferenceProtocol', '$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters', 'd')
+    Location = ('$countryCode', '$country', '$province', '$prefecture', '$county', '$locality', '$decimalLatitude', '$decimalLongitude', '$minimumElevationInMeters', '$maximumElevationInMeters', '$verbatimElevation', '$minimumDepthInMeters', '$maximumDepthInMeters', '$geodeticDatum', '$georeferenceProtocol', '$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters', 'd')
 
     # Idnetification Object
     # vernacularName 现已更名为 chineseName
@@ -231,7 +232,8 @@ class KingdoniaPlantTerms(Enum):
     eventDate_ = DateTime('$eventDate', 'datetime')
     individualCount_ = Number('$individualCount', None, int)
     individualCount = FillNa('$individualCount', 0)
-    country__stateProvince__city__county_ = AdminDiv([('$country', '$province', '$city', '$county', '::'), '$higherGeography'])
+    # 等模型改过来后， city 后续需要改为 prefecture
+    country__stateProvince__city__county_ = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
     locality_ = ('$locality', '$mountain', '$waterBody', ',')
     habitat_ = '$habitat'
     habitat = FillNa('$habitat', '无')
@@ -262,13 +264,13 @@ class KingdoniaPlantTerms(Enum):
     果实 = '$fruit'
     种子 = '$propagulum'
     根 = '$root'
-    不定根 = '$rhizoids'
+    不定根 = '$adventitiousRoot'
     #孢子囊（群）= '$孢子囊（群）')
     #孢子叶（球）= '$孢子叶（球）')
     频度 = RadioInput('$frequency', 'frequency')
     胸径 = Number('$DBH')
     体高 = '$height'
-    野外鉴定 = '$temporaryIdentification'
+    野外鉴定 = '$verbatimIdentification'
     当地名称 = '$dialectName'
     dynamicProperties_ = ('$频度', '$胸径', '$体高', '$孢子囊（群）', '$孢子叶（球）', '$花', '$叶', '$茎', '$果实', '$种子', '$根', '$不定根', '$野外鉴定', '$当地名称', 'o')
     organismRemarks_ = '$organismRemarks'
@@ -301,7 +303,7 @@ class HerbLabelTerms(Enum):
     minimumElevationInMeters_ = Number('$minimumElevationInMeters', typ=int)
     maximumElevationInMeters = Number('$maximumElevationInMeters', typ=int)
     # minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
-    country__province__city__county_ = AdminDiv([('$country', '$province', '$city', '$county', '::'), '$higherGeography'])
+    country__province__prefecture__county_ = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
     locality_ = ('$locality', '$mountain', '$waterBody', ',')
     habitat_ = '$habitat'
     individualCount_ = Number('$individualCount', None, int)
@@ -318,11 +320,12 @@ class HerbLabelTerms(Enum):
     fruit_ = '$fruit'
     seed_ = '$propagulum'
     root_ = '$root'
+    adventitiousRoot_ = '$adventitiousRoot' 
     rhizoids_ = '$rhizoids'
     frequency_ = RadioInput('$frequency', 'frequency')
     DBH_ = Number('$DBH')
     height_ = '$height'
-    temporaryIdentification_ = '$temporaryIdentification'
+    verbatimIdentification_ = '$verbatimIdentification'
     vernacularName_ = '$vernacularName'
     molecularMaterialSample_ = '$molecularMaterialSample'
     seedMaterialSample_ = '$seedMaterialSample'
@@ -347,7 +350,7 @@ class NsiiTerms(Enum):
     habitat_ = '$habitat'
     fundedBy_ = '$fundedBy'
     # Location
-    country__province__city__county_ = AdminDiv([('$country', '$province', '$city', '$county', '::'), '$higherGeography'])
+    country__province__prefecture__county_ = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
     locality_ = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude__decimalLongitude_ = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     _minimumElevationInMeters__maximumElevationInMeters = {'$verbatimElevation': '-'}
