@@ -41,7 +41,7 @@ class CvhTerms(Enum):
     树皮_ = '$stem'
     叶_ = '$leaf'
     花_ = '$reproductiveOrgans'
-    果实_ = '$fruit'
+    果实_ = ('$fruit', '$propagulum')
     寄主_ = '$host'
     备注2_ = '$organismRemarks'
 
@@ -77,6 +77,7 @@ class OccurrenceTerms(Enum):
     # Event
     eventDate = DateTime('$eventDate')
     habitat = '$habitat'
+    substrate = '$substrate'
     samplingProtocol = RadioInput('$samplingProtocol', 'samplingProtocol')
     fieldNumber = '$fieldNumber'
     fieldNotes = '$fieldNotes'
@@ -98,25 +99,33 @@ class OccurrenceTerms(Enum):
     associatedSequences = '$associatedSequences'
     occurrenceRemarks = '$occurrenceRemarks'
     # Taxon
+    kingdomChineseName = '$kingdomChineseName'
     kingdom = '$kingdom'
+    phylumChineseName = '$phylumChineseName'
     phylum = '$phylum'
+    classChineseName = '$classChineseName'
     _class  = '$class'
+    orderChineseName = '$orderChineseName'
     order = '$order'
+    familyChineseName = '$familyChineseName'
     family = '$family'
-    chineseName = '$chineseName'
     # Identification
+    chineseName = '$chineseName'
     scientificName = BioName(['$scientificName', ('$genus', '$specificEpithet', '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='scientificName')
     typeStatus = RadioInput('$typeStatus', 'typeStatus')
     identifiedBy = HumanName('$identifiedBy')
     dateIdentified = DateTime('$dateIdentified')
     identificationRemarks = '$identificationRemarks'
     # Organism of Plant
-    root = '$root'
-    stem = '$stem'
-    leaf = '$leaf'
     reproductiveOrgans = '$reproductiveOrgans'
+    leaf = '$leaf'
+    stem = '$stem'
     fruit = '$fruit'
-    seed = '$propagulum'
+    propagulum = '$propagulum'
+    root = '$root'
+    adventitiousRoot_ = '$adventitiousRoot' 
+    rhizoids_ = '$rhizoids'
+    host = "$host"
     # Organism of Aves
     weightInGrams = Number('$weightInGrams')
     bodyLengthInMillimeters = Number('$bodyLengthInMillimeters')
@@ -145,6 +154,7 @@ class NoiOccurrenceTerms(Enum):
     recordNumber = '$recordNumber'
     individualCount = Number('$individualCount', None, int)
     sex = RadioInput('$sex', 'sex')
+    # 需要增加 reproductiveConditions
     lifeStage = RadioInput('$lifeStage', 'lifeStage')
     behavior = '$behavior'
     establismentMeans = RadioInput('$establismentMeans', 'establismentMeans')
@@ -189,7 +199,7 @@ class NoiOccurrenceTerms(Enum):
     minimumDistanceAboveSurfaceInMeters = Number('$minimumDistanceAboveSurfaceInMeters')
     maximumDistanceAboveSurfaceInMeters = Number('$maximumDistanceAboveSurfaceInMeters')
     minimumDistanceAboveSurfaceInMeters__maximumDistanceAboveSurfaceInMeters = Number('$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters')
-    Location = ('$countryCode', '$country', '$province', '$prefecture', '$county', '$locality', '$decimalLatitude', '$decimalLongitude', '$minimumElevationInMeters', '$maximumElevationInMeters', '$verbatimElevation', '$minimumDepthInMeters', '$maximumDepthInMeters', '$geodeticDatum', '$georeferenceProtocol', '$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters', 'd')
+    Location = ('$countryCode', '$country', '$province', '$city', '$county', '$locality', '$decimalLatitude', '$decimalLongitude', '$minimumElevationInMeters', '$maximumElevationInMeters', '$verbatimElevation', '$minimumDepthInMeters', '$maximumDepthInMeters', '$geodeticDatum', '$georeferenceProtocol', '$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters', 'd')
 
     # Idnetification Object
     # vernacularName 现已更名为 chineseName
@@ -267,7 +277,8 @@ class KingdoniaPlantTerms(Enum):
     不定根 = '$adventitiousRoot'
     #孢子囊（群）= '$孢子囊（群）')
     #孢子叶（球）= '$孢子叶（球）')
-    频度 = RadioInput('$frequency', 'frequency')
+    # 后续需将其改为 abundance
+    频度 = RadioInput('$frequence', 'frequence')
     胸径 = Number('$DBH')
     体高 = '$height'
     野外鉴定 = '$verbatimIdentification'
@@ -306,6 +317,7 @@ class HerbLabelTerms(Enum):
     country__province__prefecture__county_ = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
     locality_ = ('$locality', '$mountain', '$waterBody', ',')
     habitat_ = '$habitat'
+    substrate_ = '$substrate'
     individualCount_ = Number('$individualCount', None, int)
     lifeForm_ = RadioInput('$lifeForm', 'lifeForm')
     familyChineseName_ = '$familyChineseName'
@@ -318,11 +330,12 @@ class HerbLabelTerms(Enum):
     leaf_ = '$leaf'
     stem_ = '$stem'
     fruit_ = '$fruit'
-    seed_ = '$propagulum'
+    propagulum_ = '$propagulum'
     root_ = '$root'
     adventitiousRoot_ = '$adventitiousRoot' 
     rhizoids_ = '$rhizoids'
-    frequency_ = RadioInput('$frequency', 'frequency')
+    host_ = '$host'
+    abundance_ = RadioInput('$abundance', 'abundance')
     DBH_ = Number('$DBH')
     height_ = '$height'
     verbatimIdentification_ = '$verbatimIdentification'

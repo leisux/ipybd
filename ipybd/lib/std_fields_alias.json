@@ -1,5 +1,7 @@
 {
     "protectedStatusOfChina":[
+        "保护级别",
+        "保护等级",
         "国保等级",
         "重点保护等级",
         "国家保护等级",
@@ -103,6 +105,8 @@
         "条码",
         "条码号",
         "标本号",
+        "总登记号",
+        "总登记号1",
         "BARCODE",
         "CATALOGNUMBER"
     ],
@@ -373,8 +377,11 @@
         "岩石地层组名称",
         "FORMATION"
     ],
-    "frequency": [
+    "abundance": [
         "多度",
+        "ABUNDANCE"
+    ],
+    "frequency": [
         "频度",
         "频率",
         "FREQUENCY"
@@ -454,6 +461,10 @@
         "HABIT",
         "LIFEFORM"
     ],
+    "substrate": [
+        "基质",
+        "SUBSTRATE"
+    ],
     "habitat": [
         "生活环境",
         "栖息环境",
@@ -461,7 +472,6 @@
         "生态环境",
         "栖息地",
         "环境",
-        "基质",
         "生存环境",
         "产地环境",
         "ENVIRONMENT",
@@ -1077,6 +1087,9 @@
     ],
     "reproductiveCondition": [
         "繁殖阶段",
+        "繁殖状况",
+        "生殖阶段",
+        "生殖状况",
         "REPRODUCTIVECONDITION"
     ],
     "resourceID": [
@@ -1364,17 +1377,27 @@
         "分类阶元原始记载",
         "VERBATIMTAXONRANK"
     ],
-    "phylumChineseName": [
-        "门中文名",
-        "中文门名",
-        "PHYLUMCHINESENAME"
-    ],
     "KingdomChineseName": [
         "界中文名",
         "中文界名",
         "VERNACULARKINGDOMNAME",
         "CHINESEKINGDOMNAME",
         "KINGDOMCHINESENAME"
+    ],
+    "phylumChineseName": [
+        "门中文名",
+        "中文门名",
+        "PHYLUMCHINESENAME"
+    ],
+    "classChineseName": [
+        "纲中文名",
+        "中文纲名",
+        "CLASSCHINESENAME"
+    ],
+    "orderChineseName": [
+        "目中文名",
+        "中文目名",
+        "ORDERCHINESENAME"
     ],
     "familyChineseName": [
         "中文科名",
