@@ -1,4 +1,21 @@
 {
+    "creator": [
+        "创作者",
+        "创造者",
+        "发明者",
+        "创作人",
+        "创造人",
+        "发明人",
+        "绘制人",
+        "CREATOR"
+    ],
+    "dateCreated": [
+        "创作日期",
+        "创建日期",
+        "绘制时间",
+        "绘制日期",
+        "DATECREATED"
+    ],
     "protectedStatusOfChina":[
         "保护级别",
         "保护等级",
@@ -111,20 +128,6 @@
         "CATALOGNUMBER"
     ],
     "category": [],
-    "prefecture": [
-        "市",
-        "州/市",
-        "市/州",
-        "州市",
-        "市州",
-        "地级市/地区/自治州",
-        "地级市",
-        "地区",
-        "自治州",
-        "市名",
-        "CITY",
-        "PREFECTURE"
-    ],
     "class": [
         "纲",
         "CLASS"
@@ -183,6 +186,20 @@
         "国家代码",
         "COUNTRYCODE"
     ],
+    "prefecture": [
+        "市",
+        "州/市",
+        "市/州",
+        "州市",
+        "市州",
+        "地级市/地区/自治州",
+        "地级市",
+        "地区",
+        "自治州",
+        "市名",
+        "CITY",
+        "PREFECTURE"
+    ],
     "county": [
         "区县",
         "县区",
@@ -193,9 +210,16 @@
         "县名",
         "COUNTY_LABEL",
         "产地2",
-        "MUNICIPALITY",
         "区市",
         "COUNTY"
+    ],
+    "municipality": [
+        "乡镇",
+        "乡/镇",
+        "镇/乡",
+        "乡",
+        "镇",
+        "MUNICIPALITY"
     ],
     "DBH": [
         "胸径(cm)",
@@ -1312,6 +1336,7 @@
         "THUMBNAILS"
     ],
     "type": [
+        "资源类型",
         "记录媒体类型",
         "TYPE"
     ],
@@ -1363,6 +1388,7 @@
     "verbatimLocality": [
         "原签产地",
         "地址原始记录",
+        "绘制地点",
         "VERBATIMLOCALITY"
     ],
     "verbatimLongitude": [
