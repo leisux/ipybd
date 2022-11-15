@@ -980,7 +980,7 @@ Name: cite, dtype: object
 
 ```
 
-`merge_columns` 方法不仅可以对数据列进行按序拼接，还可以将不同数据列组合为带 title 的换行文本，或者组装为 Python 的 `dict` 和 `list`， JSON 的 `Object` 和 `Array` 对象。如果需要这样做，可以在传递参数时，将分隔符参数按需设置为 "r"、"d"、"l"、"o"、"a" 中的某一个，即可将拼接结果转换为相应的形式。这里仍以上述已分列的引文数据为例：
+`merge_columns` 方法不仅可以对数据列进行按序拼接，还可以将不同数据列组合为带 title 的换行文本，或者组装为 Python 的 `dict` 和 `list`， JSON 的 `Object` 和 `Array` 对象。如果需要这样做，可以在传递参数时，将分隔符参数按需设置为 `r`、`t`、`d`、`l`、`o`、`a` 中的某一个，即可将拼接结果转换为相应的形式。这里仍以上述已分列的引文数据为例：
 
 ```python
 # 合并为带title的换行文本
@@ -999,6 +999,21 @@ Out:
  'author：Swinhoe\nyear：1871\nfrom：Proc. Zool. Soc. London\npage：401',
  None]
 
+# 合并为带title的单行文本
+collections.merge_columns(["author", "year", "from", "page"], "t")
+
+# 组合结果带有字段 Title，且每个组合都以换行符；为拼接符进行拼接
+Out:
+['author：Linnaeus；year： 1758；from：Syst. Nat.,ed. 10,1；page：159',
+ 'author：Sharpe；year：1894；from：Cat. Bds. Brit. Mus. 23；page：250,252',
+ 'author：Buturlin；year： 1916；from： OpH. Becth.7；page：224',
+ 'author：Jerdon et Blyth；year： 1864；from： Bds. Ind. 3；page：648',
+ 'author：Riley；year： 1925；from： Auk 42；page： 423',
+ 'author：Boddaert；year：17348；from：Tabl. Pl. enlum. Hist. Nat.；page：54',
+ 'author：Swinhoe；year：1871；from：Proc. Zool. Soc. London；page：401',
+ 'author：Hartert；year：1917；from： Nov. Zool. 24；page：272',
+ 'author：Swinhoe；year：1871；from：Proc. Zool. Soc. London；page：401',
+ None]
 
 # 将每一组合并为 python 的 dict 对象 
 collections.merge_columns(["author", "year", "from", "page"], "d")      

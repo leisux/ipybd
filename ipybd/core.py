@@ -191,6 +191,8 @@ class FormatDataset:
         """
         if separators == 'r':
             mergers = self._merge2pairs(columns, typ='rowList')
+        elif separators == 't':
+            mergers = self._merge2pairs(columns, typ='kvText')
         elif separators == 'o':
             mergers = self._merge2pairs(columns, typ='jsonObject')
         elif separators == 'a':
@@ -275,6 +277,9 @@ class FormatDataset:
             if typ == 'rowList':
                 dict2txt = map(lambda kv: "：".join(kv), tuple(r.items()))
                 mergers[i] = "\n".join(dict2txt)
+            if typ == 'kvText':
+                dict2txt = map(lambda kv: "：".join(kv), tuple(r.items()))
+                mergers[i] = "；".join(dict2txt)
             if typ == 'jsonArray':
                 mergers[i] = json.dumps(
                     list(r.values()), cls=NpEncoder, ensure_ascii=False
