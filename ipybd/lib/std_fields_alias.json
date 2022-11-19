@@ -128,9 +128,10 @@
         "CATALOGNUMBER"
     ],
     "category": [],
-    "class": [
-        "纲",
-        "CLASS"
+    "type": [
+        "资源类型",
+        "记录媒体类型",
+        "TYPE"
     ],
     "classification": [
         "大类群",
@@ -352,14 +353,6 @@
         "嘴峰",
         "EXPOSEDCULMENINMILLIMETERS"
     ],
-    "family": [
-        "科",
-        "科名",
-        "科拉丁名",
-        "拉丁科名",
-        "fAMILYNAME",
-        "FAMILY"
-    ],
     "fat": [
         "脂肪",
         "FAT"
@@ -423,14 +416,6 @@
         "标本来源",
         "PROJECT",
         "FUNDEDBY"
-    ],
-    "genus": [
-        "属",
-        "属名",
-        "拉丁属名",
-        "属拉丁名",
-        "GENUSNAME",
-        "GENUS"
     ],
     "geodeticDatum": [
         "坐标大地基准",
@@ -624,11 +609,6 @@
     "islandGroup": [
         "群岛名称",
         "ISLANDGROUP"
-    ],
-    "kingdom": [
-        "界",
-        "生物界",
-        "KINGDOM"
     ],
     "labelNote": [
         "标签备注",
@@ -926,10 +906,6 @@
         "发现记录多寡",
         "OCCURRENCESTATUS"
     ],
-    "order": [
-        "目",
-        "ORDER"
-    ],
     "organismID": [
         "生物材料ID",
         "ORGANISMID"
@@ -1000,10 +976,6 @@
     "parentNameUsageID": [
         "父级分类阶元的学名ID",
         "PARENTNAMEUSAGEID"
-    ],
-    "phylum": [
-        "门",
-        "PHYLUM"
     ],
     "pointRadiusSpatialFit": [
         "点半径的空间匹配度",
@@ -1179,7 +1151,6 @@
         "SAMPLINGPROTOCOL"
     ],
     "verbatimIdentification": [
-        "学名",
         "原始鉴定",
         "鉴定名称",
         "鉴定",
@@ -1280,128 +1251,49 @@
         "茎",
         "STEM"
     ],
+    "kingdom": [
+        "界",
+        "生物界",
+        "KINGDOM"
+    ],
+    "phylum": [
+        "门",
+        "PHYLUM"
+    ],
+    "class": [
+        "纲",
+        "CLASS"
+    ],
+    "order": [
+        "目",
+        "ORDER"
+    ],
+    "family": [
+        "科",
+        "科名",
+        "科拉丁名",
+        "拉丁科名",
+        "fAMILYNAME",
+        "FAMILY"
+    ],
     "subfamily": [
         "亚科名",
         "亚科",
         "亚科拉丁名",
         "SUBFAMILY"
     ],
+    "genus": [
+        "属",
+        "属名",
+        "拉丁属名",
+        "属拉丁名",
+        "GENUSNAME",
+        "GENUS"
+    ],
     "subgenus": [
         "亚属名",
         "亚属",
         "SUBGENUS"
-    ],
-    "substrateOfNest": [
-        "巢基",
-        "SUBSTRATEOFNEST"
-    ],
-    "tailLengthInMillimeters": [
-        "尾长",
-        "尾翼长",
-        "TAILlENGTHINMILLIMETERS"
-    ],
-    "tarsusInMillimeters": [
-        "跗蹠长",
-        "TARSUSINMILLIMETERS"
-    ],
-    "taxonConceptID": [
-        "分类概念的ID",
-        "TAXONCONCEPTID"
-    ],
-    "taxonID": [
-        "物种ID",
-        "IDENTIFICATIONID",
-        "鉴定ID",
-        "TAXONID"
-    ],
-    "taxonRank": [
-        "阶元",
-        "种下等级",
-        "INFRASPECIFICRANK",
-        "INFRASPECIFIC_RANK",
-        "TAXONRANK"
-    ],
-    "taxonRemarks": [
-        "对分类信息的附加备注",
-        "分类备注",
-        "TAXONREMARKS"
-    ],
-    "taxonomicStatus": [
-        "分类学状态",
-        "分类状态",
-        "TAXONOMICSTATUS"
-    ],
-    "thumbnails": [
-        "缩略图",
-        "THUMBNAILS"
-    ],
-    "type": [
-        "资源类型",
-        "记录媒体类型",
-        "TYPE"
-    ],
-    "typeStatus": [
-        "模式等级",
-        "模式状态",
-        "模式类型",
-        "标本属性",
-        "鉴定模式",
-        "TYPE_STATUS",
-        "TYPESTATUS"
-    ],
-    "verbatimCoordinateSystem": [
-        "坐标系统的原始记录",
-        "VERBATIMCOORDINATESYSTEM"
-    ],
-    "verbatimCoordinates": [
-        "原始坐标",
-        "坐标的原始记录",
-        "经纬度坐标",
-        "经纬度",
-        "经/纬度",
-        "地理坐标",
-        "GPS",
-        "VERBATIMCOORDINATES"
-    ],
-    "verbatimDepth": [
-        "深度原始记录",
-        "VERBATIMDEPTH"
-    ],
-    "verbatimElevation": [
-        "海拔原始记录",
-        "原始海拔记录",
-        "海拔区间",
-        "海拔",
-        "ALT",
-        "ELEVATION",
-        "VERBATIMELEVATION"
-    ],
-    "verbatimEventDate": [
-        "日期原始记录",
-        "VERBATIMEVENTDATE"
-    ],
-    "verbatimLatitude": [
-        "纬度原始记录",
-        "纬度的原始记录",
-        "VERBATIMLATITUDE"
-    ],
-    "verbatimLocality": [
-        "原签产地",
-        "地址原始记录",
-        "绘制地点",
-        "VERBATIMLOCALITY"
-    ],
-    "verbatimLongitude": [
-        "经度的原始记录",
-        "VERBATIMLONGITUDE"
-    ],
-    "verbatimSRS": [
-        "空间参考系",
-        "VERBATIMSRS"
-    ],
-    "verbatimTaxonRank": [
-        "分类阶元原始记载",
-        "VERBATIMTAXONRANK"
     ],
     "KingdomChineseName": [
         "界中文名",
@@ -1465,6 +1357,114 @@
         "DIALECTNAME",
         "DIALECTALNAME",
         "VERNACULARNAME"
+    ],
+    "substrateOfNest": [
+        "巢基",
+        "SUBSTRATEOFNEST"
+    ],
+    "tailLengthInMillimeters": [
+        "尾长",
+        "尾翼长",
+        "TAILlENGTHINMILLIMETERS"
+    ],
+    "tarsusInMillimeters": [
+        "跗蹠长",
+        "TARSUSINMILLIMETERS"
+    ],
+    "taxonConceptID": [
+        "分类概念的ID",
+        "TAXONCONCEPTID"
+    ],
+    "taxonID": [
+        "物种ID",
+        "IDENTIFICATIONID",
+        "鉴定ID",
+        "TAXONID"
+    ],
+    "taxonRank": [
+        "阶元",
+        "种下等级",
+        "INFRASPECIFICRANK",
+        "INFRASPECIFIC_RANK",
+        "TAXONRANK"
+    ],
+    "taxonRemarks": [
+        "对分类信息的附加备注",
+        "分类备注",
+        "TAXONREMARKS"
+    ],
+    "taxonomicStatus": [
+        "分类学状态",
+        "分类状态",
+        "TAXONOMICSTATUS"
+    ],
+    "thumbnails": [
+        "缩略图",
+        "THUMBNAILS"
+    ],
+    "typeStatus": [
+        "模式等级",
+        "模式状态",
+        "模式类型",
+        "标本属性",
+        "鉴定模式",
+        "TYPE_STATUS",
+        "TYPESTATUS"
+    ],
+    "verbatimCoordinateSystem": [
+        "坐标系统的原始记录",
+        "VERBATIMCOORDINATESYSTEM"
+    ],
+    "verbatimCoordinates": [
+        "原始坐标",
+        "坐标的原始记录",
+        "经纬度坐标",
+        "经纬度",
+        "经/纬度",
+        "地理坐标",
+        "GPS",
+        "VERBATIMCOORDINATES"
+    ],
+    "verbatimDepth": [
+        "深度原始记录",
+        "VERBATIMDEPTH"
+    ],
+    "verbatimElevation": [
+        "海拔原始记录",
+        "原始海拔记录",
+        "海拔区间",
+        "海拔",
+        "ALT",
+        "ELEVATION",
+        "VERBATIMELEVATION"
+    ],
+    "verbatimEventDate": [
+        "日期原始记录",
+        "VERBATIMEVENTDATE"
+    ],
+    "verbatimLatitude": [
+        "纬度原始记录",
+        "纬度的原始记录",
+        "VERBATIMLATITUDE"
+    ],
+    "verbatimLocality": [
+        "原签产地",
+        "地址原始记录",
+        "创作地点",
+        "绘制地点",
+        "VERBATIMLOCALITY"
+    ],
+    "verbatimLongitude": [
+        "经度的原始记录",
+        "VERBATIMLONGITUDE"
+    ],
+    "verbatimSRS": [
+        "空间参考系",
+        "VERBATIMSRS"
+    ],
+    "verbatimTaxonRank": [
+        "分类阶元原始记载",
+        "VERBATIMTAXONRANK"
     ],
     "waterBody": [
         "水体名称",

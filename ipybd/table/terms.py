@@ -306,6 +306,8 @@ class HerbLabelTerms(Enum):
     labelTitle_ = ['$labelTitle', '$institutionCode']
     labelNote_ = ['$labelNote', '$collectionCode']
     labelSubtitle_ = ['$labelSubtitle', '$fundedBy']
+    creator_ = '$creator'
+    dateCreated_ = '$dateCreated'
     recordedBy_ = HumanName('$recordedBy')
     recordNumber_ = '$recordNumber'
     eventDate_ = DateTime('$eventDate', 'date')
@@ -316,6 +318,7 @@ class HerbLabelTerms(Enum):
     # minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     country__province__prefecture__county_ = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
     locality_ = ('$locality', '$mountain', '$waterBody', ',')
+    verbatimLocality = '$verbatimLocality'
     habitat_ = '$habitat'
     substrate_ = '$substrate'
     individualCount_ = Number('$individualCount', None, int)
