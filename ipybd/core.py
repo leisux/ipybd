@@ -575,7 +575,7 @@ class FormatDataset:
         elif path.endswith('.xls'):
             self.to_excel(path)
         elif path.endswith('.csv'):
-            self.df.to_csv(path, index=None)
+            self.df.to_csv(path, index=None, encoding='utf-8-sig')
         elif path.endswith('.sql'):
             pass
         else:
@@ -1033,8 +1033,6 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
                     pass
 
         self.fields_manual_mapping.update(new_fields_mapping)
-
-
 
     def get_args(self, title, args, kwargs, inplace=True):
         """ 获得数据列处理方法的参数
