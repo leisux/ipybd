@@ -1,7 +1,8 @@
 {
     "batchNumber": [
         "批号",
-        "入库批次"
+        "入库批次",
+        "入库批号"
     ],
     "creator": [
         "创作者",
@@ -35,7 +36,8 @@
     ],
     "isShared": [
         "是否已经共享",
-        "是否已共享"
+        "是否已共享",
+        "已提交NSII"
     ],
     "acceptedNameUsage": [
         "接受名",
@@ -574,7 +576,8 @@
     ],
     "individualCountType": [
         "计数单位",
-        "计量单位"
+        "计量单位",
+        "单位"
     ],
     "individualCount": [
         "标本份数",
@@ -1020,6 +1023,7 @@
     ],
     "previousIdentifications": [
         "历史鉴定",
+        "鉴定历史",
         "之前的鉴定信息",
         "PREVIOUSIDENTIFICATIONS"
     ],
