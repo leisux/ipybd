@@ -9,7 +9,7 @@ class CvhTerms(Enum):
     流水号_ = UniqueID('$otherCatalogNumbers')
     模式类型_ = RadioInput('$typeStatus', 'typeStatus')
     库存_ = RadioInput('$disposition', 'disposition')
-    标本状态_ = RadioInput('$lifeStage', 'lifeStage')
+    标本状态_ = RadioInput('$reproductiveCondition', 'reproductiveCondition')
     采集人_ = HumanName('$recordedBy')
     采集号_ = '$recordNumber'
     采集日期_ = DateTime('$eventDate')
@@ -68,6 +68,7 @@ class OccurrenceTerms(Enum):
     recordedBy = HumanName('$recordedBy')
     recordNumber = '$recordNumber'
     individualCount = Number('$individualCount', None, int)
+    reproductiveCondition = RadioInput('$reproductiveCondition', 'reproductiveCondition')
     lifeStage = RadioInput('$lifeStage', 'lifeStage')
     sex = RadioInput('$sex', 'sex')
     behavior = '$behavior'
@@ -154,8 +155,9 @@ class NoiOccurrenceTerms(Enum):
     recordNumber = '$recordNumber'
     individualCount = Number('$individualCount', None, int)
     sex = RadioInput('$sex', 'sex')
-    # 需要增加 reproductiveConditions
-    lifeStage = RadioInput('$lifeStage', 'lifeStage')
+    # 需要增加 reproductiveCondition
+    # NOI 后续更新后，需要将字段名改为 reproductiveCondition
+    lifeStage = RadioInput('$reproductiveCondition', 'reproductiveCondition')
     behavior = '$behavior'
     establismentMeans = RadioInput('$establismentMeans', 'establismentMeans')
     preparations = RadioInput('$preparations', 'preparations')
@@ -233,7 +235,8 @@ class KingdoniaPlantTerms(Enum):
     institutionCode_ = RadioInput('$collectionCode', 'collectionCode')
     otherCatalogNumbers_ = '$otherCatalogNumbers'
     classification_ = RadioInput('$classification', 'classification')
-    lifeStage_ = RadioInput('$lifeStage', 'lifeStage')
+    # Kingdonia 后续更新后，需要将字段名改为 reproductiveCondition
+    lifeStage_ = RadioInput('$reproductiveCondition', 'reproductiveCondition')
     disposition_ = RadioInput('$disposition', 'disposition')
     preservedLocation_ = RadioInput('$preservedLocation', 'preservedLocation')
     preservedTime_ = DateTime('$preservedTime', 'utc')

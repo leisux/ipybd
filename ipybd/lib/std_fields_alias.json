@@ -1,4 +1,8 @@
 {
+    "batchNumber": [
+        "批号",
+        "入库批次"
+    ],
     "creator": [
         "创作者",
         "创造者",
@@ -564,6 +568,10 @@
         "孵化",
         "孵卵",
         "INCUBATION"
+    ],
+    "individualCountType": [
+        "计数单位",
+        "计量单位"
     ],
     "individualCount": [
         "标本份数",
