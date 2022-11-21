@@ -1,0 +1,11 @@
+<article class="label-item">
+  <h1>{{labelTitle}}{{#labelNote}}（{{labelNote}}）{{/labelNote}}{{#code_path}}<span style="float:right;"><img src={{code_path}}></span>{{/code_path}}</h1>
+  <h2>{{labelSubtitle}}</h2>
+  <p>{{#family}}<b>{{family}}</b>{{/family}}</p>
+  <p><b>{{#chineseName}}{{chineseName}}，{{/chineseName}}<i>{{genus}} {{specificEpithet}}</i>{{#taxonRank}} {{taxonRank}}{{/taxonRank}}<i> {{infraspecificEpithet}}</i> {{scientificNameAuthorship}}</b></p>
+  <p>{{recordNumber}}&nbsp;&nbsp;&nbsp;<span style="float:right;">{{#eventDate}}{{eventDate}}{{/eventDate}}</span></p>
+  <p><span class="title">采集地：</span>{{#country}}{{country}}，{{/country}}{{#province}}{{province}}，{{/province}}{{#prefecture}}{{prefecture}}，{{/prefecture}}{{#county}}{{county}}，{{/county}}{{#locality}}{{{locality}}}，{{/locality}}{{#habitat}}{{{habitat}}}{{/habitat}}</p>
+  <p>{{#individualCount}}标本份数：{{individualCount}}；{{/individualCount}}{{#molecularMaterialSample}}分子材料：{{molecularMaterialSample}}；{{/molecularMaterialSample}}{{#substrate}}基质：{{substrate}}；{{/substrate}}{{#lifeForm}}生活型：{{lifeForm}}；{{/lifeForm}}{{#abundance}}多度：{{abundance}}；{{/abundance}}{{#height}}体高：{{height}}；{{/height}}{{#DBH}}胸径：{{DBH}}；{{/DBH}}{{#reproductiveOrgans}}生殖器官：{{reproductiveOrgans}}；{{/reproductiveOrgans}}{{#leaf}}叶：{{leaf}}；{{/leaf}}{{#fruit}}果：{{fruit}}；{{/fruit}}{{#propagulum}}繁殖体：{{propagulum}}；{{/propagulum}}{{#stem}}茎：{{stem}}；{{/stem}}{{#root}}根：{{root}}；{{/root}}{{#adventitiousRoot}}不定根：{{adventitiousRoot}}；{{/adventitiousRoot}}{{#rhizoids}}假根：{{rhizoids}}；{{/rhizoids}}{{#host}}寄主：{{host}}；{{/host}}{{#verbatimIdentification}}野外鉴定：{{verbatimIdentification}}；{{/verbatimIdentification}}{{#vernacularName}}当地名称：{{vernacularName}}；{{/vernacularName}}{{#occurrenceRemarks}}备注：{{occurrenceRemarks}}{{/occurrenceRemarks}}</p>
+  <p><span class="title">采集人：</span>{{{recordedBy}}}</p>
+  <p><span class="title">海拔：</span>{{minimumElevationInMeters}}{{#maximumElevationInMeters}}-{{maximumElevationInMeters}}{{/maximumElevationInMeters}} m<span style="float:right;"><span class="title">经纬度：</span>{{#decimalLongitude}}{{decimalLongitude}}&deg;，{{/decimalLongitude}}{{#decimalLatitude}}{{decimalLatitude}}&deg;{{/decimalLatitude}}</span></p>
+</article>

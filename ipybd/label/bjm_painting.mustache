@@ -1,0 +1,9 @@
+<article class="label-item">
+  <h1>{{labelTitle}}{{#labelNote}}（{{labelNote}}）{{/labelNote}}{{#code_path}}<span style="float:right;"><img src={{code_path}}></span>{{/code_path}}</h1>
+  <h2>{{labelSubtitle}}</h2>
+  <p>{{#chineseName}}<b>{{chineseName}}</b>{{/chineseName}}<span style="float:right;"><b>分类号：</b>{{otherCatalogNumbers}}</span></p>
+  <p><i>{{genus}} {{specificEpithet}}</i>{{#taxonRank}} {{taxonRank}}{{/taxonRank}}<i> {{infraspecificEpithet}}</i> {{scientificNameAuthorship}}</b></p>
+  <p><span class="title">创作人：</span>{{{creator}}}<span style="float:right;"><b>创作日期：</b>{{#dateCreated}}{{dateCreated}}{{/dateCreated}}{{^dateCreated}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{/dateCreated}}</span></p>
+  <p>{{#verbatimLocality}}<span class="title">绘制地点：</span>{{verbatimLocality}}{{/verbatimLocality}}</p>
+  <p><span class="title">备注：</span>{{#recordedBy}}{{recordedBy}}{{/recordedBy}}{{#eventDate}}于{{eventdate}}{{/eventDate}}{{#locality}}采于{{locality}}。{{/locality}}{{#occurrenceRemarks}}{{occurrenceRemarks}}{{/occurrenceRemarks}}</p>
+</article>
