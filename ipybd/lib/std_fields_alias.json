@@ -184,6 +184,7 @@
         "国名",
         "采集国家",
         "采集国",
+        "采集地国",
         "COUNTRY_LABEL",
         "COUNTRY"
     ],
@@ -202,10 +203,12 @@
         "地区",
         "自治州",
         "市名",
+        "采集地市",
         "CITY",
         "PREFECTURE"
     ],
     "county": [
+        "采集地县",
         "区县",
         "县区",
         "区/县",
@@ -580,8 +583,9 @@
         "个体数量",
         "标本数量",
         "份数",
+        "数量", 
         "INDIVIDUALCOUNT"
-    ],
+   ],
     "informationWithheld": [
         "保留信息",
         "INFORMATIONWITHHELD"
@@ -1026,6 +1030,7 @@
         "省自治区",
         "州省",
         "省名",
+        "采集地省",
         "PROVINCE",
         "STATE_PROVINCE",
         "STATEPROVINCE_LABEL",
@@ -1281,6 +1286,7 @@
         "科名",
         "科拉丁名",
         "拉丁科名",
+        "科学名",
         "fAMILYNAME",
         "FAMILY"
     ],
