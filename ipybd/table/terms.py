@@ -244,31 +244,31 @@ class KingdoniaPlantTerms(Enum):
     recordNumber_ = '$recordNumber'
     eventDate_ = DateTime('$eventDate', 'datetime')
     individualCount_ = Number('$individualCount', None, int)
-    individualCount = FillNa('$individualCount', 0)
+    individualCount = FillNa('$individualCount', value=0)
     # 等模型改过来后， city 后续需要改为 prefecture
     country__stateProvince__city__county_ = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
     locality_ = ('$locality', '$mountain', '$waterBody', ',')
     habitat_ = '$habitat'
-    habitat = FillNa('$habitat', '无')
+    habitat = FillNa('$habitat', value='无')
     habit_ = RadioInput('$lifeForm', 'lifeForm')
     decimalLatitude__decimalLongitude_ = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
-    decimalLatitude = FillNa('$decimalLatitude', 0)
-    decimalLongitude = FillNa('$decimalLongitude', 0)
+    decimalLatitude = FillNa('$decimalLatitude', value=0)
+    decimalLongitude = FillNa('$decimalLongitude', value=0)
     _minimumElevationInMeters__maximumElevationInMeters = {'$verbatimElevation': '-'}
     minimumElevationInMeters_ = Number('$minimumElevationInMeters')
     maximumElevationInMeters_ = Number('$maximumElevationInMeters')
     minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     occurrenceRemarks_ = '$occurrenceRemarks'
     scientificName_ = BioName(['$scientificName', ('$genus', '$specificEpithet', '$taxonRank', '$infraspecificEpithet', ' ')], style='simpleName')
-    scientificName = FillNa('$scientificName', 'unknown')
+    scientificName = FillNa('$scientificName', value='unknown')
     typeStatus_ = RadioInput('$typeStatus', 'typeStatus')
-    typeStatus = FillNa('$typeStatus', 'not type')
+    typeStatus = FillNa('$typeStatus', value='not type')
     identifiedBy_ = HumanName('$identifiedBy')
-    identifiedBy = FillNa('$identifiedBy', '无')
+    identifiedBy = FillNa('$identifiedBy', value='无')
     dateIdentified_ = DateTime('$dateIdentified', 'datetime')
-    dateIdentified = FillNa('$dateIdentified', '0000:00:00 00:00:02')
+    dateIdentified = FillNa('$dateIdentified', value='0000:00:00 00:00:02')
     identifiedByID_ = UniqueID('$identifiedByID')
-    identifiedByID = FillNa('$identifiedByID', '0')
+    identifiedByID = FillNa('$identifiedByID', value='0')
     _identifications = ('$scientificName', '$identifiedByID', '$identifiedBy',  '$dateIdentified', '$typeStatus', 'l')
     identifications = ('$identifications', 'l')
     花 = "reproductiveOrgans"
@@ -290,11 +290,11 @@ class KingdoniaPlantTerms(Enum):
     organismRemarks_ = '$organismRemarks'
     associatedMedia_ = '$associatedMedia'
     molecularMaterialSample_ = RadioInput('$molecularMaterialSample', 'molecularMaterialSample')
-    molecularMaterialSample = FillNa('$molecularMaterialSample', '无')
+    molecularMaterialSample = FillNa('$molecularMaterialSample', value='无')
     seedMaterialSample_ = Number('$seedMaterialSample', None, int)
-    seedMaterialSample = FillNa('$seedMaterialSample', 0)
+    seedMaterialSample = FillNa('$seedMaterialSample', value=0)
     livingMaterialSample_ = Number('$livingMaterialSample', None, int)
-    livingMaterialSample = FillNa('$livingMaterialSample', 0)
+    livingMaterialSample = FillNa('$livingMaterialSample', value=0)
     MaterialSample = ('$molecularMaterialSample', '$seedMaterialSample', '$livingMaterialSample', 'o')
 
 
