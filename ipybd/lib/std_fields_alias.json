@@ -133,13 +133,8 @@
         "BARCODE",
         "CATALOGNUMBER"
     ],
-    "category": [],
-    "type": [
-        "资源类型",
-        "记录媒体类型",
-        "TYPE"
-    ],
-    "classification": [
+    "category": [
+        "馆藏类群",
         "大类群",
         "馆藏类别",
         "收藏类别",
@@ -147,7 +142,13 @@
         "大类别",
         "类群",
         "科号",
-        "CLASSIFICATION"
+        "CLASSIFICATION",
+        "CATEGORY"
+    ],
+    "type": [
+        "资源类型",
+        "记录媒体类型",
+        "TYPE"
     ],
     "collectionCode": [
         "馆代码",
@@ -1008,6 +1009,7 @@
         "馆藏位置",
         "保藏位置",
         "存放位置",
+        "保管位置",
         "PRESERVEDLOCATION"
     ],
     "preservedTime": [

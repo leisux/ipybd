@@ -55,7 +55,7 @@ class OccurrenceTerms(Enum):
     modified = DateTime('$modified', 'datetime')
     references = '$references'
     collectionCode = RadioInput('$collectionCode', 'collectionCode')
-    classification = RadioInput('$classification', 'classification')
+    category = RadioInput('$category', 'classification')
     # Occurrence
     OccurrenceID = UniqueID('$occurrenceID')
     catalogNumber = UniqueID('$catalogNumber')
@@ -234,7 +234,8 @@ class KingdoniaPlantTerms(Enum):
     catalogNumber_ = UniqueID('$catalogNumber')
     institutionCode_ = RadioInput('$collectionCode', 'collectionCode')
     otherCatalogNumbers_ = '$otherCatalogNumbers'
-    classification_ = RadioInput('$classification', 'classification')
+    # category 默认的可选值与原classification不一致，此处仍然沿用 classification 的可选项
+    classification_= RadioInput('$category', 'classification')
     # Kingdonia 后续更新后，需要将字段名改为 reproductiveCondition
     lifeStage_ = RadioInput('$reproductiveCondition', 'reproductiveCondition')
     disposition_ = RadioInput('$disposition', 'disposition')
@@ -349,6 +350,7 @@ class HerbLabelTerms(Enum):
     molecularMaterialSample_ = '$molecularMaterialSample'
     seedMaterialSample_ = '$seedMaterialSample'
     livingMaterialSample_ = '$livingMaterialSample'
+    protectedStatusOfChina_ = '$protectedStatusOfChina'
     occurrenceRemarks_ = '$occurrenceRemarks'
 
 
