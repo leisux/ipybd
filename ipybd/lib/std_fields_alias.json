@@ -82,6 +82,7 @@
     ],
     "associatedSequences": [
         "相关序列数据",
+        "相关序列",
         "分子序列",
         "ASSOCIATEDSEQUENCES"
     ],
@@ -196,6 +197,12 @@
         "COUNTRYCODE"
     ],
     "prefecture": [
+        "地级行政区",
+        "地级行政区划",
+        "市级行政区",
+        "市级行政区划",
+        "二级行政区",
+        "二级行政区划",
         "市",
         "州/市",
         "市/州",
@@ -211,6 +218,10 @@
         "PREFECTURE"
     ],
     "county": [
+        "县级行政区",
+        "县级行政区划",
+        "三级行政区",
+        "三级行政区划",
         "采集地县",
         "区县",
         "县区",
@@ -225,6 +236,10 @@
         "COUNTY"
     ],
     "township": [
+        "乡级行政区",
+        "乡级行政区划",
+        "四级行政区",
+        "四级行政区划",
         "乡镇",
         "乡/镇",
         "镇/乡",
@@ -520,6 +535,7 @@
         "行政区划",
         "行政区",
         "地理位置",
+        "REGION_NAME",
         "HIGHERGEOGRAPHY"
     ],
     "higherGeographyID": [
@@ -756,6 +772,8 @@
         "MAXIMUMDISTANCEABOVESURFACEINMETERS"
     ],
     "maximumElevationInMeters": [
+        "最高海拔",
+        "最高海拔（米）",
         "海拔最高（米）",
         "海拔高",
         "海拔高值",
@@ -817,6 +835,8 @@
         "MINIMUMDISTANCEABOVESURFACEINMETERS"
     ],
     "minimumElevationInMeters": [
+        "最低海拔",
+        "最低海拔（米）",
         "海拔最低（米）",
         "海拔（米）",
         "海拔(米)",
@@ -1030,6 +1050,10 @@
         "PREVIOUSIDENTIFICATIONS"
     ],
     "province": [
+        "省级行政区",
+        "省级行政区划",
+        "一级行政区",
+        "一级行政区划",
         "省",
         "省/自治区",
         "自治区/省",

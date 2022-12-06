@@ -272,7 +272,7 @@ class KingdoniaPlantTerms(Enum):
     identifiedByID = FillNa('$identifiedByID', value='0')
     _identifications = ('$scientificName', '$identifiedByID', '$identifiedBy',  '$dateIdentified', '$typeStatus', 'l')
     identifications = ('$identifications', 'l')
-    花 = "reproductiveOrgans"
+    花 = "$reproductiveOrgans"
     叶 = '$leaf'
     茎 = '$stem'
     果实 = '$fruit'
@@ -314,6 +314,7 @@ class HerbLabelTerms(Enum):
     dateCreated_ = '$dateCreated'
     recordedBy_ = HumanName('$recordedBy')
     recordNumber_ = '$recordNumber'
+    eventDate = ['$eventDate', '$eventTime']
     eventDate_ = DateTime('$eventDate', 'date')
     decimalLatitude__decimalLongitude_ = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     _minimumElevationInMeters__maximumElevationInMeters = {'$verbatimElevation': '-'}

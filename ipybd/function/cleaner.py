@@ -2111,7 +2111,7 @@ class UniqueID:
         return marks
 
     def __call__(self):
-        self.df.iloc[:, 0] = self.mark_duplicate()
+        self.df[self.df.columns[0]] = self.mark_duplicate()
         return self.df.iloc[:, [0]]
 
 
