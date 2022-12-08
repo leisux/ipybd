@@ -5,7 +5,6 @@ import re
 import jsonschema
 import numpy
 import pandas as pd
-from tqdm import trange
 
 from ipybd.core import NpEncoder, RestructureTable
 from ipybd.lib.noi_occurrence_schema import schema

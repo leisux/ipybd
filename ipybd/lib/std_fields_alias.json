@@ -707,12 +707,8 @@
         "物候",
         "生命期",
         "生命周期",
-        "标本状态",
-        "花果状态",
-        "花期果期",
         "幼体",
         "Status",
-        "REPORDUCTIVECONDITON",
         "LIFESTAGE"
     ],
     "lithostratigraphicTerms": [
@@ -1129,6 +1125,9 @@
         "繁殖状况",
         "生殖阶段",
         "生殖状况",
+        "标本状态",
+        "花果状态",
+        "花期果期",
         "REPRODUCTIVECONDITION"
     ],
     "resourceID": [
