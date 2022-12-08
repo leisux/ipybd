@@ -1,7 +1,6 @@
 from argparse import ArgumentError
 import asyncio
 import aiohttp
-import pandas as pd
 import requests
 from time import sleep
 from tqdm import tqdm

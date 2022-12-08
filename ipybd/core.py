@@ -14,10 +14,12 @@ from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.shortcuts import prompt
 from tqdm import tqdm
 
+from ipybd.function.bioname import BioName
+from ipybd.function.cleaner import (AdminDiv, DateTime, GeoCoordinate,
+                                    HumanName, Number, RadioInput, UniqueID)
+
 filterwarnings('error', category=UserWarning)
 
-from ipybd.function.cleaner import (AdminDiv, BioName, DateTime, GeoCoordinate,
-                                    HumanName, Number, RadioInput, UniqueID)
 
 HERE = os.path.dirname(__file__)
 STD_TERMS_ALIAS_PATH = os.path.join(HERE, 'lib', 'std_fields_alias.json')

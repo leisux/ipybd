@@ -1,6 +1,7 @@
 from enum import Enum
 
 from ipybd.function.cleaner import *
+from ipybd.function.bioname import BioName
 
 
 class CvhTerms(Enum):
@@ -87,7 +88,8 @@ class OccurrenceTerms(Enum):
     country__province__prefecture__county = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
-    _minimumElevationInMeters__maximumElevationInMeters = {'$verbatimElevation': '-'}
+    # _minimumElevationInMeters__maximumElevationInMeters = {'$verbatimElevation': '-'}
+    verbatimElevation = '$verbatimElevation'
     minimumElevationInMeters = Number('$minimumElevationInMeters')
     maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
