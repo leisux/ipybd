@@ -894,7 +894,7 @@ class RadioInput:
             raise ValueError('unvalid lib!')
 
     def format_option(self, std2alias):
-        options_mapping = dict.fromkeys(self.column)
+        options_mapping = {k:k for k in self.column} 
         std_titles = sorted(list(std2alias.keys()))
         mana2std = []
         for option in tqdm(options_mapping, desc="选值处理", ascii=True):
