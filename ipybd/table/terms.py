@@ -85,11 +85,10 @@ class OccurrenceTerms(Enum):
     fieldNotes = '$fieldNotes'
     fundedBy = '$fundedBy'
     # Location
-    country__province__prefecture__county = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
+    country__province__prefecture__county__ = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
-    # _minimumElevationInMeters__maximumElevationInMeters = {'$verbatimElevation': '-'}
-    verbatimElevation = '$verbatimElevation'
+    minimumElevationInMeters__maximumElevationInMeters__ = {'$verbatimElevation': '-'}
     minimumElevationInMeters = Number('$minimumElevationInMeters')
     maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')

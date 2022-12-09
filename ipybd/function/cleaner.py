@@ -582,9 +582,8 @@ class Number:
     def format_number(self, mark=False):
         """
         return: 如果出现 keyerro，返回列表参数错误, 否则返回处理好的table
-        care: 对于“-20-30“ 的值，无法准确划分为 -20和30，会被划分为 20和30
         """
-        pattern = re.compile(r"^[+-]?\d+[\.\d]*|\d+[\.\d]*")
+        pattern = re.compile(r"^[+-]?\d+\.?\d*|\d+\.?\d*")
         try:
             column1 = [
                 pattern.findall(str(value)) if not pd.isnull(value) else []
@@ -905,7 +904,7 @@ class RadioInput:
                     if option in v:
                         options_mapping[option] = k
                         break
-                if not options_mapping[option]:
+                if option == options_mapping[option]:
                     if pd.isnull(option):
                         continue
                     else:
@@ -930,7 +929,7 @@ class RadioInput:
                     while True:
                         n = input("\n\n请输入对应的阿拉伯数字，无法对应请输入 0 :\n\n")
                         if n == '0':
-                            options_mapping[option] = "!" + option
+                            options_mapping[option] = "!" + str(option)
                             break
                         else:
                             try:
@@ -960,7 +959,7 @@ class UniqueID:
         # 重复的行，将以 ! 标记
         self.duplicated = self.df.duplicated(keep=False)
         marks = [
-            "".join(["!", m]) if d and not pd.isnull(m) else m
+            "".join(["!", str(m)]) if d and not pd.isnull(m) else m
             for m, d in zip(self.df.iloc[:, 0], self.duplicated)
         ]
         return marks
