@@ -583,7 +583,7 @@ class Number:
         """
         return: 如果出现 keyerro，返回列表参数错误, 否则返回处理好的table
         """
-        pattern = re.compile(r"^[+-]?\d+\.?\d*|\d+\.?\d*")
+        pattern = re.compile(r"^[+-]?\d+\.?\d*(?<=\d)|\d+\.?\d*(?<=\d)")
         try:
             column1 = [
                 pattern.findall(str(value)) if not pd.isnull(value) else []
