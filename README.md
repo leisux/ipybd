@@ -145,7 +145,7 @@ collections = FormatDataset(r"~/Documents/record2019-09-10.cvs", encoding='gbk')
 ```pythoon
 collections = FormatDataset(DataFrame)
 ```
-
+注意：使用 `DataFrame` 创建 `FormatDataset` 对象时，如果 `DataFrame` 索引有重复，请先重置索引。
 基于本地或线上的关系型数据库创建 `FormatDataset` 实例，需要先创建数据库连接。在 python 生态中，比如广泛使用的 `MySQL`数据库就有诸如 mysqlclient、pymysql、mysql-connector 等多种连接库可以使用，下方示例演示的是通过 sqlalchemy 建立 mysql 数据库连接，个人可以根据喜好和使用的数据库自行选择相应的连接库创建连接器。
 
 ```python

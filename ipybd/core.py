@@ -914,7 +914,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
                 new_columns.extend(fields_name)
             else:
                 # 首先从 self.df 中删除现有 df 中相关的数据列, 并将这些数据列暂存
-                # 注意这里的 org_columns_name 可能与 self.df.columns存在一对
+                # 注意这里的 org_columns_name 可能与 self.df.columns 存在一对
                 # 多列的问题, 但不影响数据处理
                 org_columns = self.df[org_columns_name]
                 self.df.drop(org_columns_name, axis=1, inplace=True)

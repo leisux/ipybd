@@ -7,7 +7,7 @@ from tqdm import tqdm
 import urllib
 
 
-QUERY_API = 'https://www.cvh.ac.cn/controller/spms/list.php?stateProvince%5B%5D=云南省%21'
+QUERY_API = 'https://www.cvh.ac.cn/controller/spms/list.php?'
 INFO_API = 'https://www.cvh.ac.cn/controller/spms/detail.php?'
 WEB_URL = 'https://www.cvh.ac.cn/spms/detail.php?'
 
@@ -109,7 +109,7 @@ class LinkCVH:
 
     def build_url(self, api, params, page_or_id=False):
         if isinstance(page_or_id, int):
-            params['offset'] = page_or_id
+            params['offset'] = page_or_id * 30
         else:
             params['id'] = page_or_id
         return '{base}&{opt}'.format(
@@ -129,7 +129,7 @@ class LinkCVH:
                         # print(response)
                         break
         except BaseException:  # 如果异步请求出错，改为正常的 Get 请求以尽可能确保有返回结果
-            response = await self.single_get(url)
+            response = await self.single_get(url, headers)
         if not response:
             print(url, "联网超时，请检查网络连接！")
         return response  # 返回 None 表示网络有问题
@@ -154,10 +154,12 @@ class LinkCVH:
                 sleep(3)
             else:
                 total = rps.json()['total']
-                if total:
-                    return total//30 + 1
-                else:
+                if total == 0:
                     raise ValueError("没有查询到相应结果")
+                elif total%30 == 0:
+                    return total//30
+                else:
+                    return total//30 + 1
 
     def build_headers(self):
         return {
