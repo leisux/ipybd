@@ -83,7 +83,7 @@ class Label(RestructureTable):
                             labels.append(HerbLabel(r))
                             del r['code_path']
                             r['catalogNumber'] = code
-                            new_table.append(r)
+                            new_table.append(r.copy())
                             num += 1
                     else:
                         if r['catalogNumber'] != "" and r['duplicatesOfLabel'] == 1:
@@ -129,7 +129,7 @@ class Label(RestructureTable):
                         labels.append(HerbLabel(r))
                         del r['code_path']
                         r['catalogNumber'] = code
-                        new_table.append(r)
+                        new_table.append(r.copy())
                         num += 1
                 else:
                     if r['catalogNumber'] != "" and self.repeat == 1:
