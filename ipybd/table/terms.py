@@ -77,7 +77,7 @@ class OccurrenceTerms(Enum):
     establishmentMeans = RadioInput('$establishmentMeans', 'establishmentMeans')
     molecularMaterialSample = RadioInput('$molecularMaterialSample', 'molecularMaterialSample')
     # Event
-    eventDate = DateTime('$eventDate')
+    eventDate = DateTime('$eventDate', 'date')
     habitat = '$habitat'
     substrate = '$substrate'
     samplingProtocol = RadioInput('$samplingProtocol', 'samplingProtocol')
@@ -116,7 +116,7 @@ class OccurrenceTerms(Enum):
     scientificName = BioName(['$scientificName', ('$genus', '$specificEpithet', '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='scientificName')
     typeStatus = RadioInput('$typeStatus', 'typeStatus')
     identifiedBy = HumanName('$identifiedBy')
-    dateIdentified = DateTime('$dateIdentified')
+    dateIdentified = DateTime('$dateIdentified', 'date')
     identificationRemarks = '$identificationRemarks'
     # Organism of Plant
     reproductiveOrgans = '$reproductiveOrgans'
