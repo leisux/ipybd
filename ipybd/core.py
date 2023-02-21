@@ -600,6 +600,8 @@ class FormatDataset:
                 table = pd.read_json(*args, **kwargs)
             elif path_elms[1].lower() == "":
                 table = pd.read_sql(*args, **kwargs)
+            else:
+                raise ValueError("\n文件后缀不支持\n")
         return table
 
     def read_csv(self, *args, dtype=str, chunksize=20000, **kwargs):
