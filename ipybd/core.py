@@ -153,7 +153,7 @@ class FormatDataset:
                 if splitter == "$":
                     # 中英文分列
                     match = re.match(
-                        r"[\s\"\']*[\u4e00-\u9fa5][^a-zA-Z0-9]*",
+                        r"\s*[\u4e00-\u9fa5][\u4e00-\u9fa5\W]*",
                         result[-1]
                     )
                     if match:
@@ -163,7 +163,28 @@ class FormatDataset:
                         ]
                     else:
                         match = re.match(
-                            r"[\s\"\']*[a-zA-Z0-9][^\u4e00-\u9fa5]*",
+                            r"[^\u4e00-\u9fa5]+",
+                            result[-1]
+                        )
+                        if match:
+                            result[-1:] = [
+                                match.group(0).strip(),
+                                result[-1][match.span()[1]:]
+                            ]
+                elif splitter == "%":
+                    # 中英文分列
+                    match = re.match(
+                        r"\s*[0-9][0-9\W]*",
+                        result[-1]
+                    )
+                    if match:
+                        result[-1:] = [
+                            match.group(0).strip(),
+                            result[-1][match.span()[1]:]
+                        ]
+                    else:
+                        match = re.match(
+                            r"[^0-9]+",
                             result[-1]
                         )
                         if match:
@@ -551,11 +572,11 @@ class FormatDataset:
         except PermissionError:
             print("\n提醒：使用系统管理员权限运行终端，iPybd 可记录转换历史！\n")
             pass
-    
+
     def rename_duplicate_headers(self, tail_cols_num=None):
         """ 为 self.df 中重复的列名添加一致多个 _ 后缀
             new_cols_num: 设置可忽视 self.df 尾部列名的数量
-        """ 
+        """
         if tail_cols_num:
             headers = self.df.columns[:-tail_cols_num]
             duplicates = np.append(headers.duplicated(), [False]*tail_cols_num)
@@ -649,7 +670,7 @@ class FormatDataset:
     @get_name
     def format_scientificname(self, *headers, pattern, new_headers=None, concat=False):
         return pattern, headers, concat, new_headers
-    
+
     @get_name
     def get_native_name(self, *headers, lib:'Series', new_header=('nativeName', 'nativeAuthor'), concat=False):
         return lib, headers, concat, new_header
@@ -884,7 +905,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
             fcol = True
         elif field.endswith('__'):
             inplace = False
-            fcol = False  
+            fcol = False
         elif field.endswith('_'):
             inplace = True
             fcol = True
@@ -942,7 +963,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
         else:
             pass
         return new_columns
-    
+
     def __get_new_headers(self, org_columns_name):
         """ 获得因列名重复, 改名的当前新列名称
             org_columns_name: 原始表格列名组成的 list
@@ -959,7 +980,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
             if header in dup_headers:
                 org_columns_name[i] = dup_headers[header]
         return org_columns_name
-    
+
     def __fill_nonexistent_columns(self, fields_name):
         for col in fields_name:
             if col not in self.df.columns:
@@ -1025,7 +1046,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
         new_columns = sorted(set(new_columns), key=new_columns.index)
         new_columns.reverse()
         return [column for column in new_columns if column in self.df.columns]
-    
+
     def add_fields_mapping(self, headers):
         new_fields_mapping = {header: header for header in headers}
         if self.fields_func_mapping:
@@ -1113,7 +1134,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
     def model_param_parser(self, title, param, inplace=True):
         """ 对模型中定义的各列 value 进行解析
             title: 模型定义的新列名, 如果是列拆分为 list 否则为 str
-            param: 模型 value 中的各类参数，可能是 str, dict, tuple, list 
+            param: 模型 value 中的各类参数，可能是 str, dict, tuple, list
             return: 由 get_param 返回的值进一步检查后，返回 tuple 元素
             tuple 包含两个元素，前一个元素为与此相关的原始表头名组（list)
             后一个元素是单个真实可调用的数据表表头名（str）
@@ -1155,7 +1176,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
                 raise ValueError('model param of {} error'.format(title))
             if arg_name:
                 self.split_column(arg_name[-1], separators, new_fields, inplace)
-                return arg_name[0], new_fields 
+                return arg_name[0], new_fields
         # title 有多种可能的方式形成
         elif isinstance(param, list):
             # 如果某个参数有多种可能的情况，则发现首个符合条件的就终止
@@ -1176,7 +1197,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
         inplace: 对于需要拆分或者合并到列，是否使用新列替换旧列
         return: None 或 tuple, tuple 包含两个元素，
                 原始表头名组(list)与可调用的数据表表头名（str）
-                
+
         """
         if isinstance(param, str):
             fields = self.build_basic_param(param, inplace)
