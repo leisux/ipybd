@@ -1,0 +1,117 @@
+## 六、标签打印
+
+标签打印是`ipybd`为标本馆等机构专门定制的功能（当前版本仅支持植物标签的打印），标签是数字标本最初的转录依据。通常，中大型标本馆需要接收来自各方的标本，不同来源的标本，数据格式千差万别。将这些不同来源的采集信息打印成规范的标签，时常需要耗费大量的数据检查和转换工作，这不仅显著增加了工作量，也增加了人工处理数据出错的风险。
+
+`ipybd` 数据模型具备良好的众源数据清洗和转换能力，非常适合进行类似的数据预处理工作。我们为此定义了一个 `Label` 映射模型，该模型不仅可以很好的整合众源数据，还可以输出标签文档，以供直接打印使用：
+
+```python
+from ipybd import Label
+
+# 清洗数据，repeat 参数指定没条记录生成的标签数量，默认为 1
+# 如果设置为 0 ，程序会使用数据中指代标本份数的字段 duplicatesOfLabel 设定的数值作为打印数量
+printer = Label(r"/Users/.../record20201001.xlsx', repeat=2)
+                
+# 打印标签，start_code 定义了起始条形码号
+# columns 定义了纸张每页内标签的列数
+# rows 定义了纸质每页内标签的行数
+# page_height 定义了所用纸质的高度，单位为 mm
+# 比如如果是 A4 纸张纵向打印，高度为 297 mm，横向打印，高度为 210 mm
+# template 定义了标枪的样式，目前提供了四种样式：
+#   flora_code：带条形码的维管植物标签；
+#   cryptoflora_code：带条形码的隐花植物标签；
+#   plant：中文通用植物标签；
+#   plant_en：英文通用植物标签。
+printer.write_html(columns=2, rows=3, page_height=297, start_code="KUN004123", template="flora_code")
+```
+
+`printer` 实例会自动完成数据的清洗和转换，对于一些只是单纯格式有问题的数据，程序会自动纠正，另外一些可能有错误的数据，程序会以英文 `!` 标注，如果想检查一下清洗和转换结果，可以先输出为表格`printer.save_data(r"/User/.../check.xlsx")`进行查看，再重新以新表格实例化 `Label` 即可（对于怕麻烦的用户，其实也可以在输出标签之后直接在 html 文件上检查和修改） 。执行`write_html` 方法可以直接输出标签：`ipybd` 会在原文件路径下生成一个同名的 html 文件，使用浏览器打开该文件，按 `ctrl+p` 或 `command+p` 即可生成打印预览： 
+
+![label](https://ftp.bmp.ovh/imgs/2020/12/b13a38fbb4f090b2.png)
+
+与传统纸质标签不同的是，`ipybd` 标签可以附有条形码，条形码会按照设定的标本数量按序自动编排。同时，`ipybd` 还会在数据文件路径下生成一个同名文件夹，文件夹内会有一个`DarwinCore_specimens.xlsx` 文件，这个文件不仅包含了原有的数据，还写入了每条数据对应的条形码，这个措施保证了条形码和标本数据的强对应关系，可以避免后期数字化工作中人工处理数据造成的匹配错误。
+
+此外，为了标签可以正常生成，表格中需要包含 `labelTitle` `labelSubtitle` `duplicatesOfLabel` 三个字段内容。这些字段内其实也可以根据具体情况写入特定内容（比如有些标签顶部并不会使用机构全称和代码，而是会写入类似 Flora Of Yunnan 这样的地区标题，很多标签的复份数量并不一致，相应的复份数量就可以根据具体情况写入不同数值）。 
+
+生成的打印预览，也可以根据需要设置一下页边距（建议设置为0）、纸张方向等参数。通常对于维管植物的标签，采用竖排打印会更好，对于隐花植物，建议改为横排。 标签与标签之间具有淡灰色的切分线，裁剪时可以以此为依据进行裁切，但需要注意的是打印时打印机里的纸张需要尽可能摆放周正，以避免标签歪斜。
+
+
+
+## 七、数据统计与分析
+
+`ipybd` 的基础数据结构完全基于 `pandas.DataFrame` ，因此可以直接使用 `pandas` 生态完整的数据统计分功能。在 `ipybd` 中用户可以通过 `df` 属性获得 `Pandas.DataFrame`，并开展相应的操作。这里以输出一份中国西南野生种质资源库凭证标本科级类群占比为例演示使用方式，详细的统计分析功能请查看`pandas` [官网](https://pandas.pydata.org/)。
+
+第一步：装载和概览数据：
+
+```python
+from ipybd import FormatDataset as fd
+
+gbows = fd(r"/User/.../GBOWS20200918fromKingdonia.xlsx"")
+
+# 查看该数据表具有的字段属性
+# 发现科名在该表中叫做 familyName
+gbows.df.columns                                                                                                                                                  
+Out: 
+Index(['catalogNumber', 'institutionCode', 'otherCatalogNumbers',
+       'classification', 'lifeStage', 'disposition', 'preservedLocation',
+       'preservedTime', 'recordedBy', 'recordNumber', 'eventDate', 'country',
+       'stateProvince', 'city', 'county', 'locality', 'decimalLatitude',
+       'decimalLongitude', 'minimumElevationInMeters',
+       'maximumElevationInMeters', 'habitat', 'habit', '体高', '果实', '野外鉴定',
+       '种子', '花', '叶', '频度', '茎', '当地名称', '根', '胸径', 'organismRemarks',
+       'occurrenceRemarks', 'identificationID', 'scientificName',
+       'vernacularName', 'genusName', 'genusNameZH', 'familyName',
+       'familyNameZH', 'identifiedBy', 'dateIdentified',
+       'relationshipEstablishedTime', 'associatedMedia', 'individualCount',
+       'molecularMaterialSample', 'seedMaterialSample',
+       'livingMaterialSample'],
+      dtype='object')
+```
+
+第二部：按照 `familyName` 归并和统计标本份数
+
+```python
+familyCount = gbows.df.groupby('familyName').size().sort_values(ascending=False) 
+
+# 预览统计结果
+familyCount
+
+Out:
+familyName
+Rosaceae           6650
+Poaceae            5445
+Lamiaceae          4048
+Leguminosae        3429
+Polygonaceae       2303
+                   ... 
+Isoetaceae            1
+Hydroleaceae          1
+Elatinaceae           1
+Goodeniaceae          1
+Sciadopityaceae       1
+Length: 326, dtype: int64
+
+```
+
+第三部：绘制 `familyCount` 中前 15 位的饼状图：
+
+```python
+import matplotlib.pyplot as plt
+
+# 绘制饼状统计图
+familyCount[:15].plot(kind='pie') 
+
+#显示统计图
+plt.show()
+```
+
+![pie](https://ftp.bmp.ovh/imgs/2020/12/10b76b8d60de270d.png)
+
+这张图充分说明了大科有大用~
+
+
+
+## 八、特别声明
+
+1. iPybd 遵从 GNU General Public License v3.0 许可，© 徐洲锋-中国科学院华南植物园。
+2. 本项目的顺利开展受到了中国科学院华南植物园（SCBG）、中国国家标本资源平台（nsii.org.cn）支持
+

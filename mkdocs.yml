@@ -1,1 +1,11 @@
-site_name: My Docs
+site_name: iPybd 官方文档
+
+pages:
+- 安装: INSTALLATION.md
+- 学名处理: BIONAME.md
+- 字符清洗: FORMATDATASET.md
+- 标签打印: LABEL.md
+- 数据模型: MODEL.md
+ 
+theme: mkdocs
+
