@@ -1,6 +1,4 @@
-## 三、主要的数据处理方法
-
-### 3.1 BioName
+### 创建 BioName 实例
 
 `BioName` 类可接受由拉丁学名构成的 `tuple`、`list`或`Pandas.Series` 等可迭代对象进行实例化：
 
@@ -12,6 +10,8 @@ poa = BioName(["Poaceae", "Poa", "Poa annua", "Poa annua Schltdl. & Cham.", "Poa
 参与实例化的学名可以包含命名人（命名人的写法可随意），也可以不包含命名人（但包含命名人可以提高匹配精度），文本格式可以比较规范，也可以是不太规范的人工转录学名（但不能简写属名或种名）。
 
 BioName 实例主要通过 `get`方法配合关键字从 [powo](http://www.plantsoftheworldonline.org/)、[ipni](www.ipni.org)、[中国生物物种名录](www.sp2000.org.cn) 获取相关学名的分类阶元、分类处理、物种图片、发表文献、相关异名等数据 。下面以获取上文 `poa` 实例对象在`powo`平台上的科属地位为例：
+
+### 在线比对学名
 
 ```python
 poa.get('powoName')
