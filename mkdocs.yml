@@ -1,6 +1,6 @@
 site_name: iPybd 官方文档
 
-pages:
+nav:
 - 安装: INSTALLATION.md
 - 学名处理: BIONAME.md
 - 字符清洗: FORMATDATASET.md

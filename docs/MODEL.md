@@ -333,8 +333,7 @@ class MyFuncModel(Enum):
     #枚举元素的key也要写成多个字段名，以匹配 avg 的返回结果
     海拔低__海拔高__海拔 = avg('$海拔1', '$海拔2')
                                                                                                                                                
-mydata = MyFuncModel(cleandata.copy())                                                                                                                 
-mydata.df.head()                                                                                                                                                         
+mydata = MyFuncModel(cleandata.copy())                                                                                                                 mydata.df.head()                                                                                                                                                         
 Out: 
                        拉丁名         经度          纬度     海拔低  海拔高    海拔
 0               Trifolium repens L.  28.574633   99.818817  1400  1800  1600.0
@@ -346,7 +345,7 @@ Out:
 
 此外，`pandas.Series` 本身已经有很多成熟强大的[功能](https://pandas.pydata.org/pandas-docs/stable/search.html?q=pandas.Series#)可供直接调用，熟练掌握它也可以大幅简化自定义函数的功能实现难度。
 
-## 五、DarwinCore 模型
+### DarwinCore 模型
 
 `ipybd` 针对国内物种记录常见的使用常见，内置了一些具备字段映射功能的数据模型，这些模型主要基于 `DarwinCore` 标准定义，可以快速执行众源数据的清洗和转换。相应的模型包括：
 
