@@ -62,7 +62,7 @@ class BioName:
         result_len = len(list(results.values())[0])
         for name in self.querys:
             if mark:
-                print(results)
+                # print(results)
                 # 无法格式化的/检索无结果/检索失败，用英文!标注
                 if self.querys[name] is None or name not in results or set(results[name]) == {None}:
                     try:
