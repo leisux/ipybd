@@ -7,5 +7,5 @@ pages:
 - 标签打印: LABEL.md
 - 数据模型: MODEL.md
  
-theme: mkdocs
+theme: readthedocs
 
