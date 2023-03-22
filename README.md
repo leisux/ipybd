@@ -35,5 +35,5 @@ Xu Zhoufeng(2023). iPybd: A Powerful Data Cleaner For Biodiversity. South China 
 https://github.com/leisux/ipybd
 
 ### 三、特别感谢
-本框架的开发受到了中国科学院华南植物园（SCBG）、中国国家标本资源平台（nsii.org.cn）、Tropicos.org 的支持与帮助。
+本框架的开发受到了中国科学院华南植物园（SCBG）、中国国家标本资源平台（nsii.org.cn）、中国科学院昆明植物研究所（KIB）、Tropicos.org 的支持与帮助。
 
