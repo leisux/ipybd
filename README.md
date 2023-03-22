@@ -1,6 +1,6 @@
 [![docsc - readthedocs](https://img.shields.io/badge/docs-passing-brightgreen?style=flat)](https://ipybd.readthedocs.io) [![social - wechat](https://img.shields.io/badge/%E5%85%AC%E4%BC%97%E5%8F%B7-%E4%B8%9C%E9%A3%8E%E7%9A%84%E5%B0%8F%E9%99%A2-brightgreen?style=flat&logo=weChat)](http://mp.weixin.qq.com/s?__biz=Mzg2MTczOTQ5Mg==&mid=2247483843&idx=1&sn=836c7c35a3dddf9e30c6546ce6e2b6f3&chksm=ce13c148f964485e1f4da455dd02f698d9bda84440ce9ce5b17a05e1bea24759acd10551a0f0#wechat_redirect) [![Downloads](https://static.pepy.tech/badge/ipybd/week)](https://pepy.tech/project/ipybd) [![Downloads](https://static.pepy.tech/badge/ipybd/month)](https://pepy.tech/project/ipybd) [![Downloads](https://static.pepy.tech/badge/ipybd)](https://pepy.tech/project/ipybd) ![PyPI - License](https://img.shields.io/pypi/l/ipybd?color=red)
 
-`ipybd` 是一款由 `Python` 开发的中文生物多样性数据清洗、统计与分析框架。当前的 `ipybd` 版本实现了一个**通用**的生物多样性数据整合框架，它可以实现对不同来源、不同格式、不同品质、不同规范的数据集进行统一的**批量化**清洗转换与整合，进而大幅降低数据处理的门槛和成本，提高数据分析前的数据处理品质和效率。使用说明请见[文档](https://ipybd.readthedocs.io)。
+`ipybd` 是一款由 `Python` 开发的中文生物多样性数据清洗、统计与分析框架。当前的 `ipybd` 版本实现了一个**通用**的生物多样性数据整合框架，它可以实现对不同来源、不同格式、不同品质、不同规范的数据集进行统一的**批量化**清洗转换与整合，进而大幅降低数据处理的门槛和成本，提高数据分析前的数据处理品质和效率。安装和使用说明请见[文档](https://ipybd.readthedocs.io)。
 
 ### 一、主要功能
 
