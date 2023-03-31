@@ -32,7 +32,7 @@ def ifunc(obj):
                     else:
                         # 如果数据对象不是通过$修饰，则返回正常调用
                         return obj(*args, **kwargs)
-                except (AttributeError, TypeError):
+                except (AttributeError, TypeError, IndexError):
                     return obj(*args, **kwargs)
         return handler
     elif isinstance(obj, MethodType):
