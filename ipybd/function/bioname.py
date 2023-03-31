@@ -1072,6 +1072,10 @@ class BioName:
 
         return: 返回包含authors 中所有人名list 或 []
         """
+        # 排除 authors 中 ex 前的命名人
+        authors = authors.split(' ex ')[1].strip() if ' ex ' in authors else authors
+        # 排除 authors 中 in 后的命名人
+        authors = authors.split(' in ')[0].strip() if ' in ' in authors else authors
         try:
             authors = self.ascii_authors(authors)
         # authors 为空
@@ -1081,6 +1085,20 @@ class BioName:
         p = re.compile(
             r"(?:^|\(\s*|\s+et\s+|\s+ex\s+|\&\s*|\,\s*|\)\s*|\s+and\s+|\[\s*|\（\s*|\）\s*|\，\s*|\{\s*|\}\s*)([^\s\&\(\)\,\;\.\-\?\，\（\）\[\]\{\}][^\&\(\)\,\;\，\（\）\[\]\{\}]+?(?=\s+ex\s+|\s+et\s+|\s*\&|\s*\,|\s*\)|\s*\(|\s+and\s+|\s+in\s+|\s*\）|\s*\（|\s*\，|\s*\;|\s*\]|\s*\[|\s*\}|\s*\{|\s*$))")
         author_team = p.findall(authors)
+        author_team = self.check_author_team(author_team)
+        return author_team
+    
+    def check_author_team(self, author_team):
+        # 判断 author_team 中是否存在全部是小写字母组成的元素
+        # 比如 comb. nov. cons. stat.，这些标识可能会被误认为是命名人
+        # 如果存在，就删除这个元素
+        for author in author_team.copy():
+            if author.islower():
+                # 一些命名人可能存在自指的情况
+                # 比如 Ania elmeri (Ames & sine ref.) A.D.Hawkes
+                # sine ref. 虽然是小写字母，但它应该作为 Ames 的一部分
+                # 程序这里没有对这种情况做处理，以后可以考虑加入
+                author_team.remove(author)
         return author_team
 
     def __call__(self, mark=True):
