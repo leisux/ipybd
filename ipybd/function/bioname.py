@@ -1072,6 +1072,16 @@ class BioName:
 
         return: 返回包含authors 中所有人名list 或 []
         """
+        if authors.startswith('（'): 
+            authors = authors.replace('（', '(')
+            authors = authors.replace('）', ')')
+        if authors.startswith('('):
+            if authors.find(')') < authors.find(' ex '):
+                # authors 等于 ) 前的字符串加上 ex 后的字符串
+                authors = authors[:authors.find(')')+1] + authors[authors.find(' ex ')+3:]
+            if 'in ' in authors and authors.find(')') > authors.find(' in '):
+                # authors 等于 in 之前的字符串加上 ) 后的字符串
+                authors = authors[:authors.find(' in ')] + authors[authors.find(')'):]
         # 排除 authors 中 ex 前的命名人
         authors = authors.split(' ex ')[1].strip() if ' ex ' in authors else authors
         # 排除 authors 中 in 后的命名人
