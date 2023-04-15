@@ -535,8 +535,7 @@ class BioName:
                         name['authorTeam'] = []
                 std_teams = [r['authorTeam'] for r in names]
                 # 开始比对原命名人与可选学名的命名人的比对结果
-                scores = self.contrast_authors(authors, std_teams)
-                index = self._get_best_name(scores)
+                index = self.get_best_authorship(authors, std_teams)
                 if index is not None:
                     return names[index]
                 else:
@@ -616,9 +615,7 @@ class BioName:
             else:
                 std_teams = [r['author_team'] for r in names]
                 # 开始比对原命名人与可选学名的命名人的比对结果
-                scores = self.contrast_authors(authors, std_teams)
-                # print(scores)
-                index = self._get_best_name(scores)
+                index = self.get_best_authorship(authors, std_teams)
                 if index is not None:
                     return names[index]
                 else:
@@ -706,8 +703,7 @@ class BioName:
                             r['authors'] = None
                             std_teams.append([])
                 # 开始比对原命名人与可选学名的命名人的比对结果
-                scores = self.contrast_authors(authors, std_teams)
-                index = self._get_best_name(scores)
+                index = self.get_best_authorship(authors, std_teams)
                 if index is not None:
                     return names[index]
                 else:
@@ -760,8 +756,7 @@ class BioName:
             else:
                 std_teams = [r['authorTeam'] for r in names]
                 # 开始比对原命名人与可选学名的命名人的比对结果
-                scores = self.contrast_authors(authors, std_teams)
-                index = self._get_best_name(scores)
+                index = self.get_best_authorship(authors, std_teams)
                 if index is not None:
                     return names[index]
                 else:
@@ -817,8 +812,7 @@ class BioName:
             if not org_author_team:
                 return homonym[0]
             # 如果查询名称和可匹配名称均不缺少命名人, 进行命名人比较，确定最优
-            scores = self.contrast_authors(org_author_team, author_teams)
-            index = self._get_best_name(scores)
+            index = self.get_best_authorship(org_author_team, author_teams)
             if index is not None:
                 return homonym[index]
             else:
@@ -969,12 +963,11 @@ class BioName:
             raw2stdname[raw_name] = self.built_name_style(split_name, pattern)
         return [raw2stdname[name] for name in self.names]
 
-    def _get_best_name(self, scores):
+    def get_best_authorship(self, author_team, author_teams):
         """
-        scores: 由 contrast_authors 返回的比对结果
-
         return: 返回最佳匹配名称的序号，如果没有，则返回 None
         """
+        scores = self.contrast_authors(author_team, author_teams)
         scores.sort(key=lambda s: s[0], reverse=True)
         if scores[0][0]:
             # 这里默认没有得分相同的名字
@@ -1020,6 +1013,64 @@ class BioName:
             s_team_score = sum(score)/len(score)
             s_teams_score.append((s_team_score, n))
         return s_teams_score
+    
+    def authorship_compare(self, authorship1, authorship2):
+        """比较两个学名的命名人, 并返回相似等级
+
+        Args:
+            authorship1 (str): 学名中的命名人，如 "Hook. f. & Thomson ex Regel"
+            authorship2 (str): 学名中的命名人，如 "all."
+
+        Returns:
+            'S': 两组命名人来自于同一个学名, 并且命名人可以一一对应 
+            'H': 两组命名人应该来自于同一个学名, 但是其中有个学名可能省略了一些命名人
+            'M': 两组命名人可能来自于同一个学名, 但需要人工进一步考证
+            'L': 两组命名人可能来自于不同人发表的同名名称，或者两者之间存在明显的冲突
+        """
+        # 1. 拆分命名人, 并获得命名人的构成模式
+        authors1, pattern1 = self.segment_authorships(authorship1)
+        authors2, pattern2 = self.segment_authorships(authorship2)
+        # 2. 根据两个命名人的构成模式, 选择不同的相似度计算方法
+        degreen = self.authorships_similarity(authors1, authors2, pattern1, pattern2)
+        return degreen
+        
+
+    def authorships_similarity(self, authors_group1, authors_group2, pattern1, pattern2):
+        """根据两个命名人的构成模式, 选择不同的相似度计算方法
+            
+        Args:
+            authors_group1 (list): 命名人列表，如 [("Hook. f.", "Thomson"), ("Regel",)]
+            authors_group2 (list): 命名人列表，如 [("Wall.",)]
+            pattern1 (str): 命名人的构成模式，如 "ex", "and", "edit", "complex"
+            pattern2 (str): 命名人的构成模式，如 "ex", "and", "edit", "complex"
+        
+        Returns:
+            str: 'S', 'H', 'M', 'L'
+        """
+        pass
+
+    def authorship_similarity(self, authors1, authors2):
+        """评价两组命名人的相似度
+
+        Args:
+            authors1 (str): 学名中单个人名，或者使用等同 and 符连接的一组命名人，如 "Hook. f. & Thomson"
+            authors2 (str): 学名中单个人名，或者使用等同 and 符连接的一组命名人，如 "Wall."
+
+        Returns:
+            'S': authors1 和 authors2 内的每个人名都有对应 
+            'H': authors1 或者 authors2 中缺失了另一个人名组中的一些命名人
+            'M': authors1 和 athours2 中互有一些不同的命名人
+            'L': authors1 和 authors2 中没有相同的命名人
+        """
+        pass
+
+        # use uppercase letter to represent the set of scores of the authorship
+        # use lowercase letter to represent the set of similarity authorship
+        # if set(A) == {0} => L
+        # elif 0 in A:
+        #   if len(A!=0) >= len(a) => H else => M
+        # elif len(A) = len(a) => S else => H
+        
 
     def clean_author(self, author):
         aut = author.replace(".", " ")
@@ -1066,11 +1117,14 @@ class BioName:
         return ascii_authors
 
     def get_author_team(self, authors):
-        """ 提取学名命名人中，各个命名人的名字
+        """将一个学名的命名人文本拆分为多组命名人构成的列表, 并给出命名人的构成模式
 
-        authors: 一个学名的命名人字符串
+        Args:
+            authorship (str): 学名中的命名人，如 "Hook. f. & Thomson ex Regel"
 
-        return: 返回包含authors 中所有人名list 或 []
+        Returns:
+            list: 拆分后的命名人列表，如 [("Hook. f.", "Thomson"), ("Regel",)]
+            str: 命名人的构成模式，如 "ex", "and", "edit", "complex"
         """
         if authors.startswith('（'): 
             authors = authors.replace('（', '(')
@@ -1110,6 +1164,7 @@ class BioName:
                 # 程序这里没有对这种情况做处理，以后可以考虑加入
                 author_team.remove(author)
         return author_team
+
 
     def __call__(self, mark=True):
         """

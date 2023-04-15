@@ -66,84 +66,6 @@ names = HumanName([
 names()
 
 
-# BioName format_latin_names
-
-from ipybd import BioName
-
-latiname = [
-    'Narcissus enemeritoi (Sánchez-Gómez,A.F.Carrillo,A.Hern.,M.A.Carrión & Güemes) Sánchez-Gómez,A.F.Carrillo,A.Hernández González,M.A.Carrión & Güemes',
-    'Adansonia za var. bozy (Jum. & H.Perrier) H.Perrier',
-    'Potamogeton iilinoensis var. ventanicola (Hicken) Horn af Rantzien',
-    'Hieracium lagopus Soest non Don',
-    'Pithecellobium angulatum var. heterophylla (Roxb.) Prain, nom.nud.',
-    'Ania elmeri (Ames & sine ref.) A.D.Hawkes',
-    'Ophrys vernixia var. regis-ferinandii (Renz) H.Baumann & al.',
-    'Lightfootia longifolia var. oppositifolia Sonder p.p.',
-    'Bursera exequielii León de la Luz',
-    'Bidens cabopulmensis León de la Luz & B.L.Turner',
-    'Tachigali spathulipetala L.F.Gomes da Silva, L.J.T.Cardoso, D.B.O.S.Cardoso & H.C.Lim',
-    'Convolvulus tricolor subsp. cupanianus (Sa ad) Stace',
-    'Calea aldamoides G.H.L. da Silva, Bringel & A.M.Teles',
-    'Adiantum thalictroides var. hirsutum (Hook. & Grev.) de la Sota',
-    'Acianthera oricola (H.Stenzel) Karremans, Chiron & Van den Berg',
-    'Reseda urnigera var. boissieri (Müll.Arg.) Abdallah & de Wit',
-    'Cereus auratus var. intermedius Regel & Klein bis',
-    'Mitrophyllum articulatum (L.Bolus) de Boer ex H.Jacobsen',
-    'Ulex parviflorus subsp. willkommii (Webb) Borja & al.',
-    'Lycopodioideae W.H.Wagner & Beitel ex B.Øllg.',
-    'Polygala paludosa var. myurus A.St.-Hil. in A.St.-Hil., Juss. & Cambess.',
-    'Phyllostachys nigra var. stauntonii (Munro) Keng f. ex Q.F.Zheng & Y.M.Lin',
-    'Salix cordata var. angustifolia Zabel in Beissn., Schelle & Zabel',
-    'Tsugaxpicea hookeriana (A.Murray bis) M.Van Campo-Duplan and H.Gaussen',
-    'Centaurea biokorensis Teyber amend.Radic',
-    'Elaeagnus lanceolata Warb. apud',
-    # 下一个名字无法正确拆分
-    'Ocotea caesariata van der Werff',
-    'Aiouea palaciosii (van der Werff) R.Rohde',
-    # 下一个名字无法正确拆分
-    'Saxifraga rufescens bal f. f.',
-    'Saxifraga rufescens Bal f. f. var. uninervata J. T. Pan',
-    'Bulbophyllum nigricans (Aver.) J.J.Verm., Schuit. & de Vogel',
-    'Dactyloctenium mucronatum var. contractum Nees in Seem.',
-    'Microcephala discoidea var. discoidea (Ledeb.) K.Bremer, H.Eklund, Medhanie, Heiðm., N.Laurent, Maad, Niklasson & A.Nordin',
-    'Afzelia xylocarpa (Kurz) Cra',
-    'Passiflora × alatocaerulea Lindl.',
-    'Convolvulus ×turcicus nothosubsp. peshmenii (C.Aykurt & Sümbül) ined.',
-    'Betula ×piperi Britton, pro spec. & C.L.Hitchc.',
-    'Aster ×versicolor Willd.(pro sp.)',
-    'Sapium chihsinianum S．lee',
-    'Opithandra dalzielii (W.W.S.mit',
-    'Opithandra dalzielii (W.W.S.mit)',
-    'Sycopsis salicifolia Li apud Wa',
-    'Plumeria cv. Acutifolia',
-    'Phegopteris decursive-pinnata (van Hall)',
-    'Eurya handel-mazzettii Hung T. Chang',
-    'Saxifraga umbellulata Hook. f. et Thoms. var. pectinata (C. Marq. et Airy Shaw) J. T. Pan',
-    'Cerasus pseudocerasus (Lindl.)G.Don',
-    'Anemone demissa Hook. f. et Thoms. var. yunnanensis Franch.',
-    'Schisandra grandiflora (Wall.) Hook. f. et Thoms.',
-    'Phaeonychium parryoides (Kurz ex Hook. f. et T. Anderson) O. E. Schulz',
-    'Crucihimalaya lasiocarpa (Hook. f. et Thoms.) Al-Shehbaz et al.',
-    'Lindera pulcherrima (Nees) Hook. f. var. attenuata C. K. Allen',
-    'Polygonum glaciale (Meisn.) Hook. f. var. przewalskii (A. K. Skvortsov et Borodina) A. J. Li',
-    'Psilotrichum ferrugineum (Roxb.) Moq. var. ximengense Y. Y. Qian',
-    'Houpoëa officinalis (Rehd. et E. H. Wils.) N. H. Xia et C. Y. Wu',
-    'Rhododendron delavayi Franch.',
-    'Rhodododendron',
-    'Fabaceae',
-    'Lindera sinisis var. nssi Franch.',
-    'Poa annua subsp. sine',
-    'Poa annua',
-    'Poa annua annua',
-    'Poa annua annua (Kurz ex Hook. f. et T. Anderson) O. E. Schulz',
-    'Rhododendron delavayi Franch.'
- ]
-
-test = BioName(latiname, style='fullPlantSplitName')
-test()
-
-
-
 from ipybd import CVH
 
 table = CVH(r"C:\Users\xu_zh\OneDrive\PDP\iherbarium\标签推荐模版ss.xlsx")
@@ -194,7 +116,7 @@ test = BioName([
     'Pinus massoniana Lanb.', 'Potentilla discolor Bge.',
     'Senecio scandens Buch.-Ham.', 'Vernonia patula (Dryand.) Merr.',
     'Ficus pumila L.', 'Senecio scandens Buch.-Ham. ex D.Don',
-    'Euphorbia thymifolia L.', 'Euonymus japonicus Thunb.', 
+    'Euphorbia thymifolia L.', 'Euonymus japonicus Thunb.',
     'Mussaenda pubescens Dryand.'
     ])
 
