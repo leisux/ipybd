@@ -1049,28 +1049,42 @@ class BioName:
         Returns:
             str: 'S', 'H', 'M', 'L'
         """
-        comb = {len(authors_group1), len(authors_group2)}
+        authors1, authors2 = sorted([authors_group1, authors_group2], key=lambda v: len(v))
+        comb = {len(authors1), len(authors2)}
         # a => a
         if comb == {1, 1}:
             return self._authors_similar_degreen(authors_group1[0], authors_group2[0])
         elif comb == {1, 3}:
             # a => a ex b
-            if authors_group1[0] is None or authors_group2[0] is None:
-                pass
+            if authors2[0] is None:
+                score1 = self._authors_similar_degreen(authors1[0], authors2[1])
+                score2 = self._authors_similar_degreen(authors1[0], authors2[-1])
+                
+                # a ex b => a
+                # if a => S,H,M => M
+                # if a => L => L
+                # a ex b => b
+                # if b => S => S
+                # if b => H => H
+                # if b => M => M
+                # if b => L => L
+                # a ex b => c
+                # if b => c => M => M
+                # if b => c => H => M
             # a => (a)b
-            elif authors_group1[-1] is None or authors_group2[-1] is None:
+            elif authors2[-1] is None:
                 pass
             else:
                 pass
         elif comb == {3, 3}:
             # a ex b => a ex b
-            if authors_group1[0] is None and authors_group2[0] is None:
+            if authors1[0] is None and authors2[0] is None:
                 pass
             # a ex b => (a)b
-            elif authors_group1[0] is None and authors_group2[-1] is None or authors_group1[-1] is None and authors_group2[0] is None:
+            elif authors1[0] is None and authors2[-1] is None or authors1[-1] is None and authors2[0] is None:
                 pass
             # (a)b => (a)b
-            elif authors_group1[-1] is None and authors_group2[-1] is None:
+            elif authors1[-1] is None and authors2[-1] is None:
                 pass
             else:
                  pass
@@ -1078,7 +1092,6 @@ class BioName:
         else:
             pass
 
-        
 
     def _authors_similar_degreen(self, authors1, authors2):
         """评价两组命名人的相似度
@@ -1094,20 +1107,20 @@ class BioName:
             'L': authors1 和 authors2 中没有相同的命名人
         """
         score = self._caculate_simlar_score(authors2, authors1)
+        similar = sum(score)/len(score)
         if set(score) == {0}: 
-            return 'L'
+            degreen = 'L'
         elif 0 in score:
             if len(set(score))-1 >= len(authors1):
-                return 'H'
+                degreen = 'H'
             else:
-                return 'M'
+                degreen = 'M'
         elif len(authors1) == len(authors2):
-            return 'S'
+            degreen = 'S'
         else:
-            return 'H'
+            degreen = 'H'
+        return degreen, similar
 
-
-        
 
     def clean_author(self, author):
         aut = author.replace(".", " ")
