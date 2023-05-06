@@ -283,7 +283,7 @@ scientificname_split_samples = [('Decaneuropsis cumingiana (Benth.)H.Rob.& Skvar
                                 ('Rhododendron delavayi Franch.',
                                  ('Rhododendron', 'delavayi', None, None, None, 'Franch.'))]
 
-# write a pytest test for the instance method format_latin_names of hte BioName Class
+# write a pytest test for the instance method format_latin_names of the BioName Class
 @pytest.mark.parametrize("scientific_name, correct_split_name", scientificname_split_samples)
 def test_split_name(scientific_name, correct_split_name):
     split_name = BioName([scientific_name]).format_latin_names('fullPlantSplitName')

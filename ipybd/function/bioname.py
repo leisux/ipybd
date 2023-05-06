@@ -1053,13 +1053,10 @@ class BioName:
         comb = {len(authors1), len(authors2)}
         # a => a
         if comb == {1, 1}:
-            return self._authors_similar_degreen(authors_group1[0], authors_group2[0])
+            degreen, score = self._authors_similar_degreen(authors_group1[0], authors_group2[0])
         elif comb == {1, 3}:
             # a => a ex b
             if authors2[0] is None:
-                score1 = self._authors_similar_degreen(authors1[0], authors2[1])
-                score2 = self._authors_similar_degreen(authors1[0], authors2[-1])
-                
                 # a ex b => a
                 # if a => S,H,M => M
                 # if a => L => L
@@ -1071,6 +1068,16 @@ class BioName:
                 # a ex b => c
                 # if b => c => M => M
                 # if b => c => H => M
+                degreen1, score1 = self._authors_similar_degreen(authors1[0], authors2[1])
+                degreen2, score2 = self._authors_similar_degreen(authors1[0], authors2[-1])
+                if degreen1 == 0:
+                    return degreen2
+                elif degreen2 == 3:
+                    raise ValueError
+                elif degreen1 == 3 and degreen2 > 0:
+                    raise ValueError
+                else:
+                    return 1
             # a => (a)b
             elif authors2[-1] is None:
                 pass
@@ -1101,17 +1108,17 @@ class BioName:
             authors2 (list): 学名中单个人名，或者使用等同 and 符连接的一组命名人，如 ["Wall."]
 
         Returns:
-            'S': authors1 和 authors2 内的每个人名都有对应 
-            'H': authors1 或者 authors2 中缺失了另一个人名组中的一些命名人
-            'M': authors1 和 athours2 中互有一些不同的命名人
-            'L': authors1 和 authors2 中没有相同的命名人
+            3: authors1 和 authors2 内的每个人名都有对应 
+            2: authors1 或者 authors2 中缺失了另一个人名组中的一些命名人
+            1: authors1 和 athours2 中互有一些不同的命名人
+            0: authors1 和 authors2 中没有相同的命名人
         """
-        score = self._caculate_simlar_score(authors2, authors1)
-        similar = sum(score)/len(score)
-        if set(score) == {0}: 
+        scores = self._caculate_simlar_score(authors2, authors1)
+        score= sum(scores)/len(scores)
+        if set(scores) == {0}: 
             degreen = 'L'
-        elif 0 in score:
-            if len(set(score))-1 >= len(authors1):
+        elif 0 in scores:
+            if len(set(scores))-1 >= len(authors1):
                 degreen = 'H'
             else:
                 degreen = 'M'
@@ -1119,7 +1126,7 @@ class BioName:
             degreen = 'S'
         else:
             degreen = 'H'
-        return degreen, similar
+        return degreen, score
 
 
     def clean_author(self, author):
