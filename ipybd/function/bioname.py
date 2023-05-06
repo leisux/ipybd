@@ -1080,19 +1080,98 @@ class BioName:
                     return 1
             # a => (a)b
             elif authors2[-1] is None:
-                pass
+                # a => (b)a
+                # if a => S,H,M => M
+                # if a => L => L
+                # a => (a)b 
+                # if a => S,H,M,L => L
+                # a => (a)a => M
+                degreen1, score1 = self._authors_similar_degreen(authors1[0], authors2[0])
+                degreen2, score2 = self._authors_similar_degreen(authors1[0], authors2[1])
+                if degreen2 > 0:
+                    return 1
+                else:
+                    return 0
             else:
-                pass
+               print(authors1, authors2) 
+               raise ValueError
         elif comb == {3, 3}:
             # a ex b => a ex b
             if authors1[0] is None and authors2[0] is None:
-                pass
+                degreen1, score1 = self._authors_similar_degreen(authors1[1], authors2[1])
+                degreen2, score2 = self._authors_similar_degreen(authors1[-1], authors2[-1])
+                # if a ex b => S ex S => S
+                # if a ex b => H ex S => S
+                # if a ex b => M ex S => H
+                # if a ex b => S ex H => H
+                # if a ex b => H ex H => H
+                # if a ex b => S ex M => M
+                # if a ex b => H ex M => M
+                # if a ex b => M ex H => M
+                # if a ex b => M ex M => M
+                # a ex b => b ex a
+                # a ex b => a ex c
+                # a ex b => c ex a
+                # a ex b => c ex b
+                # a ex b => b ex c
+                # if a ex b => S ex L => L
+                # if a ex b => H ex L => L
+                # if a ex b => M ex L => L
+                # if a ex b => L ex S => L
+                # if a ex b => L ex H => L
+                # if a ex b => L ex M => L
+                # if a ex b => L ex L => L
+                if degreen1 == 0:
+                    return 0
+                elif degreen2 == 0:
+                    return 0
+                elif degreen2 == 1:
+                    return 1
+                elif degreen2 == 3 and degreen1 > 1:
+                    return 3
+                elif degreen2 + degreen1 >= 4:
+                    return 2
+                else:
+                    print(authors1, authors2)
+                    raise ValueError
             # a ex b => (a)b
             elif authors1[0] is None and authors2[-1] is None or authors1[-1] is None and authors2[0] is None:
-                pass
+                # a ex b => (n)m => L
+                return 0
             # (a)b => (a)b
             elif authors1[-1] is None and authors2[-1] is None:
-                pass
+                degreen1, score1 = self._authors_similar_degreen(authors1[0], authors2[0])
+                degreen2, score2 = self._authors_similar_degreen(authors1[1], authors2[1])
+                # (a)b => (a)b
+                # if (a)b => (S)S => S
+                # if (a)b => (S)H => H
+                # if (a)b => (H)S => H
+                # if (a)b => (H)H => H
+                # if (a)b => (S)M => M
+                # if (a)b => (H)M => M
+                # if (a)b => (M)M => M
+                # if (a)b => (M)S => M
+                # if (a)b => (M)H => M
+                # (a)b => (b)a
+                # (a)b => (a)c
+                # (a)b => (c)a
+                # (a)b => (c)b
+                # (a)b => (b)c
+                # if (a)b => (H)L => L
+                # if (a)b => (S)L => L
+                # if (a)b => (M)L => L
+                # if (a)b => (L)S => L
+                # if (a)b => (L)H => L
+                # if (a)b => (L)M => L
+                # if (a)b => (L)L => L
+                if degreen1 == 0 or degreen2 == 0:
+                    return 0
+                elif degreen1 == 1 or degreen2 == 1:
+                    return 1
+                elif degreen1 == 3 and degreen2 == 3:
+                    return 3
+                else:
+                    return 2
             else:
                  pass
         # 复杂的命名人组合, 递归处理
@@ -1116,16 +1195,16 @@ class BioName:
         scores = self._caculate_simlar_score(authors2, authors1)
         score= sum(scores)/len(scores)
         if set(scores) == {0}: 
-            degreen = 'L'
+            degreen = 0
         elif 0 in scores:
             if len(set(scores))-1 >= len(authors1):
-                degreen = 'H'
+                degreen = 2
             else:
-                degreen = 'M'
+                degreen = 1
         elif len(authors1) == len(authors2):
-            degreen = 'S'
+            degreen = 3
         else:
-            degreen = 'H'
+            degreen = 2
         return degreen, score
 
 
