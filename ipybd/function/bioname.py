@@ -1030,154 +1030,115 @@ class BioName:
             'H': 两组命名人来自于同一个学名, 但是其中有学名可能省略了一些命名人
             'M': 两组命名人可能来自于同一个学名, 但命名人需要人工进一步考证
             'L': 两组命名人可能来自于不同人发表的同名名称，或者两个名称的命名人存在明显的冲突
+            'E': 命名人写法可能存在错误，无法比较
         """
-        # 1. 拆分命名人, 获得嵌套的命名人列表
-        authors_group1 = self.segment_authorships(authorship1, nested=True)
-        authors_group2 = self.segment_authorships(authorship2, nested=True)
-        # 2. 根据两个命名人的构成模式, 选择不同的相似度计算方法
-        degreen = self._authorship_similar_degreen(authors_group1, authors_group2)
+        try:
+            # 1. 拆分命名人, 获得嵌套的命名人列表
+            authors_group1 = self.segment_authorships(authorship1, nested=True)
+            authors_group2 = self.segment_authorships(authorship2, nested=True)
+            # 2. 根据两个命名人的构成模式, 选择不同的相似度计算方法
+            degreen = self._authorship_similar_degreen(authors_group1, authors_group2)
+        except ValueError:
+            degreen = -1
         return degreen
         
 
     def _authorship_similar_degreen(self, authors_group1, authors_group2):
-        """根据两个命名人的构成模式, 选择不同的相似度计算方法
+        """根据两个命名人的构成模式, 选择不同的相似度计算方法，返回两组学名命名人的相似度等级
             
         Args:
             authors_group1 (list): 命名人列表，如 [["Hook. f.", "Thomson"], ["Regel"]]
             authors_group2 (list): 命名人列表，如 [["Wall."]]
         
         Returns:
-            str: 'S', 'H', 'M', 'L'
+            3: 完全相同的人名组合
+            2: 其中一个学名命名人的组合缺失了一些命名人信息
+            1: 两组命名人比较相像，但是命名人之间的发表关系需要进一步澄清
+            0: 不同的命名人组合
+        Raises:
+            ValueError: 两组命名人的组合无法比较
         """
         authors1, authors2 = sorted([authors_group1, authors_group2], key=lambda v: len(v))
         comb = {len(authors1), len(authors2)}
         # a => a
         if comb == {1, 1}:
-            degreen, score = self._authors_similar_degreen(authors_group1[0], authors_group2[0])
+            degreen = self._authors_similar_degreen(authors_group1[0], authors_group2[0])
         elif comb == {1, 3}:
             # a => a ex b
             if authors2[0] is None:
-                # a ex b => a
-                # if a => S,H,M => M
-                # if a => L => L
-                # a ex b => b
-                # if b => S => S
-                # if b => H => H
-                # if b => M => M
-                # if b => L => L
-                # a ex b => c
-                # if b => c => M => M
-                # if b => c => H => M
-                degreen1, score1 = self._authors_similar_degreen(authors1[0], authors2[1])
-                degreen2, score2 = self._authors_similar_degreen(authors1[0], authors2[-1])
-                if degreen1 == 0:
-                    return degreen2
-                elif degreen2 == 3:
-                    raise ValueError
-                elif degreen1 == 3 and degreen2 > 0:
-                    raise ValueError
-                else:
-                    return 1
+                degreen1 = self._authors_similar_degreen(authors1[0], authors2[1])
+                degreen2 = self._authors_similar_degreen(authors1[0], authors2[-1])
+                degreen = self._a_vs_aexb(degreen1, degreen2)
             # a => (a)b
             elif authors2[-1] is None:
-                # a => (b)a
-                # if a => S,H,M => M
-                # if a => L => L
-                # a => (a)b 
-                # if a => S,H,M,L => L
-                # a => (a)a => M
-                degreen1, score1 = self._authors_similar_degreen(authors1[0], authors2[0])
-                degreen2, score2 = self._authors_similar_degreen(authors1[0], authors2[1])
-                if degreen2 > 0:
-                    return 1
-                else:
-                    return 0
+                degreen2 = self._authors_similar_degreen(authors1[0], authors2[1])
+                degreen = self._a_vs_ab(degreen2)
             else:
-               print(authors1, authors2) 
-               raise ValueError
+                raise ValueError
         elif comb == {3, 3}:
             # a ex b => a ex b
             if authors1[0] is None and authors2[0] is None:
-                degreen1, score1 = self._authors_similar_degreen(authors1[1], authors2[1])
-                degreen2, score2 = self._authors_similar_degreen(authors1[-1], authors2[-1])
-                # if a ex b => S ex S => S
-                # if a ex b => H ex S => S
-                # if a ex b => M ex S => H
-                # if a ex b => S ex H => H
-                # if a ex b => H ex H => H
-                # if a ex b => S ex M => M
-                # if a ex b => H ex M => M
-                # if a ex b => M ex H => M
-                # if a ex b => M ex M => M
-                # a ex b => b ex a
-                # a ex b => a ex c
-                # a ex b => c ex a
-                # a ex b => c ex b
-                # a ex b => b ex c
-                # if a ex b => S ex L => L
-                # if a ex b => H ex L => L
-                # if a ex b => M ex L => L
-                # if a ex b => L ex S => L
-                # if a ex b => L ex H => L
-                # if a ex b => L ex M => L
-                # if a ex b => L ex L => L
-                if degreen1 == 0:
-                    return 0
-                elif degreen2 == 0:
-                    return 0
-                elif degreen2 == 1:
-                    return 1
-                elif degreen2 == 3 and degreen1 > 1:
-                    return 3
-                elif degreen2 + degreen1 >= 4:
-                    return 2
-                else:
-                    print(authors1, authors2)
-                    raise ValueError
+                degreen1 = self._authors_similar_degreen(authors1[1], authors2[1])
+                degreen2 = self._authors_similar_degreen(authors1[-1], authors2[-1])
+                degreen = self._aexb_vs_aexb(degreen1, degreen2)
             # a ex b => (a)b
             elif authors1[0] is None and authors2[-1] is None or authors1[-1] is None and authors2[0] is None:
-                # a ex b => (n)m => L
-                return 0
+                degreen = 0
             # (a)b => (a)b
             elif authors1[-1] is None and authors2[-1] is None:
-                degreen1, score1 = self._authors_similar_degreen(authors1[0], authors2[0])
-                degreen2, score2 = self._authors_similar_degreen(authors1[1], authors2[1])
-                # (a)b => (a)b
-                # if (a)b => (S)S => S
-                # if (a)b => (S)H => H
-                # if (a)b => (H)S => H
-                # if (a)b => (H)H => H
-                # if (a)b => (S)M => M
-                # if (a)b => (H)M => M
-                # if (a)b => (M)M => M
-                # if (a)b => (M)S => M
-                # if (a)b => (M)H => M
-                # (a)b => (b)a
-                # (a)b => (a)c
-                # (a)b => (c)a
-                # (a)b => (c)b
-                # (a)b => (b)c
-                # if (a)b => (H)L => L
-                # if (a)b => (S)L => L
-                # if (a)b => (M)L => L
-                # if (a)b => (L)S => L
-                # if (a)b => (L)H => L
-                # if (a)b => (L)M => L
-                # if (a)b => (L)L => L
-                if degreen1 == 0 or degreen2 == 0:
-                    return 0
-                elif degreen1 == 1 or degreen2 == 1:
-                    return 1
-                elif degreen1 == 3 and degreen2 == 3:
-                    return 3
-                else:
-                    return 2
+                degreen1 = self._authors_similar_degreen(authors1[0], authors2[0])
+                degreen2 = self._authors_similar_degreen(authors1[1], authors2[1])
+                degreen = self._ab_vs_ab(degreen1, degreen2)
             else:
-                 pass
+                raise ValueError
         # 复杂的命名人组合, 递归处理
+        elif authors2[0] is None:
+            degreen = self._authorship_similar_degreen(authors1, authors2[1:])
+        elif authors2[-1] is None:
+            pass
         else:
             pass
+        return degreen
+    
+    def _a_vs_aexb(self, degreen1, degreen2):
+        if degreen1 == 0:
+            return degreen2
+        elif degreen2 == 3:
+            raise ValueError
+        elif degreen1 == 3 and degreen2 > 0:
+            raise ValueError
+        else:
+            return 1
 
+    def _a_vs_ab(self, degreen2):
+        if degreen2 > 0:
+            return 1
+        else:
+            return 0
+    
+    def _aexb_vs_aexb(self, degreen1, degreen2):
+        if degreen1 == 0:
+            return 0
+        elif degreen2 == 0:
+            return 0
+        elif degreen2 == 1:
+            return 1
+        elif degreen2 == 3 and degreen1 > 1:
+            return 3
+        elif degreen2 + degreen1 >= 4:
+            return 2
+        else:
+            raise ValueError
+
+    def _ab_vs_ab(self, degreen1, degreen2):
+        if degreen1 == 0 or degreen2 == 0:
+            return 0
+        elif degreen1 == 1 or degreen2 == 1:
+            return 1
+        elif degreen1 == 3 and degreen2 == 3:
+            return 3
+        else:
+            return 2
 
     def _authors_similar_degreen(self, authors1, authors2):
         """评价两组命名人的相似度
@@ -1191,9 +1152,11 @@ class BioName:
             2: authors1 或者 authors2 中缺失了另一个人名组中的一些命名人
             1: authors1 和 athours2 中互有一些不同的命名人
             0: authors1 和 authors2 中没有相同的命名人
+        Raises:
+            ValueError: 两组命名人的组合无法比较
         """
         scores = self._caculate_simlar_score(authors2, authors1)
-        score= sum(scores)/len(scores)
+        # score= sum(scores)/len(scores)
         if set(scores) == {0}: 
             degreen = 0
         elif 0 in scores:
@@ -1205,8 +1168,7 @@ class BioName:
             degreen = 3
         else:
             degreen = 2
-        return degreen, score
-
+        return degreen
 
     def clean_author(self, author):
         aut = author.replace(".", " ")
@@ -1328,6 +1290,8 @@ class BioName:
                     author_team.append(None)
             else:
                 raise ValueError
+        elif len(author_team) == 4 and authorship.count(' ex ') == 2:
+            pass
         else:
             raise ValueError
         # 命名人可能是有一至多个部分组成，这里通过四种模式猜测可能的名称组成形式
