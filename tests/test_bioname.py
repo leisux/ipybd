@@ -287,7 +287,7 @@ scientificname_split_samples = [('Decaneuropsis cumingiana (Benth.)H.Rob.& Skvar
 @pytest.mark.parametrize("scientific_name, correct_split_name", scientificname_split_samples)
 def test_split_name(scientific_name, correct_split_name):
     split_name = BioName([scientific_name]).format_latin_names('fullPlantSplitName')
-    assert correct_split_name == split_name[0]
+    assert split_name[0] == correct_split_name 
 
 
 # create a list of tuples with the non-ascii author names and the correct ascii author names
@@ -303,7 +303,7 @@ scientificname_authorship_samples = [('Hook. f.', 'Hook. f.'),
 def test_ascii_authors(authorship, correct_authorship):
     instance = BioName([])
     ascii_authorship = instance.ascii_authors(authorship)
-    assert correct_authorship == ascii_authorship
+    assert ascii_authorship == correct_authorship 
 
 # create a list of tuples with the authorship and the correct author team
 scientificname_author_team_samples = [('Hook. f.', [['Hook. f.',]]),
@@ -333,60 +333,22 @@ scientificname_author_team_samples = [('Hook. f.', [['Hook. f.',]]),
 @pytest.mark.parametrize('authorship, correct_author_team', scientificname_author_team_samples)
 def test_get_author_team(authorship, correct_author_team):
     instance = BioName([])
-    author_team = instance.get_author_team(authorship)
-    assert correct_author_team == author_team
+    author_team = instance.get_author_team(authorship, nested=True)
+    assert author_team == correct_author_team
 
 
-# create a list of tuples with the authorship and the simlar authorship
-similar_authorship_samples = [('Thunb. ex Murray', 'Thunb.', 'M'),
-                          ('Thunb. ex Murray', 'Murray', 'S'),
-                          ('(Wall.) Hook. f. et Thoms.', 'Wall.', 'L'),
-                          ('(Wall.) Hook. f. et Thoms.', '(Wall.) Hook. f.', 'H'),
-                          ('(Wall.) Hook. f. et Thoms.', '(Wall.) Thoms.', 'H'),
-                          ('(Wall.) Hook. f. et Thoms.', 'Hook. & Thoms.', 'M'),
-                          ('(H.Magn.) N.S.Golubk.', '(H.Magn.) J.C.Wei', 'L'),
-                          ('(Hayata) Ching', '(Hayata) Ching ex S.H.Wu', 'L'),
-                          ('Ching ex S.H.Wu', 'Ching', 'L'),
-                          ('Ching et S.K.Wu', '(Sledge) Ching & S.K.Wu', 'M'),
-                          ('(Brause) Hieron', 'Brause', 'L'),
-                          ('(Presl) Underw.', '(Hook.) Underw.', 'L'),
-                          ('C.Y.Wu ex C.C.Hu', '(W.W.Sm.) C.Y.Wu & C.C.Hu', 'L'),
-                          ('W.W.Sm. & C.Y.Wu ex C.C.Hu', '(W.W.Sm.) C.Y.Wu & C.C.Hu', 'L'),
-                          ('C.Y.Wu ex C.C.Hu', 'W.W.Sm. & C.Y.Wu & C.C.Hu', 'M'),
-                          ('Ching et S.H.Wu', 'Ching', 'H'),
-                          ('(Hayata) Ching', '(Hayata) Ching et S.H.Wu', 'H'),
-                          ('(Brid.) B.S.G.', '(Brid.) Bruch & Schimp.', 'L'),
-                          ('H.Lev.', 'H.Lév. & Vaniot', 'H'),
-                          ('H.W.Li', 'H.W.Li & S.K.Chen', 'H'),
-                          ('(Ching) Ching et Y.X.Lin', '(Ching) Y.X.Lin', 'H'),
-                          ('(Bedd. ex Clarke et Bak.) Ching', '(Bedd. ex C.B.Clarke & Baker) Ching', 'S'),
-                          ('(Bedd. ex Clarke et Bak.) Ching', '(Bedd. ex C.B.Clarke) Ching', 'H'),
-                          ('(Clarke et Bak.) Ching', '(Bedd. ex C.B.Clarke & Baker) Ching', 'S'),
-                          ('(Bedd. ex Clarke) Ching', '(Bedd. ex C.B.Clarke & Baker) Ching', 'H'),
-                          ('(Clarke) Ching', '(Bedd. ex C.B.Clarke & Baker) Ching', 'H'),
-                          ('(Bedd.) Ching', '(Bedd. ex C.B.Clarke) Ching', 'M'),
-                          ('Thunberg', 'Thunb.', 'S'),
-                          ('Thunberg', 'Thunb.', 'S'),
-                          ('(Dunn) Li', '(Dunn) H.L.Li', 'S'),
-                          ('(Mart. et Galeot.) Ching', '(M.Martens & Galeotti) Ching', 'S')]
 
-# use the parametrize decorator to test the instance method get_best_name of the BioName class
+# use the parametrize decorator to test the instance method get_similar_degreen of the BioName class
 
-# set four different degrees of authorship similarity => L: low, H: high, M: medium, S: same 
-# S: they are the same authorships
-# H: some authors cannot be found in one of the authorships
-# M: some authors are different in each others
-# L: the auhtorships may come from different names or at least one of the names is wrong, 
+# set four different degrees of authorship similarity => L: low, H: high, M: medium, S: same, E:error
+# 3: they are the same authorships
+# 2: some authors cannot be found in one of the authorships
+# 1: some authors are different in each others
+# 0: the auhtorships may come from different names or at least one of the names is wrong, 
 #    this would make the mapping relationship between the names untenable
-
-
+# -1: error authorship
 
 # the model of scientific name similarity:
-
-# S: 完全相同的名称
-# H: 同一个名字，但是其中有一个名称的学名缺失了一些命名人信息
-# M: 可能是同一个名字，但是名称的发表关系需要进一步澄清
-# L: 不同人发表的同名名称，或者两个名称的关系存在明显的冲突
 
 # a => a
   # if a => S => S
@@ -463,6 +425,45 @@ similar_authorship_samples = [('Thunb. ex Murray', 'Thunb.', 'M'),
   # if a ex b => L ex M => L
   # if a ex b => L ex L => L
 
+# create a list of tuples with the authorship and the simlar authorship
+similar_authorship_samples = [
+                          ('Thunb. ex Murray', 'Thunb.', 1),
+                          ('(Brid.) B.S.G.', '(Brid.) Bruch & Schimp.', 0),
+                          ('(Dunn) Li', '(Dunn) H.L.Li', 3),
+                          ('Thunb. ex Murray', 'Murray', 3),
+                          ('(Wall.) Hook. f. et Thoms.', 'Wall.', 0),
+                          ('(Wall.) Hook. f. et Thoms.', '(Wall.) Thoms.', 2),
+                          ('(Wall.) Hook. f. et Thoms.', 'Hook. & Thoms.', 1),
+                          ('(Wall.) Hook. f. et Thoms.', '(Wall.) Hook. f.', 2),
+                          ('(H.Magn.) N.S.Golubk.', '(H.Magn.) J.C.Wei', 0),
+                          ('(Hayata) Ching', '(Hayata) Ching ex S.H.Wu', 1),
+                          ('Ching ex S.H.Wu', 'Ching', 1),
+                          ('Ching et S.K.Wu', '(Sledge) Ching & S.K.Wu', 1),
+                          ('(Brause) Hieron', 'Brause', 0),
+                          ('(Presl) Underw.', '(Hook.) Underw.', 0),
+                          ('C.Y.Wu ex C.C.Hu', '(W.W.Sm.) C.Y.Wu & C.C.Hu', 0),
+                          ('W.W.Sm. & C.Y.Wu ex C.C.Hu', '(W.W.Sm.) C.Y.Wu & C.C.Hu', 0),
+                          ('C.Y.Wu ex C.C.Hu', 'W.W.Sm. & C.Y.Wu & C.C.Hu', 1),
+                          ('Ching et S.H.Wu', 'Ching', 2),
+                          ('(Hayata) Ching', '(Hayata) Ching et S.H.Wu', 2),
+                          ('H.Lev.', 'H.Lév. & Vaniot', 2),
+                          ('H.W.Li', 'H.W.Li & S.K.Chen', 2),
+                          ('(Ching) Ching et Y.X.Lin', '(Ching) Y.X.Lin', 2),
+                          ('(Bedd. ex Clarke et Bak.) Ching', '(Bedd. ex C.B.Clarke & Baker) Ching', 3),
+                          ('(Bedd. ex Clarke et Bak.) Ching', '(Bedd. ex C.B.Clarke) Ching', 2),
+                          ('(Bedd. ex Clarke) Ching', '(Bedd. ex C.B.Clarke & Baker) Ching', 2),
+                          ('(Clarke et Bak.) Ching', '(Bedd. ex C.B.Clarke & Baker) Ching', 3),
+                          ('(Clarke) Ching', '(Bedd. ex C.B.Clarke & Baker) Ching', 2),
+                          ('(Bedd.) Ching', '(Bedd. ex C.B.Clarke) Ching', 1),
+                          ('Thunberg', 'Thunb.', 3),
+                          ('Thunberg', 'Thunb.', 3),
+                          ('(Mart. et Galeot.) Ching', '(M.Martens & Galeotti) Ching', 3)]
+
+@pytest.mark.parametrize("authorship1, authorship2, correct_degreen", similar_authorship_samples)
+def test_get_similar_degreen(authorship1, authorship2, correct_degreen):
+    instance = BioName([])
+    degreen = instance.get_similar_degreen(authorship1, authorship2)
+    assert degreen == correct_degreen
 
 
 

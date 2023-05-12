@@ -526,20 +526,7 @@ class BioName:
                         return name
                 return names[0]
             else:
-                for name in names:
-                    try:
-                        name['authorTeam'] = self.get_author_team(
-                            name['Author'])
-                    except:
-                        name['Author'] = None
-                        name['authorTeam'] = []
-                std_teams = [r['authorTeam'] for r in names]
-                # 开始比对原命名人与可选学名的命名人的比对结果
-                index = self.get_similar_authorship(authors, std_teams)
-                if index is not None:
-                    return names[index]
-                else:
-                    return None
+                return self.get_similar_authorship(authors, names, 'Author')
 
     async def tropicos_search(self, api, query, filters, session):
         params = self._build_tropicos_params(query, filters)
@@ -586,13 +573,7 @@ class BioName:
             for res in results:
                 if query[1] is Filters.specific or query[1] is Filters.infraspecific:
                     if res['scientific_name'] == query[0]:
-                        try:
-                            res['author_team'] = self.get_author_team(
-                                res['author'])
-                        except KeyError:
-                            res['author_team'] = []
-                        finally:
-                            names.append(res)
+                        names.append(res)
                 # col 接口目前尚无属一级的内容返回，这里先取属下种及种
                 # 下一级的分类阶元返回。
                 elif query[1] is Filters.generic:
@@ -613,13 +594,7 @@ class BioName:
                         return name
                 return names[0]
             else:
-                std_teams = [r['author_team'] for r in names]
-                # 开始比对原命名人与可选学名的命名人的比对结果
-                index = self.get_similar_authorship(authors, std_teams)
-                if index is not None:
-                    return names[index]
-                else:
-                    return None
+                return self.get_similar_authorship(authors, names, 'author')
 
     async def col_search(self, query, filters, session):
         params = self._build_col_params(query, filters)
@@ -686,28 +661,7 @@ class BioName:
             elif authors == []:
                 return names[0]
             else:
-                std_teams = []
-                for r in names:
-                    author_team = [a["name"] for a in r["authorTeam"]]
-                    if author_team:
-                        std_teams.append(author_team)
-                    else:
-                        # ipni 一些学名的检索返回会有 authorTeam = []
-                        # 但 authors 却有值的情况，此时可以基于 authors
-                        # 生成可用于比对的 authorTeam
-                        try:
-                            std_teams.append(
-                                self.get_author_team(r['authors']))
-                        except KeyError:
-                            # ipni 有些标注为 auct.not_stated 的名称，没有任何命名人信息
-                            r['authors'] = None
-                            std_teams.append([])
-                # 开始比对原命名人与可选学名的命名人的比对结果
-                index = self.get_similar_authorship(authors, std_teams)
-                if index is not None:
-                    return names[index]
-                else:
-                    return None
+                return self.get_similar_authorship(authors, names, 'authors')
 
     async def get_powo_name(self, query, session):
         """ 从 KEW API 返回的最佳匹配中，获得学名及其科属分类阶元信息
@@ -733,14 +687,6 @@ class BioName:
             names = []
             for res in results:
                 if res["name"] == query[0]:
-                    try:
-                        res['authorTeam'] = self.get_author_team(res['author'])
-                    except KeyError:
-                        # 如果查询的结果中没有命名人信息,则补充空值
-                        # 如果匹配结果只有这一个结果，采用该结果
-                        # 如果匹配结果有多个，该结果后续将因 autorTeam 为空排除
-                        res['author'] = None
-                        res['authorTeam'] = []
                     names.append(res)
             authors = self.get_author_team(query[2])
             # 如果搜索名称和返回名称不一致，标注后待人工核查
@@ -754,13 +700,7 @@ class BioName:
                         return name
                 return names[0]
             else:
-                std_teams = [r['authorTeam'] for r in names]
-                # 开始比对原命名人与可选学名的命名人的比对结果
-                index = self.get_similar_authorship(authors, std_teams)
-                if index is not None:
-                    return names[index]
-                else:
-                    return None
+                return self.get_similar_authorship(authors, names, 'author')
 
     async def kew_search(self, query, filters, api, session):
         params = self._build_kew_params(query, filters)
@@ -795,14 +735,11 @@ class BioName:
         return results
 
     def check_native_name(self, query, similar_names):
-        author_teams = []
         homonym = []
         for name in similar_names:
             split_name = self._format_name(name)
             name = self.built_name_style(split_name, 'apiName')
             if name[0] == query[0]:
-                author_team = self.get_author_team(name[1])
-                author_teams.append(author_team)
                 homonym.append(name)
             else:
                 continue
@@ -812,11 +749,7 @@ class BioName:
             if not org_author_team:
                 return homonym[0]
             # 如果查询名称和可匹配名称均不缺少命名人, 进行命名人比较，确定最优
-            index = self.get_similar_authorship(org_author_team, author_teams)
-            if index is not None:
-                return homonym[index]
-            else:
-                return None
+            return self.get_similar_authorship(org_author_team, homonym, 1)
         else:
             return None
 
@@ -963,60 +896,6 @@ class BioName:
             raw2stdname[raw_name] = self.built_name_style(split_name, pattern)
         return [raw2stdname[name] for name in self.names]
 
-    def get_similar_authorship(self, author_team, author_teams):
-        """
-        return: 返回最佳匹配名称的序号，如果没有，则返回 None
-        """
-        scores = self.contrast_authors(author_team, author_teams)
-        scores.sort(key=lambda s: s[0], reverse=True)
-        if scores[0][0]:
-            # 这里默认没有得分相同的名字
-            # 但现实可能会存在这种情况
-            # 如果真存在这种情况，就需要去优化 contrast_authors
-            return scores[0][1]
-        else:
-            return None
-
-    def contrast_authors(self, author_team, author_teams):
-        """ 将一个学名的命名人和一组学名的命名人编码进行比较，以确定最匹配的
-
-        author_team: 一个学名命名人列表, 如["Hook. f.", "Thomos."], 不可以为 []
-
-        author_teams: 一组包含多个学名命名人列表的的列表，一般来自于多个同名拉丁名的命名人, 可以为 [[]], 不可以为 None
-
-        return: 返回一个与原命名人匹配亲近关系排列的list
-        """
-        raw_team = [self.clean_author(author) for author in author_team]
-        s_teams_score = []
-        for n, std_team in enumerate(author_teams):
-            std_team = [self.clean_author(author) for author in std_team]
-            score = self._caculate_simlar_score(raw_team, std_team)
-            s_team_score = sum(score)/len(score)
-            s_teams_score.append((s_team_score, n))
-        return s_teams_score
-    
-    def _caculate_simlar_score(self, author_team1, author_team2):
-        score = []
-        for author in author_team1:
-            match = process.extract(
-                author, author_team2, scorer=fuzz.token_sort_ratio)
-            try:
-                best_ratio = max(match, key=lambda v: v[1])
-                # 这里要求一个命名人的姓的首字母，必须要在比对的名称之中
-                # 否则即便匹配对比较高，也不会认为是同一个人
-                # 比如 Regel Wall. 与 Regel 匹配度就会被强制转为 0
-                # 主要是因为不管是中西方人名，命名人的姓都是非常重要的
-                # 通常不应该丢失，这里需要注意的可能有一些中国命名人的姓
-                # 是写在前面的,不过中文名字各部分一般不会省略，因此不影响
-                # 判断
-                if author.split()[-1][0] in best_ratio[0]:
-                    score.append(best_ratio[1])
-                else:
-                    score.append(0)
-            except ValueError:
-                # 有些参与比对的学名，命名人可能为 []
-                score.append(0)
-        return score
 
     def get_similar_degreen(self, authorship1, authorship2):
         """比较两个学名的命名人, 并返回相似等级
@@ -1032,18 +911,18 @@ class BioName:
             'L': 两组命名人可能来自于不同人发表的同名名称，或者两个名称的命名人存在明显的冲突
             'E': 命名人写法可能存在错误，无法比较
         """
+        # 1. 拆分命名人, 获得嵌套的命名人列表
+        authors_group1 = self.get_author_team(authorship1, nested=True)
+        authors_group2 = self.get_author_team(authorship2, nested=True)
+        # 2. 根据两个命名人的构成模式, 选择不同的相似度计算方法
         try:
-            # 1. 拆分命名人, 获得嵌套的命名人列表
-            authors_group1 = self.segment_authorships(authorship1, nested=True)
-            authors_group2 = self.segment_authorships(authorship2, nested=True)
-            # 2. 根据两个命名人的构成模式, 选择不同的相似度计算方法
-            degreen = self._authorship_similar_degreen(authors_group1, authors_group2)
+            degreen = self._caculate_similar_degreen(authors_group1, authors_group2)
         except ValueError:
             degreen = -1
         return degreen
         
 
-    def _authorship_similar_degreen(self, authors_group1, authors_group2):
+    def _caculate_similar_degreen(self, authors_group1, authors_group2):
         """根据两个命名人的构成模式, 选择不同的相似度计算方法，返回两组学名命名人的相似度等级
             
         Args:
@@ -1059,11 +938,11 @@ class BioName:
             ValueError: 两组命名人的组合无法比较
         """
         authors1, authors2 = sorted([authors_group1, authors_group2], key=lambda v: len(v))
-        comb = {len(authors1), len(authors2)}
+        comb = len(authors1), len(authors2)
         # a => a
-        if comb == {1, 1}:
+        if comb == (1, 1):
             degreen = self._authors_similar_degreen(authors_group1[0], authors_group2[0])
-        elif comb == {1, 3}:
+        elif comb == (1, 3):
             # a => a ex b
             if authors2[0] is None:
                 degreen1 = self._authors_similar_degreen(authors1[0], authors2[1])
@@ -1075,7 +954,7 @@ class BioName:
                 degreen = self._a_vs_ab(degreen2)
             else:
                 raise ValueError
-        elif comb == {3, 3}:
+        elif comb == (3, 3):
             # a ex b => a ex b
             if authors1[0] is None and authors2[0] is None:
                 degreen1 = self._authors_similar_degreen(authors1[1], authors2[1])
@@ -1091,13 +970,53 @@ class BioName:
                 degreen = self._ab_vs_ab(degreen1, degreen2)
             else:
                 raise ValueError
-        # 复杂的命名人组合, 递归处理
-        elif authors2[0] is None:
-            degreen = self._authorship_similar_degreen(authors1, authors2[1:])
-        elif authors2[-1] is None:
-            pass
+        # 复杂的命名人组合 
+        elif comb == (1, 4):
+            if authors2[0] is None:
+                del authors2[1]
+                degreen2 = self._caculate_similar_degreen(authors1, authors2)
+            elif authors2[-1] is None:
+                degreen2 = self._caculate_similar_degreen(authors1, authors2[2:-1])
+            else:
+                degreen2 = self._caculate_similar_degreen(authors1, [None]+authors2[2:])
+            degreen = self._a_vs_ab(degreen2)
+        elif comb == (3, 4):
+            if authors1[0] is None:
+                if authors2[0] is None:
+                    del authors2[1]
+                    degreen2 = self._caculate_similar_degreen(authors1, authors2)
+                elif authors2[-1] is None:
+                    degreen2 = 0
+                else:
+                    degreen2 = self._caculate_similar_degreen(authors1, [None]+authors2[2:])
+                degreen = self._a_vs_ab(degreen2)
+            else:
+                if authors2[0] is None:
+                    authors11, authors21 = authors1[:1], authors2[1:2]
+                    del authors2[1]
+                    authors12, authors22 = authors1[1:-1], authors2
+                elif authors2[-1] is None:
+                    authors11, authors21 = authors1[:1], [None]+authors2[:2]
+                    authors12, authors22 = authors1[1:-1], authors2[2:-1]
+                else:
+                    authors11, authors21 = authors1[:1], [None]+authors2[:2]
+                    authors12, authors22 = authors1[1:-1], [None]+authors2[2:]
+                degreen1 = self._caculate_similar_degreen(authors11, authors21)
+                degreen2 = self._caculate_similar_degreen(authors12, authors22)
+                degreen = self._ab_vs_ab(degreen1, degreen2)
+        elif comb == (4, 4):
+            authors11, authors12 = authors1[:2], authors1[2:]
+            authors21, authors22 = authors2[:2], authors2[2:]
+            for authors in (authors11, authors12, authors21, authors22):
+                if None in authors:
+                    authors.remove(None)
+                else:
+                    authors.insert(0, None)
+            degreen1 = self._caculate_similar_degreen(authors11, authors21)
+            degreen2 = self._caculate_similar_degreen(authors12, authors22)
+            degreen = self._ab_vs_ab(degreen1, degreen2)
         else:
-            pass
+            raise ValueError
         return degreen
     
     def _a_vs_aexb(self, degreen1, degreen2):
@@ -1141,7 +1060,7 @@ class BioName:
             return 2
 
     def _authors_similar_degreen(self, authors1, authors2):
-        """评价两组命名人的相似度
+        """评价 authors2 与 authors1 的相似度
 
         Args:
             authors1 (list): 学名中单个人名，或者使用等同 and 符连接的一组命名人，如 ["Hook. f.", "Thomson"]
@@ -1155,6 +1074,8 @@ class BioName:
         Raises:
             ValueError: 两组命名人的组合无法比较
         """
+        authors1 = [self.clean_author(author) for author in authors1]
+        authors2 = [self.clean_author(author) for author in authors2]
         scores = self._caculate_simlar_score(authors2, authors1)
         # score= sum(scores)/len(scores)
         if set(scores) == {0}: 
@@ -1170,12 +1091,81 @@ class BioName:
             degreen = 2
         return degreen
 
+    def get_similar_authorship(self, author_team, names, index):
+        """
+        return: 返回最佳匹配名称的序号，如果没有，则返回 None
+        """
+        author_teams = []
+        for name in names:
+            try:
+                authors = self.get_author_team(name[index])
+                author_teams.append(authors)
+            except KeyError:
+                author_teams.append([])
+        # 先根据整体的相似度获得最相似的命名人索引
+        scores = self.get_similar_scores(author_team, author_teams)
+        scores.sort(key=lambda s: s[0], reverse=True)
+        if scores[0][0]:
+            name = names(scores[0][1])
+
+            degreen = self.get_similar_degreen(author_team, name[index])
+            return degreen
+
+
+        else:
+            return None
+
     def clean_author(self, author):
         aut = author.replace(".", " ")
         aut = aut.replace("-", " ")
         aut = aut.replace("'", " ")
         aut = aut.replace("  ", " ")
         return aut.strip()
+
+    def get_similar_scores(self, author_team, author_teams):
+        """ 将一个学名的命名人和一组学名的命名人编码进行比较，以确定最匹配的
+
+        author_team: 一个学名命名人列表, 如["Hook. f.", "Thomos."], 不可以为 []
+
+        author_teams: 一组包含多个学名命名人列表的的列表，一般来自于多个同名拉丁名的命名人, 可以为 [[]], 不可以为 None
+
+        return: 返回一个与原命名人匹配亲近关系排列的list
+        """
+        raw_team = [self.clean_author(author) for author in author_team]
+        s_teams_score = []
+        for n, std_team in enumerate(author_teams):
+            std_team = [self.clean_author(author) for author in std_team]
+            score = self._caculate_simlar_score(raw_team, std_team)
+            s_team_score = sum(score)/len(score)
+            s_teams_score.append((s_team_score, n))
+        return s_teams_score
+    
+    def _caculate_simlar_score(self, author_team1, author_team2):
+        score = []
+        for author in author_team1:
+            match = process.extract(
+                author, author_team2, scorer=fuzz.token_sort_ratio)
+            try:
+                best_ratio = max(match, key=lambda v: v[1])
+                # 这里要求一个命名人的姓的首字母，必须要在比对的名称之中
+                # 否则即便匹配对比较高，也不会认为是同一个人
+                # 比如 Regel Wall. 与 Regel 匹配度就会被强制转为 0
+                # 主要是因为不管是中西方人名，命名人的姓都是非常重要的
+                # 通常不应该丢失，这里需要注意的可能有一些中国命名人的姓
+                # 是写在前面的,不过中文名字各部分一般不会省略，因此不影响
+                # 判断
+                author1 = author.split()[-1]
+                author2 = best_ratio[0].split()[-1]
+                if author1 in best_ratio[0]:
+                    score.append(best_ratio[1])
+                elif author2 in author:
+                    score.append(best_ratio[1])
+                else:
+                    score.append(0)
+            except ValueError:
+                # 有些参与比对的学名，命名人可能为 []
+                score.append(0)
+        return score
 
     def strip_accents(self, text):
         """尽最大可能将字符串中衍生的拉丁字母转换为英文字母
@@ -1218,7 +1208,8 @@ class BioName:
         """将一个学名的命名人文本拆分为多组命名人构成的列表, 并给出命名人的构成模式
 
         Args:
-            authorship (str): 学名中的命名人，如 "Hook. f. & Thomson ex Regel"
+            authors (str): 学名中的命名人，如 "Hook. f. & Thomson ex Regel"
+            nested (bool, optional): 是否将命名人按照集合以列表嵌套的方式进行返回. Defaults to False.
 
         Returns:
             list: 拆分后的命名人列表，如 [("Hook. f.", "Thomson"), ("Regel",)]
@@ -1234,15 +1225,12 @@ class BioName:
         authors = authors.split(' in ')[0].strip() if ' in ' in authors else authors
         try:
             authors = self.ascii_authors(authors)
-        # authors 为空
-        except AttributeError:
-            return []
-        try:
-            return self.segment_authorship(authors, nested=nested)
-        except ValueError:
-            pass
-    
-    def segment_authorship(self, authorship, nested=False):
+            return self._segment_authorship(authors, nested=nested)
+        # authors 为空, 或者拼写有误
+        except (AttributeError, ValueError):
+            return [] 
+
+    def _segment_authorship(self, authorship, nested=False):
         """将一个学名的命名人文本拆分为多组命名人构成的列表
 
         Args:
@@ -1263,6 +1251,8 @@ class BioName:
                 [["Hayata", ], ["Ching", ], None],
                 [None, ["Hayata", ], ["Ching", ], ["S.H.Wu", ]], 
                 [["Bedd.", ], [C.B.Clarke", "Baker"], ["Ching", ], None]
+        Raises:
+            ValueError: authorship 书写有误
         """
         p = re.compile(
             r"(?:^|\(\s*|\s+et\s+|\s+ex\s+|\&\s*|\,\s*|\)\s*|\s+and\s+|\[\s*|\（\s*|\）\s*|\，\s*|\{\s*|\}\s*)([^\s\&\(\)\,\;\.\-\?\，\（\）\[\]\{\}][^\&\(\)\,\;\，\（\）\[\]\{\}]+?(?=\s+ex\s+|\s+et\s+|\s*\&|\s*\,|\s*\)|\s*\(|\s+and\s+|\s+in\s+|\s*\）|\s*\（|\s*\，|\s*\;|\s*\]|\s*\[|\s*\}|\s*\{|\s*$))")
