@@ -672,12 +672,12 @@ class FormatDataset:
         return pattern, headers, concat, new_headers
 
     @get_name
-    def get_native_name(self, *headers, lib:'Series', new_header=('nativeName', 'nativeAuthor'), concat=False):
+    def get_native_name(self, *headers, lib:'Series', new_header=('nativeName', 'nativeAuthor', 'nameMatchDegreen'), concat=False):
         return lib, headers, concat, new_header
 
     @get_name
     def name_spell_check(self, *headers, concat=False):
-        return 'stdName', headers, concat, ('nameSpellCheck', 'nameAuthors', 'mixFamily', 'mixCode')
+        return 'stdName', headers, concat, ('nameSpellCheck', 'nameAuthors', 'mixFamily', 'mixCode', 'nameMatchDegreen')
 
     @get_name
     def get_tropicos_accepted(self, *headers, concat=False):
@@ -686,11 +686,11 @@ class FormatDataset:
     @get_name
     def get_tropicos_name(self, *headers, concat=False):
         return 'tropicosName', headers, concat, ('tropicosName', 'tropicosAuthors',
-                                             'tropicosFamily', 'tropicosNameId')
+                                             'tropicosFamily', 'tropicosNameId', 'nameMatchDegreen')
     @get_name
     def get_ipni_name(self, *headers, concat=False):
         return 'ipniName', headers, concat, ('ipniName', 'ipniAuthors',
-                                             'ipniFamily', 'ipniNameLsid')
+                                             'ipniFamily', 'ipniNameLsid', 'nameMatchDegreen')
 
     @get_name
     def get_ipni_reference(self, *headers, concat=False):
@@ -702,7 +702,7 @@ class FormatDataset:
     @get_name
     def get_powo_name(self, *headers, concat=False):
         return 'powoName', headers, concat, ('powoName', 'powoAuthors',
-                                             'powoFamily', 'ipniNameLsid')
+                                             'powoFamily', 'ipniNameLsid', 'nameMatchDegreen')
 
     @get_name
     def get_powo_images(self, *headers, concat=False):
@@ -721,7 +721,7 @@ class FormatDataset:
     @get_name
     def get_col_name(self, *headers, concat=False):
         return 'colName', headers, concat, ('colName', 'colAuthors',
-                                            'colFamily', 'colCode')
+                                            'colFamily', 'colCode', 'nameMatchDegreen')
 
     @get_name
     def get_col_synonyms(self, *headers, concat=False):

@@ -301,9 +301,10 @@ class BioName:
             author = query_result["author"]
             family = query_result['family']
             ipni_lsid = query_result['fqId']
-            return scientific_name, author, family, ipni_lsid
+            degreen = query_result['match_degreen']
+            return scientific_name, author, family, ipni_lsid, degreen
         else:
-            return None, None, None, None
+            return None, None, None, None, None
 
     def col_accepted(self, query_result):
         try:
@@ -352,6 +353,7 @@ class BioName:
 
     def col_name(self, query_result):
         try:  # 种及种下检索结果
+            degreen = query_result['match_degreen']
             col_name_code = query_result['name_code']
             family = query_result['accepted_name_info']['taxonTree']['family']
             author = query_result['author']
@@ -368,8 +370,8 @@ class BioName:
                 scientific_name = family
                 col_name_code = query_result['record_id']
         except TypeError:
-            return None, None, None, None
-        return scientific_name, author, family, col_name_code
+            return None, None, None, None, None
+        return scientific_name, author, family, col_name_code, degreen
 
     def ipni_name(self, query_result):
         try:
@@ -377,10 +379,11 @@ class BioName:
             author = query_result["authors"]
             family = query_result['family']
             ipni_lsid = query_result['fqId']
+            degreen = query_result['match_degreen']
             # print(query[-1], genus, family, author)
         except TypeError:
-            return None, None, None, None
-        return scientific_name, author, family, ipni_lsid
+            return None, None, None, None, None
+        return scientific_name, author, family, ipni_lsid, degreen
 
     def ipni_reference(self, query_result):
         try:
@@ -410,9 +413,10 @@ class BioName:
             author = query_result['Author']
             family = query_result['Family']
             name_id = query_result['NameId']
-            return scientific_name, author, family, name_id
+            degreen = query_result['match_degreen']
+            return scientific_name, author, family, name_id, degreen
         else:
-            return None, None, None, None
+            return None, None, None, None, None
 
     def tropicos_accepted(self, query_result):
         try:
@@ -515,18 +519,21 @@ class BioName:
         if not names:
             return names
         else:
-            authors = self.get_author_team(query[2])
+            authors = self.get_author_team(query[2], nested=True)
             # 如果有结果，但检索名的命名人缺失，则默认返回第一个accept name
             if authors == []:
                 for name in names:
                     if name['NomenclatureStatusName'] in ["nom. cons.", "Legitimate"]:
+                        name['match_degreen'] = None
                         return name
                 for name in names:
                     if name['NomenclatureStatusName'] == "No opinion":
+                        name['match_degreen'] = None
                         return name
+                names[0]['match_degreen'] = None
                 return names[0]
             else:
-                return self.get_similar_authorship(authors, names, 'Author')
+                return self.get_similar_name(authors, names, 'Author')
 
     async def tropicos_search(self, api, query, filters, session):
         params = self._build_tropicos_params(query, filters)
@@ -579,22 +586,26 @@ class BioName:
                 elif query[1] is Filters.generic:
                     try:
                         if res['accepted_name_info']['taxonTree']['genus'] == query[0]:
+                            res['accepted_name_info']['taxonTree']['match_degreen'] = None
                             return res['accepted_name_info']['taxonTree']
                     except TypeError:
                         continue
                 elif query[1] is Filters.familial and res['family'] == query[0]:
+                    res['match_degreen'] = None
                     return res
-            authors = self.get_author_team(query[2])
+            authors = self.get_author_team(query[2], nested=True)
             if names == []:
                 return None
             # 若检索词命名人缺失，默认使用第一个同名接受名
             elif authors == []:
                 for name in names:
                     if name['name_status'] == 'accepted name':
+                        name['match_degreen'] = None
                         return name
+                names[0]['match_degreen'] = None
                 return names[0]
             else:
-                return self.get_similar_authorship(authors, names, 'author')
+                return self.get_similar_name(authors, names, 'author')
 
     async def col_search(self, query, filters, session):
         params = self._build_col_params(query, filters)
@@ -653,15 +664,16 @@ class BioName:
             for res in results:
                 if res["name"] == query[0]:
                     names.append(res)
-            authors = self.get_author_team(query[2])
+            authors = self.get_author_team(query[2], nested=True)
             if names == []:
                 # print(query)
                 return None
             # 检索词缺命名人，默认使用第一个同名结果
             elif authors == []:
+                names[0]['match_degreen'] = None
                 return names[0]
             else:
-                return self.get_similar_authorship(authors, names, 'authors')
+                return self.get_similar_name(authors, names, 'authors')
 
     async def get_powo_name(self, query, session):
         """ 从 KEW API 返回的最佳匹配中，获得学名及其科属分类阶元信息
@@ -688,7 +700,7 @@ class BioName:
             for res in results:
                 if res["name"] == query[0]:
                     names.append(res)
-            authors = self.get_author_team(query[2])
+            authors = self.get_author_team(query[2], nested=True)
             # 如果搜索名称和返回名称不一致，标注后待人工核查
             if names == []:
                 # print(query)
@@ -697,10 +709,12 @@ class BioName:
             elif authors == []:
                 for name in names:
                     if name['accepted'] == True:
+                        name['match_degreen'] = None
                         return name
+                names[0]['match_degreen'] = None
                 return names[0]
             else:
-                return self.get_similar_authorship(authors, names, 'author')
+                return self.get_similar_name(authors, names, 'author')
 
     async def kew_search(self, query, filters, api, session):
         params = self._build_kew_params(query, filters)
@@ -744,12 +758,12 @@ class BioName:
             else:
                 continue
         if homonym:
-            org_author_team = self.get_author_team(query[2])
+            org_author_team = self.get_author_team(query[2], nested=True)
             # 如果查询名称有命名人, 或者匹配名称没有命名人, 返回匹配但同名结果第一个
             if not org_author_team:
                 return homonym[0]
             # 如果查询名称和可匹配名称均不缺少命名人, 进行命名人比较，确定最优
-            return self.get_similar_authorship(org_author_team, homonym, 1)
+            return self.get_similar_name(org_author_team, homonym, 1)
         else:
             return None
 
@@ -896,13 +910,43 @@ class BioName:
             raw2stdname[raw_name] = self.built_name_style(split_name, pattern)
         return [raw2stdname[name] for name in self.names]
 
+    def get_similar_name(self, authors_group, names, index):
+        """
+        return: 返回最佳匹配名称的序号，如果没有，则返回 None
+        """
+        author_teams = []
+        for name in names:
+            try:
+                authors = self.get_author_team(name[index])
+                author_teams.append(authors)
+            except KeyError:
+                author_teams.append([])
+        # 先根据整体的相似度获得最相似的命名人索引
+        author_team = []
+        for authors in authors_group:
+            if authors:
+                author_team.extend(authors)
+        scores = self.get_similar_scores(author_team, author_teams)
+        scores.sort(key=lambda s: s[0], reverse=True)
+        # 对相似的命名人进行评级
+        if scores[0][0]:
+            name = names[scores[0][1]]
+            authors_group2 = self.get_author_team(name[index], nested=True)
+            degreen = self.get_similar_degreen(authors_group, authors_group2)
+            try:
+                name['match_degreen'] = degreen
+            except TypeError:
+                name.append(degreen)
+            return name
+        else:
+            return None
 
-    def get_similar_degreen(self, authorship1, authorship2):
+    def get_similar_degreen(self, authors_group1, authors_group2):
         """比较两个学名的命名人, 并返回相似等级
 
         Args:
-            authorship1 (str): 学名中的命名人，如 "Hook. f. & Thomson ex Regel"
-            authorship2 (str): 学名中的命名人，如 "Thom."
+            authors_group1 (list): 命名人列表，如 [["Hook. f.", "Thomson"], ["Regel"]]
+            authors_group2 (list): 命名人列表，如 [["Wall."]]
 
         Returns:
             'S': 两组命名人来自于同一个学名, 并且命名人可以一一对应 
@@ -911,10 +955,6 @@ class BioName:
             'L': 两组命名人可能来自于不同人发表的同名名称，或者两个名称的命名人存在明显的冲突
             'E': 命名人写法可能存在错误，无法比较
         """
-        # 1. 拆分命名人, 获得嵌套的命名人列表
-        authors_group1 = self.get_author_team(authorship1, nested=True)
-        authors_group2 = self.get_author_team(authorship2, nested=True)
-        # 2. 根据两个命名人的构成模式, 选择不同的相似度计算方法
         try:
             degreen = self._caculate_similar_degreen(authors_group1, authors_group2)
         except ValueError:
@@ -1090,30 +1130,6 @@ class BioName:
         else:
             degreen = 2
         return degreen
-
-    def get_similar_authorship(self, author_team, names, index):
-        """
-        return: 返回最佳匹配名称的序号，如果没有，则返回 None
-        """
-        author_teams = []
-        for name in names:
-            try:
-                authors = self.get_author_team(name[index])
-                author_teams.append(authors)
-            except KeyError:
-                author_teams.append([])
-        # 先根据整体的相似度获得最相似的命名人索引
-        scores = self.get_similar_scores(author_team, author_teams)
-        scores.sort(key=lambda s: s[0], reverse=True)
-        if scores[0][0]:
-            name = names(scores[0][1])
-
-            degreen = self.get_similar_degreen(author_team, name[index])
-            return degreen
-
-
-        else:
-            return None
 
     def clean_author(self, author):
         aut = author.replace(".", " ")
