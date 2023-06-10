@@ -1,8 +1,38 @@
 {
+    "taxonDistribution":[
+        "分布区域",
+        "TAXONDISTRIBUTION"
+    ],
+    "cultivarEpithet":
+    [
+        "栽培品种",
+        "CULTIVAREPITHET"
+    ],
+    "iucnStatus": [
+        "IUCN保护等级",
+        "IUCN保护级别",
+        "IUCN保护状态",
+        "IUCN保护状况",
+        "IUCN保护",
+        "IUCN",
+        "IUCNSTATUS"
+    ],
+    "pinYinOfVernacularNames":
+    [
+        "中文别名拼音",
+        "PINYINOFVERNACULARNAMES"
+    ],
+    "pinYin":[
+        "拼音",
+        "中文拼音",
+        "SPECIES_C_PY",
+        "PINYIN"
+    ],
     "batchNumber": [
         "批号",
         "入库批次",
-        "入库批号"
+        "入库批号",
+        "BATCHNUMBER"
     ],
     "creator": [
         "创作者",
@@ -37,7 +67,8 @@
     "isShared": [
         "是否已经共享",
         "是否已共享",
-        "已提交NSII"
+        "已提交NSII",
+        "ISSHARED"
     ],
     "acceptedNameUsage": [
         "接受名",
@@ -46,6 +77,7 @@
     ],
     "acceptedNameUsageID": [
         "接受名ID",
+        "ACCEPTED_NAME_CODE",
         "ACCEPTEDNAMEUSAGEID"
     ],
     "accessRights": [
@@ -556,6 +588,16 @@
         "鉴定记录ID",
         "IDENTIFICATIONID"
     ],
+    "verbatimIdentification": [
+        "原始鉴定",
+        "鉴定名称",
+        "鉴定",
+        "鉴定名",
+        "临时鉴定",
+        "野外鉴定",
+        "TEMPORARYIDENTIFICATION",
+        "VERBATIMIDENTIFICATION"
+    ],
     "identificationQualifier": [
         "鉴定质疑",
         "IDENTIFICATIONQUALIFIER"
@@ -615,6 +657,7 @@
         "种下等级",
         "种下名称",
         "亚种名",
+        "INFRASPECIES",
         "INFRASPECIFIC_EPITHET",
         "INFRASPECIFICEPITHET"
     ],
@@ -852,6 +895,7 @@
     "modified": [
         "更新时间",
         "录入日期",
+        "SCRUTINY_DATE",
         "MODIFIED",
         "DATE_LASTMODIFIED"
     ],
@@ -1193,15 +1237,15 @@
         "获取方法",
         "SAMPLINGPROTOCOL"
     ],
-    "verbatimIdentification": [
-        "原始鉴定",
-        "鉴定名称",
-        "鉴定",
-        "鉴定名",
-        "临时鉴定",
-        "野外鉴定",
-        "TEMPORARYIDENTIFICATION",
-        "VERBATIMIDENTIFICATION"
+    "verbatimScientificName": [
+        "原始学名",
+        "原始拉丁学名",
+        "VERBATIMSCIENTIFICNAME"
+    ],
+    "scientificNameID":[
+        "学名ID",
+        "NAME_CODE",
+        "SCIENTIFICNAMEID"
     ],
     "scientificName": [
         "学名",
@@ -1214,8 +1258,9 @@
         "拉丁种名",
         "种",
         "种名",
-        "NAMELA",
         "拉丁名",
+        "NAMELA",
+        "CANONICAL_NAME",
         "IDENTIFICATIONS",
         "SCINAME",
         "SCIENTIFICNAME"
@@ -1239,10 +1284,6 @@
         "INFRASPECIFICAUTHORSHIP",
         "AUTHOR_OF_INFRASPECIFIC_RANK",
         "SCIENTIFICNAMEAUTHORSHIP"
-    ],
-    "scientificNameID": [
-        "学名ID",
-        "SCIENTIFICNAMEID"
     ],
     "propagulum":[
         "繁殖体",
@@ -1387,6 +1428,7 @@
         "中名",
         "俗名",
         "种中文名",
+        "SPECIES_C",
         "CNNAME",
         "COMMONNAME",
         "CHINESENAME"
@@ -1428,6 +1470,7 @@
     "taxonRank": [
         "阶元",
         "种下等级",
+        "INFRASPECIES_MARKER",
         "INFRASPECIFICRANK",
         "INFRASPECIFIC_RANK",
         "TAXONRANK"
@@ -1440,6 +1483,7 @@
     "taxonomicStatus": [
         "分类学状态",
         "分类状态",
+        "SP2000_STATUS",
         "TAXONOMICSTATUS"
     ],
     "thumbnails": [

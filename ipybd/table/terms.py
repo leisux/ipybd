@@ -125,8 +125,8 @@ class OccurrenceTerms(Enum):
     fruit = '$fruit'
     propagulum = '$propagulum'
     root = '$root'
-    adventitiousRoot_ = '$adventitiousRoot' 
-    rhizoids_ = '$rhizoids'
+    adventitiousRoot = '$adventitiousRoot' 
+    rhizoids = '$rhizoids'
     host = "$host"
     # Organism of Aves
     weightInGrams = Number('$weightInGrams')

@@ -672,12 +672,16 @@ class FormatDataset:
         return pattern, headers, concat, new_headers
 
     @get_name
-    def get_native_name(self, *headers, lib:'Series', new_header=('nativeName', 'nativeAuthor', 'nameMatchDegreen'), concat=False):
+    def get_native_name(self, *headers, lib:'Series', new_header=('nativeName', 'nativeAuthor', 'nativeMatchedDegree'), concat=False):
         return lib, headers, concat, new_header
 
     @get_name
     def name_spell_check(self, *headers, concat=False):
-        return 'stdName', headers, concat, ('nameSpellCheck', 'nameAuthors', 'mixFamily', 'mixCode', 'nameMatchDegreen')
+        return 'stdName', headers, concat, ('nameSpellCheck', 'nameAuthors', 'mixFamily', 'mixCode', 'nameMatchedDegree')
+
+    @get_name
+    def get_best_name(self, *headers, concat=False):
+        return 'bestName', headers, concat, ('scientificName', 'scientificNameAuthorship', 'similarAuhtorship', 'nameMatchedDegree')
 
     @get_name
     def get_tropicos_accepted(self, *headers, concat=False):
@@ -686,11 +690,11 @@ class FormatDataset:
     @get_name
     def get_tropicos_name(self, *headers, concat=False):
         return 'tropicosName', headers, concat, ('tropicosName', 'tropicosAuthors',
-                                             'tropicosFamily', 'tropicosNameId', 'nameMatchDegreen')
+                                             'tropicosFamily', 'tropicosNameId', 'tropicosMatchedDegree')
     @get_name
     def get_ipni_name(self, *headers, concat=False):
         return 'ipniName', headers, concat, ('ipniName', 'ipniAuthors',
-                                             'ipniFamily', 'ipniNameLsid', 'nameMatchDegreen')
+                                             'ipniFamily', 'ipniNameLsid', 'ipniMatchedDegree')
 
     @get_name
     def get_ipni_reference(self, *headers, concat=False):
@@ -702,7 +706,7 @@ class FormatDataset:
     @get_name
     def get_powo_name(self, *headers, concat=False):
         return 'powoName', headers, concat, ('powoName', 'powoAuthors',
-                                             'powoFamily', 'ipniNameLsid', 'nameMatchDegreen')
+                                             'powoFamily', 'ipniNameLsid', 'powoMatchedDegreen')
 
     @get_name
     def get_powo_images(self, *headers, concat=False):
@@ -721,7 +725,7 @@ class FormatDataset:
     @get_name
     def get_col_name(self, *headers, concat=False):
         return 'colName', headers, concat, ('colName', 'colAuthors',
-                                            'colFamily', 'colCode', 'nameMatchDegreen')
+                                            'colFamily', 'colCode', 'colMatchedDegree')
 
     @get_name
     def get_col_synonyms(self, *headers, concat=False):
@@ -746,6 +750,19 @@ class FormatDataset:
             else:
                 return new_columns
         return format_func
+    
+    @drop_and_concat_columns
+    def format_authorship(self, header, inplace=True):
+        bioname = BioName([])
+        authors = dict.fromkeys(self.df[header])
+        for author in authors:
+            try:
+                authorship = bioname.format_authorship(author)
+                authors[author] = authorship
+            except AttributeError:
+                pass
+        authorships = [authors[author] for author in self.df[header]]
+        return pd.DataFrame(authorships), [header], inplace
 
     @drop_and_concat_columns
     def format_latlon(self, *headers, inplace=True):

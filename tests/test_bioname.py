@@ -2,7 +2,23 @@ from ipybd import BioName
 import pytest
 
 
-scientificname_split_samples = [('Decaneuropsis cumingiana (Benth.)H.Rob.& Skvarla',
+scientificname_split_samples = [("Syringa oblata Lindl. var. giraldii (Lemoine) Rehd. 'Chun'Ge'",
+                                 ('Syringa', 'oblata', None, 'var.', 'giraldii', "(Lemoine) Rehd. 'Chun'Ge'")),
+                                ('Paphiopedilum Atlantis grex', 
+                                 ('Paphiopedilum', 'Atlantis', 'grex', None, None, None)),
+                                ("Symphoricarpos albus (L.) S.F.Blake 'Turesson'", 
+                                 ('Symphoricarpos', 'albus', None, None, None, "(L.) S.F.Blake 'Turesson'")),
+                                ("Solanum tuberosum 'King Edward'", 
+                                 ('Solanum', 'tuberosum', None, None, None, "'King Edward'")),
+                                ('Stewartia sinensis var. acutisepala (P. L. Chiu & G. R. Zhong) T. L. Ming & J. Li ex J. L', 
+                                 ('Stewartia', 'sinensis', None, 'var.', 'acutisepala', '(P. L. Chiu & G. R. Zhong) T. L. Ming & J. Li ex J. L')),
+                                ('Wisteria sinensis var. multijuga auct non. Hook. f. : B. Z. Ding & S. Y. Wang',
+                                 ('Wisteria', 'sinensis', None, 'var.', 'multijuga', 'auct non. Hook. f. : B. Z. Ding & S. Y. Wang')),
+                                ('Trigonella emodi var. medicaginoides Širj.',
+                                 ('Trigonella', 'emodi', None, 'var.', 'medicaginoides', 'Širj.')),
+                                ('Pothos scandens var. sumatranus de Vriese', 
+                                 ('Pothos', 'scandens', None, 'var.', 'sumatranus', 'de Vriese')),
+                                ('Decaneuropsis cumingiana (Benth.)H.Rob.& Skvarla',
                                  ('Decaneuropsis', 'cumingiana', None, None, None, '(Benth.)H.Rob.& Skvarla')),
                                 ('Decaneuropsis cumingiana Skvarla',
                                  ('Decaneuropsis', 'cumingiana', None, None, None, 'Skvarla')),
@@ -314,7 +330,7 @@ scientificname_author_team_samples = [('Hook. f.', [['Hook. f.',]]),
                                   ('(H.Stenzel) Karremans, Chiron & van den Berg', [['H.Stenzel'], ['Karremans', 'Chiron', 'van den Berg'], None]),
                                   ('Willd.(pro sp.)', [['Willd.']]),
                                   ('(Hook. & Grev.) de la Sota', [['Hook.', 'Grev.'], ['de la Sota'], None]),
-                                  ('(Ames & sine ref.) A.D.Hawkes', [['Ames sine ref.'], ['A.D.Hawkes'], None]),
+                                  ('(Ames & sine ref.) A.D.Hawkes', [['Ames'], ['A.D.Hawkes'], None]),
                                   ('Sonder p.p.', [['Sonder']]),
                                   ('(Hook. f. et Thoms.) Al-Shehbaz et al.', [['Hook. f.', 'Thoms.'], ['Al-Shehbaz'], None]),
                                   ('(Kurz ex Hook. f. et T. Anderson) O. E. Schulz', [['Kurz'], ['Hook. f.', 'T. Anderson'], ['O. E. Schulz'], None]),
@@ -427,6 +443,23 @@ def test_get_author_team(authorship, correct_author_team):
 
 # create a list of tuples with the authorship and the simlar authorship
 similar_authorship_samples = [
+                           ('Y.C.Tang', 'Y.C.Tong', 3),
+                          ('(Bak.) H.Iot', '(Baker) H.Itô', 3),
+                          ('B.N.Chamg et al.', 'K.I.B. & K.I.M. ex B.N.Chang', 0),
+                          ('L.', 'Duchesne ex Lam.', 0),
+                          ('P.C.Li et Ni', 'P.C.Li & C.C.Ni', 3),
+                          ('P.C.Li & C.C.Ni', 'P.C.Li et Ni', 3),
+                          ('Tang & F.T.Wang', 'Tang & Lang', 1), # Wang 与 Tang 的相似度要大于与 F. T. Wang 的相似度，程序先获取相似度最大的名字，再做判断可能会导致这里 Wang 无法找到任何匹配
+                          ('Tang & F.T.Wang', 'Tang & Wang', 3), # Wang 与 Tang 的相似度要大于与 F. T. Wang 的相似度，程序先获取相似度最大的名字，再做判断可能会导致这里 Wang 无法找到任何匹配
+                          ('(S.G.Haw & L.A.Lauener) T.Hong & J.J.Li ex D.Y.Hong', '(S.G.Haw & Lauener) T.Hong & J.J.Li', 1), # 这里 T. Hong 与 D.Y.Hong 会被判断为同一个人
+                          ('C.Chr.', 'Christ', 0), # Adiantum pedatum var. glaucinum Christ, Adiantum pedatum var. glaucinum C.Chr. 不是一个名字，这里可能会粗无的判断为命名人错误
+                          ('(Bedd.) Baker', '(Bedd.) C.B.Clarke', 3),
+                          ('(Wall. ex Milde) Á. Löve & D. Löve', '(Wall.) Á.Löve & D.Löve', 1),
+                          ('(Wall. ex Milde) A. Love & D. Love', '(Wall.) Á.Love & D.Love', 1),
+                          ('C. B. Clarke ex J. D. Hooker', 'C.B.Clarke ex Hook.f.', 3),
+                          ('(A. de Candolle) G. L. Chu & M. G. Gilbert', '(A.DC.) G.L.Chu & M.G.Gilbert', 3),
+                          ('(S.L. Zhou ex Landrein) Landrein', '(S.L.Zhou ex Landrein) Landrein & R.L.Barrett', 2),
+                          ('(Airy Shaw) Z.H. Chen,  X.F.et P.L. Chiu Jin', '(Airy Shaw) Z.H.Chen, X.F.Jin & P.L.Chiu', 1),
                           ('Thunb. ex Murray', 'Thunb.', 1),
                           ('(Brid.) B.S.G.', '(Brid.) Bruch & Schimp.', 0),
                           ('(Dunn) Li', '(Dunn) H.L.Li', 3),
@@ -460,9 +493,11 @@ similar_authorship_samples = [
                           ('(Mart. et Galeot.) Ching', '(M.Martens & Galeotti) Ching', 3)]
 
 @pytest.mark.parametrize("authorship1, authorship2, correct_degreen", similar_authorship_samples)
-def test_get_similar_degreen(authorship1, authorship2, correct_degreen):
+def test_get_similar_degree(authorship1, authorship2, correct_degreen):
     instance = BioName([])
-    degreen = instance.get_similar_degreen(authorship1, authorship2)
+    authors_group1 = instance.get_author_team(authorship1, nested=True)
+    authors_group2 = instance.get_author_team(authorship2, nested=True)
+    degreen = instance.get_similar_degree(authors_group1, authors_group2)
     assert degreen == correct_degreen
 
 
