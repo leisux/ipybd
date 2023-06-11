@@ -1193,16 +1193,16 @@ class BioName:
             2: authors1 或者 authors2 中缺失了另一个人名组中的一些命名人
             1: authors1 和 athours2 中互有一些不同的命名人
             0: authors1 和 authors2 中没有相同的命名人
+            -1: 名称拼写可能有问题
         Raises:
             ValueError: 两组命名人的组合无法比较
         """
-        authors1 = [self._clean_author_for_caculate(author) for author in authors1]
-        authors2 = [self._clean_author_for_caculate(author) for author in authors2]
-        # 
-        scores = self._caculate_simlar_score(authors2, authors1)
+        scores = self._caculate_simlar_score(authors2, authors1, degree=True)
         # score= sum(scores)/len(scores)
         if set(scores) == {0}: 
             degree = 0
+        elif -1 in scores:
+            degree = -1
         elif 0 in scores:
             if len(scores)-scores.count(0) >= len(authors1):
                 degree = 2
@@ -1255,18 +1255,130 @@ class BioName:
 
         author_team: 一个学名命名人列表, 如["Hook. f.", "Thomos."], 不可以为 []
 
-        author_teams: 一组包含多个学名命名人列表的的列表，一般来自于多个同名拉丁名的命名人, 可以为 [[]], 不可以为 None
+        author_teams: 一组包含多个学名命名人列表的的列表，一般来自于多个同名拉丁名的命
+                      名人, 可以为 [[]], 不可以为 None
 
         return: 返回一个与原命名人匹配亲近关系排列的list
         """
-        raw_team = [self._clean_author_for_caculate(author) for author in author_team]
         s_teams_score = []
         for n, std_team in enumerate(author_teams):
-            std_team = [self._clean_author_for_caculate(author) for author in std_team]
-            score = self._caculate_simlar_score(raw_team, std_team)
+            score = self._caculate_simlar_score(author_team, std_team)
             s_team_score = sum(score)/len(score)
             s_teams_score.append((s_team_score, n))
         return s_teams_score
+
+    def _caculate_simlar_score(self, author_team1, author_team2, degree=False):
+        """
+        Args:
+            author_team1: 一个学名命名人列表, 如["Hook. f.", "Thomos."], 不可以为 []
+            author_team2: 一个学名命名人列表, 如["Hook. f.", "Thomos."], 可以为 []
+
+        return: 返回一个与 author_team1 等长的最佳匹配得分的 list
+        """
+        scores = []
+        for author in author_team1:
+            match = process.extract(
+                author, author_team2, scorer=fuzz.token_sort_ratio)
+            try:
+                best_ratio = match[0]
+            except IndexError:
+                # author_team2 可能为 []
+                scores.append(0)
+                continue
+            is_matched = self._is_matched_author(author, best_ratio[0])
+            if is_matched:
+                scores.append(best_ratio[1])
+            elif is_matched is None and not degree:
+                scores.append(best_ratio[1])
+            elif is_matched is None and degree:
+                scores.append(-1)
+            elif len(match) > 1 and match[1][1] >= fuzz.token_sort_ratio(
+                match[1][0], best_ratio[0]):
+                is_matched = self._is_matched_author(author, match[1][0])
+                if is_matched:
+                    scores.append(match[1][1])
+                elif is_matched is None and not degree:
+                    scores.append(-1*match[1][1])
+                elif is_matched is None and degree:
+                    scores.append(-1)
+                else:
+                    scores.append(0)
+            else:
+                scores.append(0)
+
+        return scores
+    
+    def _is_matched_author(self, org_author1, org_author2):
+        """计算两个命名人的相似度
+
+        Args:
+            split_author1 (str): 单个命名人1
+            split_author2 (str): 单个命名人2
+
+        Returns:
+            bool: 是否相似
+        """
+        author1 = self._clean_author_for_caculate(org_author1)
+        author2 = self._clean_author_for_caculate(org_author2)
+        split_author1, split_author2 = author1.split(), author2.split()
+        lname1, lname2 = split_author1[-1], split_author2[-1]
+        if len(lname1) > len(lname2):
+            org_author1, org_author2 = org_author2, org_author1
+            author1, author2 = author2, author1
+            split_author1, split_author2 = split_author2, split_author1
+            lname1, lname2 = lname2, lname1
+        # 若姓名中有四个起始字符一致，极可能是同一个人，字符起始字母通常是大写
+        # 名子中的首字母如果能在相互名子中找到,则认为是同一个人
+        # 如果两个姓名中至少有一个缺少名子部分,相同的起始字符必须是姓且如果是缩写必须有.号 
+        if lname1[:4] in author2 or lname2[:4] in author1:
+            is_matched = 1
+        # 允许对元音进行省略简写的姓，这里不区分大小写
+        # 如果姓氏过长,这个方法很有效,但是如果姓氏过短
+        # 或者再省略掉后鼻音后,真正参与比较的字母可能只有一个
+        # 这个时候比较的结果一般不可靠, 比如 Kang 和 Kong, Miao 和 Mao
+        elif self._del_author_aeiou(lname1)[:3] == self._del_author_aeiou(lname2)[:3]:
+            short_name = self._del_author_aeiou(lname1)
+            if len(short_name) == 1:
+                is_matched = None
+            elif len(short_name) == 3 and lname1[-3:] in ('ang', 'ing', 'ong', 'eng'):
+                is_matched = None
+            else:
+                is_matched = True
+        # 允许姓的前四个字符顺序有不一致，但字符集必须一致
+        # 这里也有可能出现误判, 比如对于 Mask. 和 Maks. 这种情况
+        # 但在同一个物种名的命名人中出现如此相似的人名, 
+        # 除非是这个类群的专家才能判断是否是同一个人, 这里直接作为同一个人名处理
+        elif set(lname1[:4]) == set(lname2[:4]) and lname1[0] == lname2[0]:
+            is_matched = True
+        # 姓的前四个字符至少有一个辅音字符导致的不同，可以认为是同一个字符,但首字母必须一致
+        # 绝大多数情况下对于一个特定的物种名,这是可靠的,但偶尔也有例外, 比如Walp.和Wall.
+        # 另外对于并不等长的字符,这也有一定的误差, 比如 Bge. 和 Berge, Bunge 就难以区分
+        # 这类问题通常颇难处理, 因为这些不同的人名本身就过于相似, 但是这种情况出现的频率较低
+        # 权衡之下,这里还是将其作为同一个人名处理
+        elif fuzz.token_sort_ratio(lname1[:4], lname2[:4]) > 50 and lname1[0] == lname2[0]:
+            is_matched = True
+        # elif 这里未来还可以补充首字母变体，比如 U V I L G C 之间等
+        else:
+            is_matched = False
+        # 对名进行约束，中文同姓很多，会造成不少 -1 级别的匹配，同时单纯靠姓的前四个字符
+        # 进行约束也会造成不少假匹配, 这里通过对名的首字母进行约束，可以在很大程度上解决
+        # 上述问题，但仍然不能保证 100% 的正确性, 相应规则未来可能需要进一步细化
+        if is_matched is not False:
+            fname1 = split_author1[0] if len(split_author1) > 1 else None
+            fname2 = split_author2[0] if len(split_author2) > 1 else None
+            if fname1 and fname2:
+                if fname1[0] in author2 and fname2[0] in author1:
+                    is_matched = True
+                else:
+                    is_matched = False
+            elif is_matched == 1:
+                if lname1[:4]==lname2[:4] or org_author1.split()[-1].endswith('.') and lname2.startswith(lname1[:4]):
+                    is_matched = True
+                else:
+                    is_matched = False
+            else:
+                pass 
+        return is_matched
 
     def _clean_author_for_caculate(self, author):
         aut = author.replace("-", "")\
@@ -1281,84 +1393,6 @@ class BioName:
         aut = aut.replace(' p p', '') if aut.endswith(' p p') else aut
         return aut
     
-    def _caculate_simlar_score(self, author_team1, author_team2):
-        """
-        Args:
-            author_team1: 一个学名命名人列表, 如["Hook. f.", "Thomos."], 不可以为 []
-            author_team2: 一个学名命名人列表, 如["Hook. f.", "Thomos."], 可以为 []
-
-        Return: 返回一个与 author_team1 等长的最佳匹配得分的 list
-        """
-        scores = []
-        for author in author_team1:
-            match = process.extract(
-                author, author_team2, scorer=fuzz.token_sort_ratio)
-            try:
-                best_ratio = match[0]
-            except IndexError:
-                # author_team2 可能为 []
-                scores.append(0)
-                continue
-            if self._is_matched_author(author, best_ratio[0]):
-                scores.append(best_ratio[1])
-            elif len(match) > 1 and match[1][1] >= fuzz.token_sort_ratio(match[1][0], best_ratio[0]):
-                if self._is_matched_author(author, match[1][0]):
-                    scores.append(match[1][1])
-                else:
-                    scores.append(0)
-                    continue
-            else:
-                scores.append(0)
-                continue
-
-        return scores
-    
-    def _is_matched_author(self, author, similar_author):
-        """计算两个命名人的相似度
-
-        Args:
-            split_author1 (str): 单个命名人1
-            split_author2 (str): 单个命名人2
-
-        Returns:
-            bool: 是否相似
-        """
-        split_author1, split_author2 = author.split(), similar_author.split()
-        lname1, lname2 = sorted((split_author1[-1], split_author2[-1]), key=lambda x: len(x))
-        is_matched = None
-        # 若姓名中有四个起始字符一致，这里认为是同一个人，字符起始字母通常是大写
-        if split_author1[-1][:4] in similar_author or split_author2[-1][:4] in author:
-            is_matched = True
-        # 允许对元音进行缩略简写姓，这里不区分大小写
-        elif self._del_author_aeiou(lname1)[:3] == self._del_author_aeiou(lname2)[:3]:
-            is_matched = True
-        # 允许姓的前四个字符顺序有不一致，但字符集必须一致
-        elif set(lname1[:4]) <= set(lname2[:4]) and lname1[0] == lname2[0]:
-            is_matched = True
-        # 允许姓的前四个字符有一个字符不同，但首字母必须一致
-        elif fuzz.token_sort_ratio(lname1[:4], lname2[:4]) > 50 and lname1[0] == lname2[0]:
-            is_matched = True
-        # elif 这里未来还可以补充首字母变体，比如 U V I L 之间等
-        else:
-            is_matched = False
-        # 对名进行约束，中文同姓很多，会造成不少 -1 级别的匹配，同时单纯靠姓的前四个字符进行约束也会造成不少假匹配
-        # 这里通过对名的首字母进行约束，可以在很大程度上解决上述问题，但仍然不能保证 100% 的正确性, 相应规则未来可能需要进一步细化
-        if is_matched:
-            fname1 = split_author1[0] if len(split_author1) > 1 else None
-            fname2 = split_author2[0] if len(split_author2) > 1 else None
-            if fname1 and fname2:
-                if fname1[0] in similar_author[-1] and fname2[0] in author[-1]:
-                    pass
-                else:
-                    is_matched = False
-            else:
-                if lname2.startswith(lname1):
-                    is_matched = True
-                else:
-                    is_matched = False
-            
-        return is_matched
-
     def _del_author_aeiou(self, author):
         """删除命名人中的元音字母
 
