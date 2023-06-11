@@ -1331,7 +1331,7 @@ class BioName:
         # 名子中的首字母如果能在相互名子中找到,则认为是同一个人
         # 如果两个姓名中至少有一个缺少名子部分,相同的起始字符必须是姓且如果是缩写必须有.号 
         if lname1[:4] in author2 or lname2[:4] in author1:
-            is_matched = 1
+            is_matched = -1
         # 允许对元音进行省略简写的姓，这里不区分大小写
         # 如果姓氏过长,这个方法很有效,但是如果姓氏过短
         # 或者再省略掉后鼻音后,真正参与比较的字母可能只有一个
@@ -1371,9 +1371,15 @@ class BioName:
                     is_matched = True
                 else:
                     is_matched = False
-            elif is_matched == 1:
-                if lname1[:4]==lname2[:4] or org_author1.split()[-1].endswith('.') and lname2.startswith(lname1[:4]):
+            elif is_matched == -1:
+                if lname1[:4]==lname2[:4]:
                     is_matched = True
+                elif lname2.startswith(lname1[:4]) and org_author1.split()[-1].endswith('.'): 
+                    is_matched = True
+                elif len(lname1) > 3 and fname2 and fname2.startswith(lname1[:4]):
+                    is_matched = None
+                elif len(lname2) > 3 and fname1 and fname1.startswith(lname2[:4]):
+                    is_matched = None
                 else:
                     is_matched = False
             else:
