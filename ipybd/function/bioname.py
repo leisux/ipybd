@@ -1024,6 +1024,41 @@ class BioName:
             raise ValueError("学名处理参数错误，不存在{}".format(pattern))
 
 
+    def get_similar_name(self, authors_group, names, index):
+        """
+        args:
+            authors_group: 待比较学名的命名人组，如 [["Hook. f.", "Thomson"], ["Wall."]]
+            names: 待选学名组，可能是 list 也可能是 dict 类型
+            index: names 中 authors 属性的索引，可能是 str 也可能是 int 类型
+        return: 从 names 中选取与 authors_group 最相似的学名信息，如果没有，则返回 None
+        """
+        author_teams = []
+        for name in names:
+            try:
+                authors = self.get_author_team(name[index])
+                author_teams.append(authors)
+            except KeyError:
+                author_teams.append([])
+        # 先根据整体的相似度获得最相似的命名人索引
+        author_team = []
+        for authors in authors_group:
+            if authors:
+                author_team.extend(authors)
+        scores = self.get_similar_scores(author_team, author_teams)
+        scores.sort(key=lambda s: s[0], reverse=True)
+        name = names[scores[0][1]]
+        if scores[0][0]:
+            # 对相似的命名人进行评级
+            authors_group2 = self.get_author_team(name[index], nested=True)
+            degree = self.get_similar_degree(authors_group, authors_group2)
+        else:
+            degree = 0
+        try:
+            name['match_degree'] = degree
+        except TypeError:
+            name = name + (degree,)
+        return name
+
     def get_similar_degree(self, authors_group1, authors_group2):
         """比较两个学名的命名人, 并返回相似等级
 
@@ -1063,33 +1098,37 @@ class BioName:
         comb = len(authors1), len(authors2)
         # a => a
         if comb == (1, 1):
-            degree = self._authors_similar_degree(authors_group1[0], authors_group2[0])
+            degree, similar_degree = self._authors_similar_degree(authors_group1[0], authors_group2[0])
         elif comb == (1, 3):
             # a => a ex b
             if authors2[0] is None:
-                degree1 = self._authors_similar_degree(authors1[0], authors2[1])
-                degree2 = self._authors_similar_degree(authors1[0], authors2[-1])
+                degree1, similar_degree1 = self._authors_similar_degree(authors1[0], authors2[1])
+                degree2, similar_degree2 = self._authors_similar_degree(authors1[0], authors2[-1])
                 degree = self._a_vs_aexb(degree1, degree2)
+                similar_degree = (similar_degree1 + similar_degree2) / 2
             # a => (a)b
             elif authors2[-1] is None:
-                degree2 = self._authors_similar_degree(authors1[0], authors2[1])
+                degree2, similar_degree = self._authors_similar_degree(authors1[0], authors2[1])
                 degree = self._a_vs_ab(degree2)
             else:
                 raise ValueError
         elif comb == (3, 3):
             # a ex b => a ex b
             if authors1[0] is None and authors2[0] is None:
-                degree1 = self._authors_similar_degree(authors1[1], authors2[1])
-                degree2 = self._authors_similar_degree(authors1[-1], authors2[-1])
+                degree1, similar_degree1 = self._authors_similar_degree(authors1[1], authors2[1])
+                degree2, similar_degree2 = self._authors_similar_degree(authors1[-1], authors2[-1])
                 degree = self._aexb_vs_aexb(degree1, degree2)
+                similar_degree = (similar_degree1 + similar_degree2) / 2
             # a ex b => (a)b
             elif authors1[0] is None and authors2[-1] is None or authors1[-1] is None and authors2[0] is None:
+                similar_degree = 0
                 degree = 0
             # (a)b => (a)b
             elif authors1[-1] is None and authors2[-1] is None:
-                degree1 = self._authors_similar_degree(authors1[0], authors2[0])
-                degree2 = self._authors_similar_degree(authors1[1], authors2[1])
+                degree1, similar_degree1 = self._authors_similar_degree(authors1[0], authors2[0])
+                degree2, similar_degree1 = self._authors_similar_degree(authors1[1], authors2[1])
                 degree = self._ab_vs_ab(degree1, degree2)
+                similar_degree = (similar_degree1 + similar_degree2) / 2
             else:
                 raise ValueError
         # 复杂的命名人组合 
@@ -1101,17 +1140,18 @@ class BioName:
                 degree2 = self._caculate_similar_degree(authors1, authors2[2:-1])
             else:
                 degree2 = self._caculate_similar_degree(authors1, [None]+authors2[2:])
-            degree = self._a_vs_ab(degree2)
+            degree = self._a_vs_ab(degree2[0]) + degree2[1]
+
         elif comb == (3, 4):
             if authors1[0] is None:
                 if authors2[0] is None:
                     del authors2[1]
                     degree2 = self._caculate_similar_degree(authors1, authors2)
                 elif authors2[-1] is None:
-                    degree2 = 0
+                    degree2 = '00'
                 else:
                     degree2 = self._caculate_similar_degree(authors1, [None]+authors2[2:])
-                degree = self._a_vs_ab(degree2)
+                degree = self._a_vs_ab(int(degree2[0])) + degree2[1]
             else:
                 if authors2[0] is None:
                     authors11, authors21 = authors1[:1], authors2[1:2]
@@ -1197,12 +1237,11 @@ class BioName:
         Raises:
             ValueError: 两组命名人的组合无法比较
         """
-        scores = self._caculate_simlar_score(authors2, authors1, degree=True)
+        scores, similar_degrees = self._caculate_simlar_score(authors2, authors1, degree=True)
         # score= sum(scores)/len(scores)
+        similar_degree = round(sum(similar_degrees)/len(similar_degrees))
         if set(scores) == {0}: 
             degree = 0
-        elif -1 in scores:
-            degree = -1
         elif 0 in scores:
             if len(scores)-scores.count(0) >= len(authors1):
                 degree = 2
@@ -1212,43 +1251,9 @@ class BioName:
             degree = 3
         else:
             degree = 2
-        return degree
+        return degree, similar_degree
     
 
-    def get_similar_name(self, authors_group, names, index):
-        """
-        args:
-            authors_group: 待比较学名的命名人组，如 [["Hook. f.", "Thomson"], ["Wall."]]
-            names: 待选学名组，可能是 list 也可能是 dict 类型
-            index: names 中 authors 属性的索引，可能是 str 也可能是 int 类型
-        return: 从 names 中选取与 authors_group 最相似的学名信息，如果没有，则返回 None
-        """
-        author_teams = []
-        for name in names:
-            try:
-                authors = self.get_author_team(name[index])
-                author_teams.append(authors)
-            except KeyError:
-                author_teams.append([])
-        # 先根据整体的相似度获得最相似的命名人索引
-        author_team = []
-        for authors in authors_group:
-            if authors:
-                author_team.extend(authors)
-        scores = self.get_similar_scores(author_team, author_teams)
-        scores.sort(key=lambda s: s[0], reverse=True)
-        name = names[scores[0][1]]
-        if scores[0][0]:
-            # 对相似的命名人进行评级
-            authors_group2 = self.get_author_team(name[index], nested=True)
-            degree = self.get_similar_degree(authors_group, authors_group2)
-        else:
-            degree = 0
-        try:
-            name['match_degree'] = degree
-        except TypeError:
-            name = name + (degree,)
-        return name
 
     def get_similar_scores(self, author_team, author_teams):
         """ 将一个学名的命名人和一组学名的命名人编码进行比较，以确定最匹配的
@@ -1262,7 +1267,7 @@ class BioName:
         """
         s_teams_score = []
         for n, std_team in enumerate(author_teams):
-            score = self._caculate_simlar_score(author_team, std_team)
+            score = self._caculate_simlar_score(author_team, std_team)[0]
             s_team_score = sum(score)/len(score)
             s_teams_score.append((s_team_score, n))
         return s_teams_score
@@ -1276,6 +1281,7 @@ class BioName:
         return: 返回一个与 author_team1 等长的最佳匹配得分的 list
         """
         scores = []
+        degrees = []
         for author in author_team1:
             match = process.extract(
                 author, author_team2, scorer=fuzz.token_sort_ratio)
@@ -1284,29 +1290,26 @@ class BioName:
             except IndexError:
                 # author_team2 可能为 []
                 scores.append(0)
+                degrees.append(0)
                 continue
             is_matched = self._is_matched_author(author, best_ratio[0])
             if is_matched:
                 scores.append(best_ratio[1])
-            elif is_matched is None and not degree:
-                scores.append(best_ratio[1])
-            elif is_matched is None and degree:
-                scores.append(-1)
+                degrees.append(is_matched)
             elif len(match) > 1 and match[1][1] >= fuzz.token_sort_ratio(
                 match[1][0], best_ratio[0]):
                 is_matched = self._is_matched_author(author, match[1][0])
                 if is_matched:
                     scores.append(match[1][1])
-                elif is_matched is None and not degree:
-                    scores.append(-1*match[1][1])
-                elif is_matched is None and degree:
-                    scores.append(-1)
+                    degrees.append(is_matched)
                 else:
                     scores.append(0)
+                    degrees.append(best_ratio[1]//25)
             else:
                 scores.append(0)
+                degrees.append(best_ratio[1]//25)
 
-        return scores
+        return scores, degrees
     
     def _is_matched_author(self, org_author1, org_author2):
         """计算两个命名人的相似度
@@ -1316,7 +1319,11 @@ class BioName:
             split_author2 (str): 单个命名人2
 
         Returns:
-            bool: 是否相似
+            3: 是同一个人
+            -3: 是同一个人, 但拼写上可能有错
+            -2: 极有可能是同一个人, 但拼写上可能有错
+            -1: 有可能是同一个人, 但需要核查
+             0: 不是同一个人
         """
         author1 = self._clean_author_for_caculate(org_author1)
         author2 = self._clean_author_for_caculate(org_author2)
@@ -1331,7 +1338,7 @@ class BioName:
         # 名子中的首字母如果能在相互名子中找到,则认为是同一个人
         # 如果两个姓名中至少有一个缺少名子部分,相同的起始字符必须是姓且如果是缩写必须有.号 
         if lname1[:4] in author2 or lname2[:4] in author1:
-            is_matched = -1
+            is_matched = 4
         # 允许对元音进行省略简写的姓，这里不区分大小写
         # 如果姓氏过长,这个方法很有效,但是如果姓氏过短
         # 或者再省略掉后鼻音后,真正参与比较的字母可能只有一个
@@ -1339,49 +1346,54 @@ class BioName:
         elif self._del_author_aeiou(lname1)[:3] == self._del_author_aeiou(lname2)[:3]:
             short_name = self._del_author_aeiou(lname1)
             if len(short_name) == 1:
-                is_matched = None
+                is_matched = 1
             elif len(short_name) == 3 and lname1[-3:] in ('ang', 'ing', 'ong', 'eng'):
-                is_matched = None
+                is_matched = 2
             else:
-                is_matched = True
+                is_matched = 3
         # 允许姓的前四个字符顺序有不一致，但字符集必须一致
         # 这里也有可能出现误判, 比如对于 Mask. 和 Maks. 这种情况
         # 但在同一个物种名的命名人中出现如此相似的人名, 
         # 除非是这个类群的专家才能判断是否是同一个人, 这里直接作为同一个人名处理
         elif set(lname1[:4]) == set(lname2[:4]) and lname1[0] == lname2[0]:
-            is_matched = True
+            is_matched = 2
         # 姓的前四个字符至少有一个辅音字符导致的不同，可以认为是同一个字符,但首字母必须一致
         # 绝大多数情况下对于一个特定的物种名,这是可靠的,但偶尔也有例外, 比如Walp.和Wall.
         # 另外对于并不等长的字符,这也有一定的误差, 比如 Bge. 和 Berge, Bunge 就难以区分
         # 这类问题通常颇难处理, 因为这些不同的人名本身就过于相似, 但是这种情况出现的频率较低
         # 权衡之下,这里还是将其作为同一个人名处理
         elif fuzz.token_sort_ratio(lname1[:4], lname2[:4]) > 50 and lname1[0] == lname2[0]:
-            is_matched = True
+            is_matched = 2
         # elif 这里未来还可以补充首字母变体，比如 U V I L G C 之间等
         else:
-            is_matched = False
+            is_matched = 0
         # 对名进行约束，中文同姓很多，会造成不少 -1 级别的匹配，同时单纯靠姓的前四个字符
         # 进行约束也会造成不少假匹配, 这里通过对名的首字母进行约束，可以在很大程度上解决
         # 上述问题，但仍然不能保证 100% 的正确性, 相应规则未来可能需要进一步细化
-        if is_matched is not False:
+        if is_matched:
             fname1 = split_author1[0] if len(split_author1) > 1 else None
             fname2 = split_author2[0] if len(split_author2) > 1 else None
             if fname1 and fname2:
                 if fname1[0] in author2 and fname2[0] in author1:
-                    is_matched = True
+                    if is_matched == 4:
+                        is_matched = 3
+                    else:
+                        is_matched = 2
                 else:
-                    is_matched = False
-            elif is_matched == -1:
+                    is_matched = 0
+            elif is_matched == 4:
                 if lname1[:4]==lname2[:4]:
-                    is_matched = True
+                    is_matched = 3
                 elif lname2.startswith(lname1[:4]) and org_author1.split()[-1].endswith('.'): 
-                    is_matched = True
+                    is_matched = 3
+                elif lname2.startswith(lname1[:4]):
+                    is_matched = 1
                 elif len(lname1) > 3 and fname2 and fname2.startswith(lname1[:4]):
-                    is_matched = None
+                    is_matched = 1
                 elif len(lname2) > 3 and fname1 and fname1.startswith(lname2[:4]):
-                    is_matched = None
+                    is_matched = 1
                 else:
-                    is_matched = False
+                    is_matched = 0
             else:
                 pass 
         return is_matched
@@ -1504,11 +1516,11 @@ class BioName:
             list: 拆分后的命名人列表, 当nested 为 False 时, 结果如:
                 ["Hook. f.", "Thomson", "Regel"]
             当 nested 为 True 时, 结果如: 
-                [["Hook. f.", "Thomson"]], 
-                [None, ["Hook. f.", "Thomson"], ["Regel",]], 
-                [["Hayata", ], ["Ching", ], None],
-                [None, ["Hayata", ], ["Ching", ], ["S.H.Wu", ]], 
-                [["Bedd.", ], [C.B.Clarke", "Baker"], ["Ching", ], None]
+                a => [["Hook. f.", "Thomson"]], 
+                a ex b => [None, ["Hook. f.", "Thomson"], ["Regel",]], 
+                (a)b => [["Hayata", ], ["Ching", ], None],
+                (a)b ex c => [None, ["Hayata", ], ["Ching", ], ["S.H.Wu", ]], 
+                (a ex b)c => [["Bedd.", ], [C.B.Clarke", "Baker"], ["Ching", ], None]
         Raises:
             ValueError: authorship 书写有误
         """
