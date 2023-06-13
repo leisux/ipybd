@@ -1182,16 +1182,18 @@ class BioName:
         return degree, similar
     
     def _a_vs_aexb(self, degree1, degree2, similar1, similar2):
-        if degree1 == 0:
-            return degree2, similar1
+        if degree1 == 0 and degree2 == 0:
+            return 0, max(similar1, similar2)
+        elif degree1 == 0:
+            return degree2, similar2
         elif degree2 == 0:
-            return 1, similar2
+            return 1, similar1
         elif degree2 == 3:
             raise ValueError
         elif degree1 == 3 and degree2 > 0:
             raise ValueError
         else:
-            return 1, (similar1 + similar2) / 2
+            return 1, abs(similar1 - similar2)
             
     def _a_vs_ab(self, degree2):
         if degree2 > 0:
@@ -1206,12 +1208,13 @@ class BioName:
             return 0, similar2
         elif degree2 == 1:
             return 1, similar2
+        elif degree1 == 1:
+            return 1, similar1
         elif degree2 == 3 and degree1 > 1:
             return 3, (similar1 + similar2) / 2
         elif degree2 + degree1 >= 4:
             return 2, (similar1 + similar2) / 2
         else:
-            # degree1 == 1 and degree2 == 2
             raise ValueError
 
     def _ab_vs_ab(self, degree1, degree2, similar1, similar2):
@@ -1244,7 +1247,7 @@ class BioName:
         Raises:
             ValueError: 两组命名人的组合无法比较
         """
-        scores, similar_degrees = self._caculate_similar_score(authors2, authors1, degree=True)
+        scores, similar_degrees = self._caculate_similar_score(authors2, authors1)
         # score= sum(scores)/len(scores)
         if set(scores) == {0}: 
             degree = 0
