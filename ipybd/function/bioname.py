@@ -1047,12 +1047,9 @@ class BioName:
         scores = self.get_similar_scores(author_team, author_teams)
         scores.sort(key=lambda s: s[0], reverse=True)
         name = names[scores[0][1]]
-        if scores[0][0]:
-            # 对相似的命名人进行评级
-            authors_group2 = self.get_author_team(name[index], nested=True)
-            degree = self.get_similar_degree(authors_group, authors_group2)
-        else:
-            degree = 0
+        # 对相似的命名人进行评级
+        authors_group2 = self.get_author_team(name[index], nested=True)
+        degree = self.get_similar_degree(authors_group, authors_group2)
         try:
             name['match_degree'] = degree
         except TypeError:
@@ -1067,19 +1064,21 @@ class BioName:
             authors_group2 (list): 命名人列表，如 [["Wall."]]
 
         Returns:
-            '3': 两组命名人来自于同一个学名, 并且命名人可以一一对应 
-            '2': 两组命名人来自于同一个学名, 但是其中有学名可能省略了一些命名人
-            '1': 两组命名人可能来自于同一个学名, 但命名人需要人工进一步考证
-            '0': 两组命名人可能来自于不同人发表的同名名称，或者两个名称的命名人存在明显的冲突
-            '-1': 命名人写法可能存在错误，无法比较
+            'S': 两组命名人来自于同一个学名, 并且命名人可以一一对应 
+            'H': 两组命名人来自于同一个学名, 但是其中有学名可能省略了一些命名人
+            'M': 两组命名人可能来自于同一个学名, 但命名人需要人工进一步考证
+            'L': 两组命名人可能来自于不同人发表的同名名称，或者两个名称的命名人存在明显的冲突
+            'E': 命名人写法可能存在错误，无法比较
         """
         try:
-            degree = self._caculate_similar_degree(authors_group1, authors_group2)
+            degree, similar = self._authorship_similar_degree(authors_group1, authors_group2)
+            degree_translate = {3: 'S', 2: 'H', 1: 'M', 0: 'L'}
+            degree = degree_translate[degree] + str(round(similar))
         except ValueError:
-            degree = -1
+            degree = 'E'
         return degree
 
-    def _caculate_similar_degree(self, authors_group1, authors_group2):
+    def _authorship_similar_degree(self, authors_group1, authors_group2):
         """根据两个命名人的构成模式, 选择不同的相似度计算方法，返回两组学名命名人的相似度等级
             
         Args:
@@ -1087,10 +1086,16 @@ class BioName:
             authors_group2 (list): 命名人列表，如 [["Wall."]]
         
         Returns:
-            3: 完全相同的人名组合
-            2: 其中一个学名命名人的组合缺失了一些命名人信息
-            1: 两组命名人比较相像，但是命名人之间的发表关系需要进一步澄清
-            0: 不同的命名人组合
+            degree (int): 同名等级评估
+                3: 完全相同的人名组合
+                2: 其中一个学名命名人的组合缺失了一些命名人信息
+                1: 两组命名人比较相像，但是命名人之间的发表关系需要进一步澄清
+                0: 不同的命名人组合
+            similar (float): 相似度评估
+                0: 完全不同的命名人组合
+                1: 可能是同一个命名人组合, 但需要核查
+                2: 极可能是同一个命名人组合, 但拼写上存在一些差异
+                3: 完全相同的命名人组合
         Raises:
             ValueError: 两组命名人的组合无法比较
         """
@@ -1098,60 +1103,55 @@ class BioName:
         comb = len(authors1), len(authors2)
         # a => a
         if comb == (1, 1):
-            degree, similar_degree = self._authors_similar_degree(authors_group1[0], authors_group2[0])
+            degree, similar = self._authors_similar_degree(authors_group1[0], authors_group2[0])
         elif comb == (1, 3):
             # a => a ex b
             if authors2[0] is None:
-                degree1, similar_degree1 = self._authors_similar_degree(authors1[0], authors2[1])
-                degree2, similar_degree2 = self._authors_similar_degree(authors1[0], authors2[-1])
-                degree = self._a_vs_aexb(degree1, degree2)
-                similar_degree = (similar_degree1 + similar_degree2) / 2
+                degree1, similar1 = self._authors_similar_degree(authors1[0], authors2[1])
+                degree2, similar2 = self._authors_similar_degree(authors1[0], authors2[-1])
+                degree, similar = self._a_vs_aexb(degree1, degree2, similar1, similar2)
             # a => (a)b
             elif authors2[-1] is None:
-                degree2, similar_degree = self._authors_similar_degree(authors1[0], authors2[1])
+                degree2, similar = self._authors_similar_degree(authors1[0], authors2[1])
                 degree = self._a_vs_ab(degree2)
             else:
                 raise ValueError
         elif comb == (3, 3):
             # a ex b => a ex b
             if authors1[0] is None and authors2[0] is None:
-                degree1, similar_degree1 = self._authors_similar_degree(authors1[1], authors2[1])
-                degree2, similar_degree2 = self._authors_similar_degree(authors1[-1], authors2[-1])
-                degree = self._aexb_vs_aexb(degree1, degree2)
-                similar_degree = (similar_degree1 + similar_degree2) / 2
+                degree1, similar1 = self._authors_similar_degree(authors1[1], authors2[1])
+                degree2, similar2 = self._authors_similar_degree(authors1[-1], authors2[-1])
+                degree, similar = self._aexb_vs_aexb(degree1, degree2, similar1, similar2)
             # a ex b => (a)b
             elif authors1[0] is None and authors2[-1] is None or authors1[-1] is None and authors2[0] is None:
-                similar_degree = 0
-                degree = 0
+                similar, degree = 0, 0
             # (a)b => (a)b
             elif authors1[-1] is None and authors2[-1] is None:
-                degree1, similar_degree1 = self._authors_similar_degree(authors1[0], authors2[0])
-                degree2, similar_degree1 = self._authors_similar_degree(authors1[1], authors2[1])
-                degree = self._ab_vs_ab(degree1, degree2)
-                similar_degree = (similar_degree1 + similar_degree2) / 2
+                degree1, similar1 = self._authors_similar_degree(authors1[0], authors2[0])
+                degree2, similar2 = self._authors_similar_degree(authors1[1], authors2[1])
+                degree, similar = self._ab_vs_ab(degree1, degree2, similar1, similar2)
             else:
                 raise ValueError
         # 复杂的命名人组合 
         elif comb == (1, 4):
             if authors2[0] is None:
                 del authors2[1]
-                degree2 = self._caculate_similar_degree(authors1, authors2)
+                degree2, similar = self._authorship_similar_degree(authors1, authors2)
             elif authors2[-1] is None:
-                degree2 = self._caculate_similar_degree(authors1, authors2[2:-1])
+                degree2, similar = self._authorship_similar_degree(authors1, authors2[2:-1])
             else:
-                degree2 = self._caculate_similar_degree(authors1, [None]+authors2[2:])
-            degree = self._a_vs_ab(degree2[0]) + degree2[1]
-
+                degree2, similar = self._authorship_similar_degree(authors1, [None]+authors2[2:])
+            degree = self._a_vs_ab(degree2)
         elif comb == (3, 4):
             if authors1[0] is None:
                 if authors2[0] is None:
                     del authors2[1]
-                    degree2 = self._caculate_similar_degree(authors1, authors2)
+                    degree2, similar = self._authorship_similar_degree(authors1, authors2)
                 elif authors2[-1] is None:
-                    degree2 = '00'
+                    degree2, similar = 0, 0
                 else:
-                    degree2 = self._caculate_similar_degree(authors1, [None]+authors2[2:])
-                degree = self._a_vs_ab(int(degree2[0])) + degree2[1]
+                    degree2, similar = self._authorship_similar_degree(authors1, [None]+authors2[2:])
+                degree = self._a_vs_ab(degree2)
             else:
                 if authors2[0] is None:
                     authors11, authors21 = authors1[:1], authors2[1:2]
@@ -1163,9 +1163,9 @@ class BioName:
                 else:
                     authors11, authors21 = authors1[:1], [None]+authors2[:2]
                     authors12, authors22 = authors1[1:-1], [None]+authors2[2:]
-                degree1 = self._caculate_similar_degree(authors11, authors21)
-                degree2 = self._caculate_similar_degree(authors12, authors22)
-                degree = self._ab_vs_ab(degree1, degree2)
+                degree1, similar1 = self._authorship_similar_degree(authors11, authors21)
+                degree2, similar2 = self._authorship_similar_degree(authors12, authors22)
+                degree, similar = self._ab_vs_ab(degree1, degree2, similar1, similar2)
         elif comb == (4, 4):
             authors11, authors12 = authors1[:2], authors1[2:]
             authors21, authors22 = authors2[:2], authors2[2:]
@@ -1174,52 +1174,59 @@ class BioName:
                     authors.remove(None)
                 else:
                     authors.insert(0, None)
-            degree1 = self._caculate_similar_degree(authors11, authors21)
-            degree2 = self._caculate_similar_degree(authors12, authors22)
-            degree = self._ab_vs_ab(degree1, degree2)
+            degree1, similar1 = self._authorship_similar_degree(authors11, authors21)
+            degree2, similar2 = self._authorship_similar_degree(authors12, authors22)
+            degree, similar = self._ab_vs_ab(degree1, degree2, similar1, similar2)
         else:
             raise ValueError
-        return degree
+        return degree, similar
     
-    def _a_vs_aexb(self, degree1, degree2):
+    def _a_vs_aexb(self, degree1, degree2, similar1, similar2):
         if degree1 == 0:
-            return degree2
+            return degree2, similar1
+        elif degree2 == 0:
+            return 1, similar2
         elif degree2 == 3:
             raise ValueError
         elif degree1 == 3 and degree2 > 0:
             raise ValueError
         else:
-            return 1
-
+            return 1, (similar1 + similar2) / 2
+            
     def _a_vs_ab(self, degree2):
         if degree2 > 0:
             return 1
         else:
             return 0
     
-    def _aexb_vs_aexb(self, degree1, degree2):
+    def _aexb_vs_aexb(self, degree1, degree2, similar1, similar2):
         if degree1 == 0:
-            return 0
+            return 0, similar1
         elif degree2 == 0:
-            return 0
+            return 0, similar2
         elif degree2 == 1:
-            return 1
+            return 1, similar2
         elif degree2 == 3 and degree1 > 1:
-            return 3
+            return 3, (similar1 + similar2) / 2
         elif degree2 + degree1 >= 4:
-            return 2
+            return 2, (similar1 + similar2) / 2
         else:
+            # degree1 == 1 and degree2 == 2
             raise ValueError
 
-    def _ab_vs_ab(self, degree1, degree2):
-        if degree1 == 0 or degree2 == 0:
-            return 0
-        elif degree1 == 1 or degree2 == 1:
-            return 1
+    def _ab_vs_ab(self, degree1, degree2, similar1, similar2):
+        if degree1 == 0:
+            return 0, similar1
+        elif degree2 == 0:
+            return 0, similar2
+        elif degree1 == 1:
+            return 1, similar1
+        elif degree2 == 1:
+            return 1, similar2
         elif degree1 == 3 and degree2 == 3:
-            return 3
+            return 3, (similar1 + similar2) / 2
         else:
-            return 2
+            return 2, (similar1 + similar2) / 2
 
     def _authors_similar_degree(self, authors1, authors2):
         """评价 authors2 与 authors1 的相似度
@@ -1237,20 +1244,25 @@ class BioName:
         Raises:
             ValueError: 两组命名人的组合无法比较
         """
-        scores, similar_degrees = self._caculate_simlar_score(authors2, authors1, degree=True)
+        scores, similar_degrees = self._caculate_similar_score(authors2, authors1, degree=True)
         # score= sum(scores)/len(scores)
-        similar_degree = round(sum(similar_degrees)/len(similar_degrees))
         if set(scores) == {0}: 
             degree = 0
+            similar_degree = max(similar_degrees)
         elif 0 in scores:
+            similar_degrees = [similar_degrees[i] for i in range(len(scores)) if scores[i] != 0]
             if len(scores)-scores.count(0) >= len(authors1):
                 degree = 2
+                similar_degree = min(similar_degrees)
             else:
                 degree = 1
+                similar_degree = min(similar_degrees)
         elif len(authors1) == len(authors2):
             degree = 3
+            similar_degree = min(similar_degrees)
         else:
             degree = 2
+            similar_degree = min(similar_degrees)
         return degree, similar_degree
     
 
@@ -1267,12 +1279,12 @@ class BioName:
         """
         s_teams_score = []
         for n, std_team in enumerate(author_teams):
-            score = self._caculate_simlar_score(author_team, std_team)[0]
+            score = self._caculate_similar_score(author_team, std_team)[0]
             s_team_score = sum(score)/len(score)
             s_teams_score.append((s_team_score, n))
         return s_teams_score
 
-    def _caculate_simlar_score(self, author_team1, author_team2, degree=False):
+    def _caculate_similar_score(self, author_team1, author_team2):
         """
         Args:
             author_team1: 一个学名命名人列表, 如["Hook. f.", "Thomos."], 不可以为 []
@@ -1320,10 +1332,9 @@ class BioName:
 
         Returns:
             3: 是同一个人
-            -3: 是同一个人, 但拼写上可能有错
-            -2: 极有可能是同一个人, 但拼写上可能有错
-            -1: 有可能是同一个人, 但需要核查
-             0: 不是同一个人
+            2: 极有可能是同一个人, 但拼写上可能有错
+            1: 有可能是同一个人, 但需要核查
+            0: 不是同一个人
         """
         author1 = self._clean_author_for_caculate(org_author1)
         author2 = self._clean_author_for_caculate(org_author2)
