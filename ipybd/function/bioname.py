@@ -1369,8 +1369,10 @@ class BioName:
             short_name = self._del_author_aeiou(lname1)
             if len(short_name) == 1:
                 is_matched = 1
-            elif lname1[:2] in ['Ch', 'Sh', 'Zh'] and short_name in ('Chng', 'Shng', 'Zhng', 'Ch', 'Sh', 'Zh', 'Chn', 'Shn', 'Zhn'): 
-                is_matched = 0
+            elif len(short_name) == 2 and lname1[:2] in ['Ch', 'Sh', 'Zh']:
+                is_matched = 1
+            elif len(short_name) == 2 and lname1[-3:] in ('ang', 'ing', 'ong', 'eng'):
+                is_matched = 2
             elif len(short_name) == 3 and lname1[-3:] in ('ang', 'ing', 'ong', 'eng'):
                 is_matched = 2
             else:
@@ -1381,7 +1383,7 @@ class BioName:
         # 这类问题通常颇难处理, 因为这些不同的人名本身就过于相似, 但是这种情况出现的频率较低
         # 权衡之下,这里还是将其作为同一个人名处理
         elif fuzz.token_sort_ratio(lname1[:4], lname2[:4]) > 50 and lname1[0] == lname2[0]:
-            if len(lname1) < len(lname2) and not lname1.endswith('.'):
+            if len(lname1) < len(lname2) and not org_author1.endswith('.') and lname1[-1] != lname2[-1]:
                 is_matched = 0
             else:
                 is_matched = 2
@@ -1441,10 +1443,12 @@ class BioName:
         Returns:
             str: 删除元音字母后的命名人
         """
-        if 'un' in author[1:]:
-            author = author.replace('un', '')
-        return author[0].lower() + re.sub(r'[aeiou]', '', author[1:])
-        
+        author = author.replace('un', '') if 'un' in author[1:] and not author.endswith('un') else author
+        author = author.replace('in', '') if 'in' in author[1:] and not author.endswith('in') else author
+        author = author.replace('on', '') if 'on' in author[1:] and not author.endswith('on') else author
+        author = author.replace('en', '') if 'en' in author[1:] and not author.endswith('en') else author
+        author = author.replace('an', '') if 'an' in author[1:] and not author.endswith('an') else author
+        return author[0].lower() + re.sub(r'[aeiouy]', '', author[1:])
 
     def get_author_team(self, authors, nested=False):
         """将一个学名的命名人文本拆分为多组命名人构成的列表, 并给出命名人的构成模式
