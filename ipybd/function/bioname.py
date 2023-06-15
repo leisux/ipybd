@@ -1351,42 +1351,18 @@ class BioName:
             split_author1, split_author2 = split_author2, split_author1
             lname1, lname2 = lname2, lname1
         # 若姓名中有四个起始字符一致，极可能是同一个人，字符起始字母通常是大写
-        # 名子中的首字母如果能在相互名子中找到,则认为是同一个人
-        # 如果两个姓名中至少有一个缺少名子部分,相同的起始字符必须是姓且如果是缩写必须有.号 
         if lname1[:4] in author2 or lname2[:4] in author1:
             is_matched = 4
-        # 允许姓的前四个字符顺序有不一致，但字符集必须一致
-        # 这里也有可能出现误判, 比如对于 Mask. 和 Maks. 这种情况
-        # 但在同一个物种名的命名人中出现如此相似的人名, 
-        # 除非是这个类群的专家才能判断是否是同一个人, 这里直接作为同一个人名处理
+        # 前置字符允许一定的顺序倒置,这可能会不可避免的有误判, 比如 Mask. 和 Maks.
         elif set(lname1[:4]) == set(lname2[:4]) and lname1[0] == lname2[0]:
-            is_matched = 2
-        # 允许对元音进行省略简写的姓，这里不区分大小写
-        # 如果姓氏过长,这个方法很有效,但是如果姓氏过短
-        # 或者再省略掉后鼻音后,真正参与比较的字母可能只有一个
-        # 这个时候比较的结果一般不可靠, 比如 Kang 和 Kong, Miao 和 Mao
+            is_matched = self._is_lastname_suffix(lname1, lname2, org_author1.split()[-1])
+        # 允许对姓氏中的元音进行省略简写，这里不区分大小写
         elif self._del_author_aeiou(lname1)[:4] == self._del_author_aeiou(lname2)[:4]:
-            short_name = self._del_author_aeiou(lname1)
-            if len(short_name) == 1:
-                is_matched = 1
-            elif len(short_name) == 2 and lname1[:2] in ['Ch', 'Sh', 'Zh']:
-                is_matched = 1
-            elif len(short_name) == 2 and lname1[-3:] in ('ang', 'ing', 'ong', 'eng'):
-                is_matched = 2
-            elif len(short_name) == 3 and lname1[-3:] in ('ang', 'ing', 'ong', 'eng'):
-                is_matched = 2
-            else:
-                is_matched = 3
-        # 姓的前四个字符至少有一个辅音字符导致的不同，可以认为是同一个字符,但首字母必须一致
-        # 绝大多数情况下对于一个特定的物种名,这是可靠的,但偶尔也有例外, 比如Walp.和Wall.
-        # 另外对于并不等长的字符,这也有一定的误差, 比如 Bge. 和 Berge, Bunge 就难以区分
-        # 这类问题通常颇难处理, 因为这些不同的人名本身就过于相似, 但是这种情况出现的频率较低
-        # 权衡之下,这里还是将其作为同一个人名处理
+            is_matched = self._is_lastname_abbreviation(lname1)
+        # 允许姓氏有一定的字符错误或丢失, 这可能会不可避免的有误判, 比如 Walp. 和 Wall.
+        # 另外对于并不等长的字符,也可能有一定的误差, 比如 Bge. 和 Berge, Bunge 就难以区分
         elif fuzz.token_sort_ratio(lname1[:4], lname2[:4]) > 50 and lname1[0] == lname2[0]:
-            if len(lname1) < len(lname2) and not org_author1.endswith('.') and lname1[-1] != lname2[-1]:
-                is_matched = 0
-            else:
-                is_matched = 2
+            is_matched = self._is_lastname_suffix(lname1, lname2, org_author1.split()[-1], strloss=True)
         # elif 这里未来还可以补充首字母变体，比如 U V I L G C 之间等
         else:
             is_matched = 0
@@ -1398,10 +1374,13 @@ class BioName:
             fname2 = split_author2[0] if len(split_author2) > 1 else None
             if fname1 and fname2:
                 if fname1[0] in author2 and fname2[0] in author1:
-                    if is_matched == 4:
-                        is_matched = 3
+                    if split_author1[1][0] in author2 and split_author2[1][0] in author1:
+                        if is_matched == 4:
+                            is_matched = 3
+                        else:
+                            is_matched = 2
                     else:
-                        is_matched = 2
+                        is_matched = 0
                 else:
                     is_matched = 0
             elif is_matched == 4:
@@ -1419,6 +1398,61 @@ class BioName:
                     is_matched = 0
             else:
                 pass 
+        return is_matched
+
+    def _is_lastname_suffix(self, lname1, lname2, org_lname1, strloss=None):
+        if lname1[-2:] in ('un', 'an', 'in', 'on', 'en') and lname2[-2:] in ('ung', 'ang', 'ing', 'ong', 'eng'):
+            is_matched = 0
+        elif len(lname1) > 4:
+            if fuzz.token_sort_ratio(lname1[4:], lname2[4:len(lname1)]) >= 50:
+                if strloss is False:
+                    is_matched = 3
+                else:
+                    is_matched = 2
+            elif len(lname1) == 5:
+                if strloss is None:
+                    is_matched = 0
+                else:
+                    is_matched = 2
+            else:
+                is_matched = 0
+        elif len(lname1) == 4:
+            if strloss is False:
+                is_matched = 3
+            else:
+                is_matched = 2
+        elif len(lname1) == 1:
+            if lname1 == 'L':
+                if lname2 in ("Li", "Lin", "Linn") or lname2.startswith("Linn"):
+                    is_matched = 3
+                else:
+                    is_matched = 0
+            else:
+                is_matched = 0
+        elif len(lname2) - len(lname1) > 2:
+            if org_lname1.endswith('.'):
+                if strloss is False:
+                    is_matched = 3
+                else:
+                    is_matched = 2
+            else:
+                is_matched = 0
+        else:
+            is_matched = 2
+        return is_matched
+    
+    def _is_lastname_abbreviation(self, lname1):
+        short_name = self._del_author_aeiou(lname1)
+        if len(short_name) == 1:
+            is_matched = 1
+        elif len(short_name) == 2 and lname1[:2] in ['Ch', 'Sh', 'Zh']:
+            is_matched = 1
+        elif len(short_name) == 2 and lname1[-3:] in ('ang', 'ing', 'ong', 'eng'):
+            is_matched = 2
+        elif len(short_name) == 3 and lname1[-3:] in ('ang', 'ing', 'ong', 'eng'):
+            is_matched = 2
+        else:
+            is_matched = 3
         return is_matched
 
     def _clean_author_for_caculate(self, author):
