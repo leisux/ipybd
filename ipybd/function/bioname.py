@@ -1299,11 +1299,11 @@ class BioName:
             authors2 (list): 如 ["Wall."]
 
         Returns:
+            degree (int): 0, 1, 2, 3
             3: authors1 和 authors2 内的每个人名都有对应 
             2: authors1 或者 authors2 中缺失了另一个人名组中的一些命名人
             1: authors1 和 athours2 中互有一些不同的命名人
             0: authors1 和 authors2 中没有相同的命名人
-            -1: 名称拼写可能有问题
         Raises:
             ValueError: 两组命名人的组合无法比较
         """
@@ -1311,22 +1311,22 @@ class BioName:
         # score= sum(scores)/len(scores)
         if set(scores) == {0}: 
             degree = 0
-            similar_degree = max(similar_degrees)
+            similar = max(similar_degrees)
         elif 0 in scores:
             similar_degrees = [similar_degrees[i] for i in range(len(scores)) if scores[i] != 0]
             if len(scores)-scores.count(0) >= len(authors1):
                 degree = 2
-                similar_degree = min(similar_degrees)
+                similar = min(similar_degrees)
             else:
                 degree = 1
-                similar_degree = min(similar_degrees)
+                similar = min(similar_degrees)
         elif len(authors1) == len(authors2):
             degree = 3
-            similar_degree = min(similar_degrees)
+            similar = min(similar_degrees)
         else:
             degree = 2
-            similar_degree = min(similar_degrees)
-        return degree, similar_degree
+            similar = min(similar_degrees)
+        return degree, similar
     
     def _is_same_author(self, org_author1, org_author2):
         """计算两个命名人的相似度
@@ -1350,57 +1350,59 @@ class BioName:
             author1, author2 = author2, author1
             split_author1, split_author2 = split_author2, split_author1
             lname1, lname2 = lname2, lname1
+        fname1 = split_author1[0] if len(split_author1) > 1 else None
+        fname2 = split_author2[0] if len(split_author2) > 1 else None
         # 若姓名中有四个起始字符一致，极可能是同一个人，字符起始字母通常是大写
         if lname1[:4] in author2 or lname2[:4] in author1:
-            is_matched = 4
+            is_matched = self.__is_same_lastname(lname1, lname2, org_author1.split()[-1], fname1, fname2)
         # 前置字符允许一定的顺序倒置,这可能会不可避免的有误判, 比如 Mask. 和 Maks.
         elif set(lname1[:4]) == set(lname2[:4]) and lname1[0] == lname2[0]:
-            is_matched = self._is_lastname_suffix(lname1, lname2, org_author1.split()[-1])
+            is_matched = self.__is_same_suffix(lname1, lname2, org_author1.split()[-1])
         # 允许对姓氏中的元音进行省略简写，这里不区分大小写
         elif self._del_author_aeiou(lname1)[:4] == self._del_author_aeiou(lname2)[:4]:
-            is_matched = self._is_lastname_abbreviation(lname1)
+            is_matched = self.__is_lastname_abbreviation(lname1)
         # 允许姓氏有一定的字符错误或丢失, 这可能会不可避免的有误判, 比如 Walp. 和 Wall.
-        # 另外对于并不等长的字符,也可能有一定的误差, 比如 Bge. 和 Berge, Bunge 就难以区分
+        # 对于并不等长的字符,也可能有一定的误差, 比如 Bge. 和 Berge, Bunge 就难以区分
         elif fuzz.token_sort_ratio(lname1[:4], lname2[:4]) > 50 and lname1[0] == lname2[0]:
-            is_matched = self._is_lastname_suffix(lname1, lname2, org_author1.split()[-1], strloss=True)
+            is_matched = self.__is_same_suffix(lname1, lname2, org_author1.split()[-1], strloss=True)
         # elif 这里未来还可以补充首字母变体，比如 U V I L G C 之间等
         else:
             is_matched = 0
-        # 对名进行约束，中文同姓很多，会造成不少 -1 级别的匹配，同时单纯靠姓的前四个字符
-        # 进行约束也会造成不少假匹配, 这里通过对名的首字母进行约束，可以在很大程度上解决
-        # 上述问题，但仍然不能保证 100% 的正确性, 相应规则未来可能需要进一步细化
-        if is_matched:
-            fname1 = split_author1[0] if len(split_author1) > 1 else None
-            fname2 = split_author2[0] if len(split_author2) > 1 else None
+        # 对名进行约束，以尽可能避免姓氏相同的人被误判
+        is_matched = self.__is_same_name(fname1, fname2, author1, author2, split_author1, split_author2, is_matched)
+        return is_matched
+    
+    def __is_same_name(self, fname1, fname2, author1, author2, split_author1, split_author2, lastname_matched):
+        if lastname_matched:
             if fname1 and fname2:
                 if fname1[0] in author2 and fname2[0] in author1:
-                    if split_author1[1][0] in author2 and split_author2[1][0] in author1:
-                        if is_matched == 4:
+                    if len(split_author1) == len(split_author2):
+                        if split_author1[1][0] in author2 and split_author2[1][0] in author1:
                             is_matched = 3
                         else:
-                            is_matched = 2
+                            is_matched = 0
                     else:
-                        is_matched = 0
-                else:
-                    is_matched = 0
-            elif is_matched == 4:
-                if lname1[:4]==lname2[:4]:
-                    is_matched = 3
-                elif lname2.startswith(lname1[:4]) and org_author1.split()[-1].endswith('.'): 
-                    is_matched = 3
-                elif lname2.startswith(lname1[:4]):
-                    is_matched = 1
-                elif len(lname1) > 3 and fname2 and fname2.startswith(lname1[:4]):
-                    is_matched = 1
-                elif len(lname2) > 3 and fname1 and fname1.startswith(lname2[:4]):
-                    is_matched = 1
+                        is_matched = 1
                 else:
                     is_matched = 0
             else:
-                pass 
+                is_matched = lastname_matched
+        else:
+            is_matched = 0
+        return is_matched
+    
+    def __is_same_lastname(self, lname1, lname2, org_lname1, fname1, fname2):
+        is_matched = self.__is_same_suffix(lname1, lname2, org_lname1, strloss=False)
+        if is_matched == 0:
+            if len(lname1) > 3 and fname2 and fname2.startswith(lname1[:4]):
+                is_matched = 1
+            elif len(lname2) > 3 and fname1 and fname1.startswith(lname2[:4]):
+                is_matched = 1
+            else:
+                is_matched = 0
         return is_matched
 
-    def _is_lastname_suffix(self, lname1, lname2, org_lname1, strloss=None):
+    def __is_same_suffix(self, lname1, lname2, org_lname1, strloss=None):
         if lname1[-2:] in ('un', 'an', 'in', 'on', 'en') and lname2[-2:] in ('ung', 'ang', 'ing', 'ong', 'eng'):
             is_matched = 0
         elif len(lname1) > 4:
@@ -1438,10 +1440,10 @@ class BioName:
             else:
                 is_matched = 0
         else:
-            is_matched = 2
+            is_matched = 1
         return is_matched
     
-    def _is_lastname_abbreviation(self, lname1):
+    def __is_lastname_abbreviation(self, lname1):
         short_name = self._del_author_aeiou(lname1)
         if len(short_name) == 1:
             is_matched = 1
