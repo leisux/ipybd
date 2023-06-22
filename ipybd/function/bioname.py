@@ -1403,7 +1403,9 @@ class BioName:
         return is_matched
 
     def __is_same_suffix(self, lname1, lname2, org_lname1, strloss=None):
-        if lname1[-2:] in ('un', 'an', 'in', 'on', 'en') and lname2[-2:] in ('ung', 'ang', 'ing', 'ong', 'eng'):
+        if lname1 == lname2:
+            is_matched = 3
+        elif lname1[-2:] in ('un', 'an', 'in', 'on', 'en') and lname2[-2:] in ('ung', 'ang', 'ing', 'ong', 'eng'):
             is_matched = 0
         elif len(lname1) > 4:
             if fuzz.token_sort_ratio(lname1[4:], lname2[4:len(lname1)]) >= 50:
@@ -1425,7 +1427,7 @@ class BioName:
                 is_matched = 2
         elif len(lname1) == 1:
             if lname1 == 'L':
-                if lname2 in ("Li", "Lin", "Linn") or lname2.startswith("Linn"):
+                if lname2 in ("Lin", "Linn") or lname2.startswith("Linn"):
                     is_matched = 3
                 else:
                     is_matched = 0
@@ -1440,7 +1442,19 @@ class BioName:
             else:
                 is_matched = 0
         else:
-            is_matched = 1
+            if strloss is False:
+                if org_lname1.endswith('.'):
+                    is_matched = 3
+                else:
+                    is_matched = 1
+            elif len(lname1) == 2:
+                # Ha, Hfa, Hfae
+                is_matched = 0
+            elif strloss is None and len(lname2) == 3:
+                is_matched = 2
+            else:
+                is_matched = 1
+            
         return is_matched
     
     def __is_lastname_abbreviation(self, lname1):
