@@ -1405,10 +1405,11 @@ class BioName:
     def __is_same_suffix(self, lname1, lname2, org_lname1, strloss=None):
         if lname1 == lname2:
             is_matched = 3
-        elif lname1[-2:] in ('un', 'an', 'in', 'on', 'en') and lname2[-2:] in ('ung', 'ang', 'ing', 'ong', 'eng'):
+        elif lname1[-3:] not in ('ung', 'ang', 'ing', 'ong', 'eng') and lname2[-3:] in ('ung', 'ang', 'ing', 'ong', 'eng'):
             is_matched = 0
         elif len(lname1) > 4:
-            if fuzz.token_sort_ratio(lname1[4:], lname2[4:len(lname1)]) >= 50:
+            suffix1, suffix2 = lname1[4:], lname2[4:]
+            if fuzz.token_sort_ratio(suffix1, suffix2[:len(suffix1)]) >= 50:
                 if strloss is False:
                     is_matched = 3
                 else:
@@ -1418,6 +1419,8 @@ class BioName:
                     is_matched = 0
                 else:
                     is_matched = 2
+            elif self._del_author_aeiou(suffix1) in self._del_author_aeiou(suffix2):
+                is_matched = 2
             else:
                 is_matched = 0
         elif len(lname1) == 4:
@@ -1434,13 +1437,16 @@ class BioName:
             else:
                 is_matched = 0
         elif len(lname2) - len(lname1) > 2:
-            if org_lname1.endswith('.'):
-                if strloss is False:
+            if strloss is False:
+                if org_lname1.endswith('.'):
                     is_matched = 3
                 else:
-                    is_matched = 2
+                    is_matched = 1
             else:
-                is_matched = 0
+                if org_lname1.endswith('.'):
+                    is_matched = 2
+                else:
+                    is_matched = 1
         else:
             if strloss is False:
                 if org_lname1.endswith('.'):
@@ -1449,7 +1455,7 @@ class BioName:
                     is_matched = 1
             elif len(lname1) == 2:
                 # Ha, Hfa, Hfae
-                is_matched = 0
+                is_matched = 1
             elif strloss is None and len(lname2) == 3:
                 is_matched = 2
             else:
@@ -1498,7 +1504,8 @@ class BioName:
         author = author.replace('on', '') if 'on' in author[1:] and not author.endswith('on') else author
         author = author.replace('en', '') if 'en' in author[1:] and not author.endswith('en') else author
         author = author.replace('an', '') if 'an' in author[1:] and not author.endswith('an') else author
-        return author[0].lower() + re.sub(r'[aeiouy]', '', author[1:])
+        author = author[0] + re.sub(r'[aeiouy]', '', author[1:])
+        return author.lower()
 
     def get_author_team(self, authors, nested=False):
         """将一个学名的命名人文本拆分为多组命名人构成的列表, 并给出命名人的构成模式
