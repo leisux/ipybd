@@ -1392,7 +1392,10 @@ class BioName:
         return is_matched
     
     def __is_same_lastname(self, lname1, lname2, org_lname1, fname1, fname2):
-        is_matched = self.__is_same_suffix(lname1, lname2, org_lname1, strloss=False)
+        if lname2.startswith(lname1[:4]):
+            is_matched = self.__is_same_suffix(lname1, lname2, org_lname1, strloss=False)
+        else:
+            is_matched = 0
         if is_matched == 0:
             if len(lname1) > 3 and fname2 and fname2.startswith(lname1[:4]):
                 is_matched = 1
@@ -1405,7 +1408,7 @@ class BioName:
     def __is_same_suffix(self, lname1, lname2, org_lname1, strloss=None):
         if lname1 == lname2:
             is_matched = 3
-        elif lname1[-3:] not in ('ung', 'ang', 'ing', 'ong', 'eng') and lname2[-3:] in ('ung', 'ang', 'ing', 'ong', 'eng'):
+        elif lname2[-3:] in ('ung', 'ang', 'ing', 'ong', 'eng') and lname1[-3:] not in ('ung', 'ang', 'ing', 'ong', 'eng') and len(lname2)-len(lname1) < 3:
             is_matched = 0
         elif len(lname1) > 4:
             suffix1, suffix2 = lname1[4:], lname2[4:]
