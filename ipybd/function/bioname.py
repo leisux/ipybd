@@ -39,46 +39,22 @@ class BioName:
                 names[org_name] = keywords[0], authorship, similar_authorship, degree
         return names
             
-    def _get_best_authorship(self, name, authorship):
-        while True:
-            try:
-                powo_degree = self.cache['powo'][name]['match_degree']
-                break
-            except TypeError:
-                powo_degree = None
-                break
-            except KeyError:
-                self.web_get('powoName', self.querys)
-        while True:
-            try:
-                ipni_degree = self.cache['ipni'][name]['match_degree']
-                break
-            except TypeError:
-                ipni_degree = None 
-                break
-            except KeyError:
-                self.web_get('ipniName', self.querys)
-        while True:
-            try:
-                col_degree = self.cache['col'][name]['match_degree']
-                break
-            except TypeError:
-                col_degree = None
-                break
-            except KeyError:
-                self.web_get('colName', self.querys)
-        while True:
-            try:
-                tropicos_degree = self.cache['tropicosName'][name]['match_degree']
-                break
-            except TypeError:
-                tropicos_degree = None
-                break
-            except KeyError:
-                self.web_get('tropicosName', self.querys)
-        if powo_degree == 3:
-            similar_authorship, degree = self.cache['powo'][name]['author'], 'P3'
-            authorship = similar_authorship
+    def _get_best_authorship(self, name, authorship, databases={'powo':'author', 'ipni':'authors', 'col':'author', 'tropicos':'Author'}):
+        for database in databases:
+            while True:
+                try:
+                    degree = self.cache[database][name]['match_degree']
+                    break
+                except TypeError:
+                    degree = None
+                    break
+                except KeyError:
+                    self.web_get(database+'Name', self.querys)
+        for database in databases:
+            if degree == 3:
+                similar_authorship = self.cache[database][name][databases[database]]
+                degree = ''.join(database[0].upper(), )
+                authorship = similar_authorship
         elif ipni_degree == 3:
             similar_authorship, degree = self.cache['ipni'][name]['authors'], 'I3'
             authorship = similar_authorship
@@ -1048,10 +1024,12 @@ class BioName:
         scores.sort(key=lambda s: s[0], reverse=True)
         name = names[scores[0][1]]
         # 对相似的命名人进行评级
-        authors_group2 = self.get_author_team(name[index], nested=True)
-        degree = self.get_similar_degree(authors_group, authors_group2)
         try:
+            authors_group2 = self.get_author_team(name[index], nested=True)
+            degree = self.get_similar_degree(authors_group, authors_group2)
             name['match_degree'] = degree
+        except KeyError:
+            name['match_degree'] = 'E0'
         except TypeError:
             name = name + (degree,)
         return name
