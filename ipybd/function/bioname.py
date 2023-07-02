@@ -39,82 +39,27 @@ class BioName:
                 names[org_name] = keywords[0], authorship, similar_authorship, degree
         return names
             
-    def _get_best_authorship(self, name, authorship, databases={'powo':'author', 'ipni':'authors', 'col':'author', 'tropicos':'Author'}):
-        for database in databases:
-            while True:
-                try:
-                    degree = self.cache[database][name]['match_degree']
+    def _get_best_authorship(self, name, authorship, databases={'powo':'author', 'tropicos':'Author', 'ipni':'authors', 'col':'author'}):
+        for dgr in ('S', 'H', 'M', 'L', 'E'):
+            for database in databases:
+                while True:
+                    try:
+                        degree = self.cache[database][name]['match_degree']
+                        break
+                    except TypeError:
+                        degree = None
+                        break
+                    except KeyError:
+                        self.web_get(database+'Name', self.querys)
+                if degree and degree[0] == dgr:
+                    similar_authorship = self.cache[database][name][databases[database]]
+                    degree = ''.join(database[0].upper(), degree)
+                    authorship = self.format_authorship(similar_authorship)
                     break
-                except TypeError:
-                    degree = None
+                else:
+                    similar_authorship, degree = None, None
+                    authorship = self.format_authorship(authorship)
                     break
-                except KeyError:
-                    self.web_get(database+'Name', self.querys)
-        for database in databases:
-            if degree == 3:
-                similar_authorship = self.cache[database][name][databases[database]]
-                degree = ''.join(database[0].upper(), )
-                authorship = similar_authorship
-        elif ipni_degree == 3:
-            similar_authorship, degree = self.cache['ipni'][name]['authors'], 'I3'
-            authorship = similar_authorship
-        elif tropicos_degree == 3:
-            similar_authorship, degree = self.cache['tropicosName'][name]['Author'], 'T3'
-            authorship = self.format_authorship(similar_authorship)
-        elif col_degree == 3:
-            similar_authorship, degree = self.cache['col'][name]['author'], 'C3'
-            authorship = self.format_authorship(similar_authorship)
-        elif powo_degree == 2:
-            similar_authorship, degree = self.cache['powo'][name]['author'], 'P2'
-            authorship = self.format_authorship(authorship)
-        elif tropicos_degree == 2:
-            similar_authorship, degree = self.cache['tropicosName'][name]['Author'], 'T2'
-            authorship = self.format_authorship(authorship)
-        elif ipni_degree == 2:
-            similar_authorship, degree = self.cache['ipni'][name]['authors'], 'I2'
-            authorship = self.format_authorship(authorship)
-        elif col_degree == 2:
-            similar_authorship, degree = self.cache['col'][name]['author'], 'C2'
-            authorship = self.format_authorship(authorship)
-        elif powo_degree == 1:
-            similar_authorship, degree = self.cache['powo'][name]['author'], 'P1'
-            authorship = self.format_authorship(authorship)
-        elif tropicos_degree == 1:
-            similar_authorship, degree = self.cache['tropicosName'][name]['Author'], 'T1'
-            authorship = self.format_authorship(authorship)
-        elif ipni_degree == 1:
-            similar_authorship, degree = self.cache['ipni'][name]['authors'], 'I1'
-            authorship = self.format_authorship(authorship)
-        elif col_degree == 1:
-            similar_authorship, degree = self.cache['col'][name]['author'], 'C1'
-            authorship = self.format_authorship(authorship)
-        elif powo_degree == 0:
-            similar_authorship, degree = self.cache['powo'][name]['author'], 'P0'
-            authorship = self.format_authorship(authorship)
-        elif tropicos_degree == 0:
-            similar_authorship, degree = self.cache['tropicosName'][name]['Author'], 'T0'
-            authorship = self.format_authorship(authorship)
-        elif ipni_degree == 0:
-            similar_authorship, degree = self.cache['ipni'][name]['authors'], 'I0'
-            authorship = self.format_authorship(authorship)
-        elif col_degree == 0:
-            similar_authorship, degree = self.cache['col'][name]['author'], 'C0'
-            authorship = self.format_authorship(authorship)
-        elif powo_degree == -1:
-            similar_authorship, degree = self.cache['powo'][name]['author'], 'P-1'
-            authorship = self.format_authorship(authorship)
-        elif tropicos_degree == -1:
-            similar_authorship, degree = self.cache['tropicosName'][name]['Author'], 'T-1'
-            authorship = self.format_authorship(authorship)
-        elif ipni_degree == -1:
-            similar_authorship, degree = self.cache['ipni'][name]['authors'], 'I-1'
-            authorship = self.format_authorship(authorship)
-        elif col_degree == -1:
-            similar_authorship, degree = self.cache['col'][name]['author'], 'C-1'
-            authorship = self.format_authorship(authorship)
-        else:
-            similar_authorship, degree = None, None
-            authorship = self.format_authorship(authorship)
         return authorship, similar_authorship, degree
     
     def get(self, action, typ=list, mark=False):
