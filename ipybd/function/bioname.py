@@ -11,6 +11,7 @@ import pandas as pd
 import requests
 from ipybd.function.api_terms import Filters
 from thefuzz import fuzz, process
+from Levenshtein import distance
 from tqdm import tqdm
 
 
@@ -25,41 +26,63 @@ class BioName:
     def __init__(self, names: Union[list, pd.Series, tuple], style='scientificName'):
         self.names = names
         self.querys = {}
-        self.cache = {'ipni': {}, 'col': {}, 'powo': {}, 'tropicosName': {
+        self.cache = {'ipni': {}, 'col': {}, 'powo': {}, 'tropicos': {
         }, 'tropicosAccepted': {}, 'tropicosSynonyms': {}}
         self.style = style
     
     def get_best_names(self):
         """ 从 self.names 中的每个元素中提取最佳的作者信息
         """
+        tasks = self.querys
         names = {}
-        for org_name, keywords in self.querys.items():
-            if keywords:
-                authorship, similar_authorship, degree = self._get_best_authorship(org_name, keywords[2])
-                names[org_name] = keywords[0], authorship, similar_authorship, degree
+        while tasks:
+            querys, tasks = tasks, {}
+            for org_name, keywords in querys.items():
+                if keywords:
+                    try:
+                        authorship, similar_authorship, degree = self._get_best_authorship(org_name, keywords[2])
+                        names[org_name] = keywords[0], authorship, similar_authorship, degree
+                    except KeyError as error:
+                        database = str(error)[1:-1]
+                        try:
+                            tasks[database][org_name] = keywords
+                        except KeyError:
+                            tasks[database] = {}
+                            tasks[database][org_name] = keywords
+            if tasks:
+                new_tasks = {}
+                for database, querys in tasks.items():
+                    self.web_get(database+'Name', querys)
+                    new_tasks.update(querys)
+                tasks = new_tasks
         return names
             
     def _get_best_authorship(self, name, authorship, databases={'powo':'author', 'tropicos':'Author', 'ipni':'authors', 'col':'author'}):
         for dgr in ('S', 'H', 'M', 'L', 'E'):
             for database in databases:
-                while True:
+                try:
+                    degree = self.cache[database][name]['match_degree']
+                except TypeError:
+                    degree = None
+                    continue
+                except KeyError:
+                    raise KeyError(database)
+                if degree[0] == dgr:
                     try:
-                        degree = self.cache[database][name]['match_degree']
-                        break
-                    except TypeError:
-                        degree = None
-                        break
+                        similar_authorship = self.cache[database][name][databases[database]]
+                        similar_authorship = self.format_authorship(similar_authorship)
                     except KeyError:
-                        self.web_get(database+'Name', self.querys)
-                if degree and degree[0] == dgr:
-                    similar_authorship = self.cache[database][name][databases[database]]
-                    degree = ''.join(database[0].upper(), degree)
-                    authorship = self.format_authorship(similar_authorship)
-                    break
-                else:
-                    similar_authorship, degree = None, None
+                        similar_authorship = None
+                    degree = ''.join([database[0].upper(), degree])
                     authorship = self.format_authorship(authorship)
                     break
+                else:
+                    degree = None
+            if degree:
+                break
+        if degree is None:
+            similar_authorship = None
+            authorship = self.format_authorship(authorship)
         return authorship, similar_authorship, degree
     
     def get(self, action, typ=list, mark=False):
@@ -134,7 +157,7 @@ class BioName:
             'stdName': {
                 **self.cache['ipni'],
                 **self.cache['powo'],
-                **self.cache['tropicosName'],
+                **self.cache['tropicos'],
                 **self.cache['col'],
                 },
             'colTaxonTree': self.cache['col'],
@@ -146,7 +169,7 @@ class BioName:
             'powoName': self.cache['powo'],
             'powoAccepted': self.cache['powo'],
             'powoImages': self.cache['powo'],
-            'tropicosName': self.cache['tropicosName'],
+            'tropicosName': self.cache['tropicos'],
             'tropicosAccepted': self.cache['tropicosAccepted'],
             'tropicosSynonyms': self.cache['tropicosSynonyms']
         }
@@ -497,7 +520,7 @@ class BioName:
     async def get_tropicos_name(self, query, session):
         name = await self.check_tropicos_name(query, session)
         if name or name is None:
-            return query[-1], name, 'tropicosName'
+            return query[-1], name, 'tropicos'
 
     async def get_tropicos_accepted(self, query, session):
         name = await self.check_tropicos_name(query, session)
@@ -522,30 +545,45 @@ class BioName:
             if query is None:
                 continue
             homonyms = names[names.str.startswith(query[0])]
+            # homonyms = self.find_similar(query[0], names)
             if not homonyms.empty:
                 name = self.check_native_name(query, homonyms)
                 if name:
+                    dist = distance(query[0], name[0])
+                    if dist > 0:
+                        name = name[0], name[1], name[-1].lower()
                     results[query[-1]] = name
                 else:
                     continue
             else:
                 continue
         return results
+    
+    def find_similar(self, name, series):
+        dist = series.apply(self._name_similarity, args=(name,))
+        names = series[dist < 4]
+        return names
 
+    def _name_similarity(self, name1, name2):
+        if pd.isnull(name1) or pd.isnull(name2):
+            return None
+        else:
+            name1 = self.format_latin_name(name1, 'simpleName')
+            if name1:
+                return distance(name1, name2)
+            else:
+                return None
+    
     def check_native_name(self, query, similar_names):
         homonym = []
         for name in similar_names:
-            split_name = self._format_name(name)
-            name = self.built_name_style(split_name, 'apiName')
-            if name[0] == query[0]:
-                homonym.append(name)
-            else:
-                continue
+            name = self.format_latin_name(name, 'apiName')
+            homonym.append(name)
         if homonym:
             org_author_team = self.get_author_team(query[2], nested=True)
-            # 如果查询名称有命名人, 或者匹配名称没有命名人, 返回匹配但同名结果第一个
+            # 如果查询名称没有命名人, 或者匹配名称没有命名人, 返回匹配同名结果第一个
             if not org_author_team:
-                return homonym[0] + (None,)
+                return homonym[0] + ('E0',)
             # 如果查询名称和可匹配名称均不缺少命名人, 进行命名人比较，确定最优
             return self.get_similar_name(org_author_team, homonym, 1)
         else:
@@ -561,13 +599,13 @@ class BioName:
             if authors == []:
                 for name in names:
                     if name['NomenclatureStatusName'] in ["nom. cons.", "Legitimate"]:
-                        name['match_degree'] = None
+                        name['match_degree'] = 'E0'
                         return name
                 for name in names:
                     if name['NomenclatureStatusName'] == "No opinion":
-                        name['match_degree'] = None
+                        name['match_degree'] = 'E0'
                         return name
-                names[0]['match_degree'] = None
+                names[0]['match_degree'] = 'E0'
                 return names[0]
             else:
                 return self.get_similar_name(authors, names, 'Author')
@@ -592,12 +630,12 @@ class BioName:
                 elif query[1] is Filters.generic:
                     try:
                         if res['accepted_name_info']['taxonTree']['genus'] == query[0]:
-                            res['accepted_name_info']['taxonTree']['match_degree'] = None
+                            res['accepted_name_info']['taxonTree']['match_degree'] = 'E0'
                             return res['accepted_name_info']['taxonTree']
                     except TypeError:
                         continue
                 elif query[1] is Filters.familial and res['family'] == query[0]:
-                    res['match_degree'] = None
+                    res['match_degree'] = 'E0'
                     return res
             authors = self.get_author_team(query[2], nested=True)
             if names == []:
@@ -606,9 +644,9 @@ class BioName:
             elif authors == []:
                 for name in names:
                     if name['name_status'] == 'accepted name':
-                        name['match_degree'] = None
+                        name['match_degree'] = 'E0'
                         return name
-                names[0]['match_degree'] = None
+                names[0]['match_degree'] = 'E0'
                 return names[0]
             else:
                 return self.get_similar_name(authors, names, 'author')
@@ -632,7 +670,7 @@ class BioName:
                 return None
             # 检索词缺命名人，默认使用第一个同名结果
             elif authors == []:
-                names[0]['match_degree'] = None
+                names[0]['match_degree'] = 'E0'
                 return names[0]
             else:
                 return self.get_similar_name(authors, names, 'authors')
@@ -660,9 +698,9 @@ class BioName:
             elif authors == []:
                 for name in names:
                     if name['accepted'] == True:
-                        name['match_degree'] = None
+                        name['match_degree'] = 'E0'
                         return name
-                names[0]['match_degree'] = None
+                names[0]['match_degree'] = 'E0'
                 return names[0]
             else:
                 return self.get_similar_name(authors, names, 'author')
@@ -780,7 +818,7 @@ class BioName:
         """
         raw2stdname = dict.fromkeys(self.names)
         for raw_name in raw2stdname:
-            split_name = self._format_name(raw_name)
+            split_name = self.parse_name(raw_name)
             if split_name is None:
                 raw2stdname[raw_name] = None
                 continue
@@ -826,11 +864,14 @@ class BioName:
     def format_latin_names(self, pattern):
         raw2stdname = dict.fromkeys(self.names)
         for raw_name in raw2stdname:
-            split_name = self._format_name(raw_name)
-            raw2stdname[raw_name] = self.built_name_style(split_name, pattern)
+            raw2stdname[raw_name] = self.format_latin_name(raw_name, pattern)
         return [raw2stdname[name] for name in self.names]
+    
+    def format_latin_name(self, raw_name, pattern):
+        split_name = self.parse_name(raw_name)
+        return self.built_name_style(split_name, pattern)
 
-    def _format_name(self, raw_name):
+    def parse_name(self, raw_name):
         """ 将手写学名转成规范格式
 
             raw_name: 各类动植物学名字符串，目前仅支持:
@@ -1049,18 +1090,25 @@ class BioName:
             authors_group2 (list): 命名人列表，如 [["Wall."]]
 
         Returns:
-            'S': 两组命名人来自于同一个学名, 并且命名人可以一一对应 
-            'H': 两组命名人来自于同一个学名, 但是其中有学名可能省略了一些命名人
-            'M': 两组命名人可能来自于同一个学名, 但命名人需要人工进一步考证
-            'L': 两组命名人可能来自于不同人发表的同名名称，或者两个名称的命名人存在明显的冲突
-            'E': 命名人写法可能存在错误，无法比较
+
+            degree (int): 命名人等级评估
+                'S': 两组命名人来自于同一个学名, 并且命名人可以一一对应 
+                'H': 两组命名人来自于同一个学名, 但是其中有学名可能省略了一些命名人
+                'M': 两组命名人可能来自于同一个学名, 但命名人需要人工进一步考证
+                'L': 两组命名人可能来自于不同人发表的同名名称，或者两个名称的命名人存在明显的冲突
+                'E': 命名人写法可能存在错误，无法比较
+            similar (float): 通过核心人名对degree的可信度进行评价
+                0: 仅与 L 和 E 组合，由命名人完全不同或规则限制导致的评级
+                1: 可与 SHMLE 组合，表示关键命名人需要人工核查
+                2: 可与 SHMLE 组合，表示关键命名人拼写上存在一些差异，需人工核查
+                3: 可与 SHMLE 组合，表示关键命名人相同
         """
         try:
             degree, similar = self._is_same_authorship(authors_group1, authors_group2)
             degree_translate = {3: 'S', 2: 'H', 1: 'M', 0: 'L'}
             degree = degree_translate[degree] + str(round(similar))
         except ValueError as e:
-            degree = e
+            degree = str(e)
         return degree
 
     def _is_same_authorship(self, authors_group1, authors_group2):
@@ -1076,11 +1124,8 @@ class BioName:
                 2: 其中一个学名命名人的组合缺失了一些命名人信息
                 1: 两组命名人比较相像，但是命名人之间的发表关系需要进一步澄清
                 0: 不同的命名人组合
-            similar (float): 相似度评估
-                0: 完全不同的命名人组合
-                1: 可能是同一个命名人组合, 但需要核查
-                2: 极可能是同一个命名人组合, 但拼写上存在一些差异
-                3: 完全相同的命名人组合
+            similar (int): 相似度评估
+                ... 
         Raises:
             ValueError: 两组命名人的组合无法比较
         """
@@ -1223,10 +1268,13 @@ class BioName:
 
         Returns:
             degree (int): 0, 1, 2, 3
-            3: authors1 和 authors2 内的每个人名都有对应 
-            2: authors1 或者 authors2 中缺失了另一个人名组中的一些命名人
-            1: authors1 和 athours2 中互有一些不同的命名人
-            0: authors1 和 authors2 中没有相同的命名人
+                3: authors1 和 authors2 内的每个人名都有对应 
+                2: authors1 或者 authors2 中缺失了另一个人名组中的一些命名人
+                1: authors1 和 athours2 中互有一些不同的命名人
+                0: authors1 和 authors2 中没有相同的命名人
+            similar (float): 0, 1, 2, 3
+                取authors1， authors 命名人比较中，影响 degree 可信度最重要的比较值
+                它主要由 _is_same_author() 函数返回的值直接或间接决定
         Raises:
             ValueError: 两组命名人的组合无法比较
         """
@@ -1452,10 +1500,10 @@ class BioName:
             return [] 
 
     def format_authorship(self, authorship):
-        authorship = authorship.replace(' et ', '  et ')\
+        authorship = authorship.replace('&', ' & ')\
+                                .replace(' et ', '  & ')\
                                 .replace(' ex ', '  ex ')\
                                 .replace(' in ', '  in ')\
-                                .replace('&', ' & ')\
                                 .replace(',', ', ')\
                                 .replace(')', ') ')\
                                 .replace('）', ') ')\
@@ -1594,7 +1642,7 @@ class BioName:
         """
         if self.style == 'scientificName':
             choose = input(
-                "\n是否执行拼写检查，在线检查将基于 IPNI、POWO、Tropicos、COL China 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
+                "\n是否执行拼写检查，在线检查将基于 IPNI、POWO、Tropicos、COL China 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n\n")
             if choose.strip() == 'y':
                 results = self.get('stdName', mark=mark)
                 if results:
@@ -1611,7 +1659,7 @@ class BioName:
                 return pd.DataFrame(self.format_latin_names(pattern="scientificName"))
         elif self.style == 'simpleName':
             choose = input(
-                "\n是否执行拼写检查，在线检查将基于 IPNI、POWO、Tropicos、COL China 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
+                "\n是否执行拼写检查，在线检查将基于 IPNI、POWO、Tropicos、COL China 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n\n")
             if choose.strip() == 'y':
                 results = self.get('stdName', mark=mark)
                 if results:
@@ -1626,16 +1674,33 @@ class BioName:
                     return pd.DataFrame([None]*len(self.names))
             else:
                 return pd.DataFrame(self.format_latin_names(pattern="simpleName"))
-        elif self.style == 'plantSplitName':
+        elif self.style == 'apiName':
             choose = input(
-                "\n是否执行拼写检查，在线检查将基于 IPNI、POWO、Tropicos、COL China 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n")
+                "\n是否执行拼写检查，在线检查将基于 IPNI、POWO、Tropicos、COL China 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n\n")
             if choose.strip() == 'y':
                 results = self.get('stdName', mark=mark)
                 if results:
                     return pd.DataFrame(
                         [
-                            self._format_name(name[0].strip())[:4] + (name[1],)
-                            if name[1] else self.built_name_style(self._format_name(name[0].strip()), 'plantSplitName')
+                            (name[0].strip(), name[1])
+                            if name[1] else (name[0], None)
+                            for name in results
+                        ]
+                    )
+                else:
+                    return pd.DataFrame([[None, None]]*len(self.names))
+            else:
+                return pd.DataFrame(self.format_latin_names(pattern="apiName"))
+        elif self.style == 'plantSplitName':
+            choose = input(
+                "\n是否执行拼写检查，在线检查将基于 IPNI、POWO、Tropicos、COL China 进行，但这要求工作电脑一直联网，同时如果需要核查的名称太多，可能会耗费较长时间（y/n）\n\n")
+            if choose.strip() == 'y':
+                results = self.get('stdName', mark=mark)
+                if results:
+                    return pd.DataFrame(
+                        [
+                            self.parse_name(name[0].strip())[:4] + (name[1],)
+                            if name[1] else self.built_name_style(self.parse_name(name[0].strip()), 'plantSplitName')
                             if name[0] else (None, None, None, None, None)
                             for name in results
                         ]
