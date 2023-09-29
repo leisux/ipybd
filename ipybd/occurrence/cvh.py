@@ -96,6 +96,8 @@ class LinkCVH:
         async with self.sema:
             response = await self.async_get(url, headers, session)
             self.pbar.update(1)
+            # if response is None:
+            #     raise AttributeError
             result = response['rows']
             # 将 detail 的结果中 uuid 改名为 collectionID
             # 以便遵从 DarwinCore ，同时与非 detail 模式下

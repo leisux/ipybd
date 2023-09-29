@@ -113,6 +113,7 @@ class FormatDataset:
         is_repeats = [header in self.df.columns for header in new_headers]
         for is_repeat, header in zip(is_repeats, new_headers):
             if is_repeat: self.df.rename({header:''.join([header, '_'])}, axis=1, inplace=True)
+        new_columns.set_index(self.df.index, inplace=True)
         self.df = pd.concat([self.df, new_columns], axis=1)
 
     def split_column(self, column, splitters, new_headers=None, inplace=True):
@@ -134,7 +135,7 @@ class FormatDataset:
             (splitters for _ in range(self.df.shape[0]))
         )
         if new_headers:
-            frame = pd.DataFrame(frame)
+            frame = pd.DataFrame(frame).set_index(self.df.index)
             frame.columns = new_headers
             if inplace:
                 self.df.drop(column, axis=1, inplace=True)
@@ -659,10 +660,19 @@ class FormatDataset:
                     results = self.bioname.format_latin_names(get_action)
                 else:
                     results = self.bioname.get(get_action)
-            if concat and results:
-                new_columns = pd.DataFrame(results)
-                new_columns.columns = new_headers
-                self.df = pd.concat([self.df, new_columns], axis=1)
+            if results:
+                if concat:
+                    new_columns = pd.DataFrame(results).set_index(self.df.index)
+                    if new_headers:
+                        new_columns.columns = new_headers
+                    self.df = pd.concat([self.df, new_columns], axis=1)
+                else:
+                    if new_headers:
+                        new_columns = pd.DataFrame(results).set_index(self.df.index)
+                        new_columns.columns = new_headers
+                        return new_columns
+                    else:
+                        return results
             else:
                 return results
         return get_func
@@ -672,68 +682,59 @@ class FormatDataset:
         return pattern, headers, concat, new_headers
 
     @get_name
-    def get_native_name(self, *headers, lib:'Series', new_header=('nativeName', 'nativeAuthor', 'nativeMatchedDegree'), concat=False):
-        return lib, headers, concat, new_header
+    def get_native_name(self, *headers, lib:'Series', new_headers=('nativeName', 'nativeAuthor', 'nativeMatchedDegree'), concat=True):
+        return lib, headers, concat, new_headers
 
     @get_name
-    def name_spell_check(self, *headers, concat=False):
-        return 'stdName', headers, concat, ('nameSpellCheck', 'nameAuthors', 'mixFamily', 'mixCode', 'nameMatchedDegree')
+    def name_spell_check(self, *headers, new_headers = ('nameSpellCheck', 'nameAuthors', 'mixFamily', 'mixCode', 'nameMatchedDegree'), concat=False):
+        return 'stdName', headers, concat, new_headers
 
     @get_name
-    def get_best_name(self, *headers, concat=False):
-        return 'bestName', headers, concat, ('scientificName', 'scientificNameAuthorship', 'similarAuhtorship', 'nameMatchedDegree')
+    def get_best_name(self, *headers, new_headers = ('scientificName', 'scientificNameAuthorship', 'similarAuhtorship', 'nameMatchedDegree'), concat=False):
+        return 'bestName', headers, concat, new_headers
 
     @get_name
-    def get_tropicos_accepted(self, *headers, concat=False):
-        return 'tropicosAccepted', headers, concat, ('tropicosAccepted',)
+    def get_tropicos_accepted(self, *headers, new_header=('tropicosAccepted',), concat=False):
+        return 'tropicosAccepted', headers, concat, new_header
 
     @get_name
-    def get_tropicos_name(self, *headers, concat=False):
-        return 'tropicosName', headers, concat, ('tropicosName', 'tropicosAuthors',
-                                             'tropicosFamily', 'tropicosNameId', 'tropicosMatchedDegree')
+    def get_tropicos_name(self, *headers, new_headers=('tropicosName', 'tropicosAuthors', 'tropicosFamily', 'tropicosNameId', 'tropicosMatchedDegree'), concat=False):
+        return 'tropicosName', headers, concat, new_headers
     @get_name
-    def get_ipni_name(self, *headers, concat=False):
-        return 'ipniName', headers, concat, ('ipniName', 'ipniAuthors',
-                                             'ipniFamily', 'ipniNameLsid', 'ipniMatchedDegree')
+    def get_ipni_name(self, *headers, new_headers=('ipniName', 'ipniAuthors', 'ipniFamily', 'ipniNameLsid', 'ipniMatchedDegree'), concat=False):
+        return 'ipniName', headers, concat, new_headers
 
     @get_name
-    def get_ipni_reference(self, *headers, concat=False):
-        return 'ipniReference', headers, concat, ('publishingAuthor',
-            'publication', 'referenceCollation', 'publicationYear',
-            'publicationYearNote', 'referenceRemarks', 'citationReference',
-            'bhlLink', 'ipniPublicationLsid')
+    def get_ipni_reference(self, *headers, new_headers=('publishingAuthor', 'publication', 'referenceCollation', 'publicationYear', 'publicationYearNote', 'referenceRemarks', 'citationReference', 'bhlLink', 'ipniPublicationLsid'), concat=False):
+        return 'ipniReference', headers, concat, new_headers
 
     @get_name
-    def get_powo_name(self, *headers, concat=False):
-        return 'powoName', headers, concat, ('powoName', 'powoAuthors',
-                                             'powoFamily', 'ipniNameLsid', 'powoMatchedDegreen')
+    def get_powo_name(self, *headers, new_headers=('powoName', 'powoAuthors', 'powoFamily', 'ipniNameLsid', 'powoMatchedDegreen'), concat=False):
+        return 'powoName', headers, concat, new_headers
 
     @get_name
-    def get_powo_images(self, *headers, concat=False):
-        return 'powoImages', headers, concat, (
-            'powoImage1', 'powoImage2', 'powoImage3')
+    def get_powo_images(self, *headers, new_headers=('powoImage1', 'powoImage2', 'powoImage3'), concat=False):
+        return 'powoImages', headers, concat, new_headers 
 
     @get_name
-    def get_powo_accepted(self, *headers, concat=False):
-        return 'powoAccepted', headers, concat, ('powoAccepted',)
+    def get_powo_accepted(self, *headers, new_header=('powoAccepted',), concat=False):
+        return 'powoAccepted', headers, concat, new_header 
 
     @get_name
-    def get_col_taxontree(self, *headers, concat=False):
-        return 'colTaxonTree', headers, concat, (
-            'colGenus', 'colFamily', 'colOrder', 'colClass', 'colPhylum', 'colKingdom')
+    def get_col_taxontree(self, *headers, new_headers=('colGenus', 'colFamily', 'colOrder', 'colClass', 'colPhylum', 'colKingdom'), concat=False):
+        return 'colTaxonTree', headers, concat, new_headers 
 
     @get_name
-    def get_col_name(self, *headers, concat=False):
-        return 'colName', headers, concat, ('colName', 'colAuthors',
-                                            'colFamily', 'colCode', 'colMatchedDegree')
+    def get_col_name(self, *headers, new_headers=('colName', 'colAuthors', 'colFamily', 'colCode', 'colMatchedDegree'), concat=False):
+        return 'colName', headers, concat, new_headers
 
     @get_name
-    def get_col_synonyms(self, *headers, concat=False):
-        return 'colSynonyms', headers, concat, ('colSynonyms',)
+    def get_col_synonyms(self, *headers, new_header=('colSynonyms',), concat=False):
+        return 'colSynonyms', headers, concat, new_header
 
     @get_name
-    def get_col_accepted(self, *headers, concat=False):
-        return 'colSynonyms', headers, concat, ('colAccepted',)
+    def get_col_accepted(self, *headers, new_header=('colAccepted',), concat=False):
+        return 'colSynonyms', headers, concat, new_header
 
     def drop_and_concat_columns(func):
         def format_func(self, *args, **kwargs):
@@ -746,6 +747,7 @@ class FormatDataset:
                 pass
             if inplace:
                 self.df.drop(headers, axis=1, inplace=True)
+                new_columns.set_index(self.df.index, inplace=True)
                 self.df = pd.concat([self.df, new_columns], axis=1)
             else:
                 return new_columns
@@ -1349,7 +1351,8 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
                     # 导致信息不可用，比如学名中的属名，
                     # 有些则对数据的进一步校验影响不大。
                     # 但无论如何对于缺失的字段，这里都不会强求用户补全，
-                    # 而会在具体的数值校验程序中进行处理。
+                    # 如果这对数据的可用性有很大影响，
+                    # 建议在具体的数值校验程序中进行处理。
                     else:
                         column_names.append(None)
         # 如果没有找到对应字段，则返回 None
