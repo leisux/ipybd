@@ -1008,8 +1008,30 @@ class BioName:
                 author_team.extend(authors)
         scores = self.get_similar_scores(author_team, author_teams)
         scores.sort(key=lambda s: s[0], reverse=True)
-        name = names[scores[0][1]]
-        # 对相似的命名人进行评级
+        # 同等得分的可能并不一定是最匹配的，
+        # 比如['Kunze', 'Chi'] 与 [['Kunze', 'Holttum'],['Kunze', 'Ching']]
+        # 相似得分都是 50，但是按照排序会选择第一个
+        if len(scores) > 1 and scores[0][0] == scores[1][0]:
+            name1 = names[scores[0][1]]
+            name2 = names[scores[1][1]]
+            name1 = self.__get_degree(name1, index, authors_group)
+            name2 = self.__get_degree(name2, index, authors_group)
+            degree_level = ['S3', 'S2', 'S1', 'H3', 'H2', 'H1', 'M3', 'M2', 'M1', 'E3', 'E2', 'E1', 'E0', 'L3', 'L2', 'L1', 'L0']
+            if degree_level.index(name1[-1].upper()) < degree_level.index(name2[-1].upper()):
+                return name1
+            elif degree_level.index(name1[-1].upper()) > degree_level.index(name2[-1].upper()):
+                return name2
+            elif name1[-1].isupper():
+                return name1
+            else:
+                return name2
+        else:
+            name = names[scores[0][1]]
+            return self.__get_degree(name, index, authors_group)
+    
+    def __get_degree(self, name, index, authors_group):
+        """ 对相似的命名人进行评级
+        """
         try:
             authors_group2 = self.get_author_team(name[index], nested=True)
             degree = self.get_similar_degree(authors_group, authors_group2)
