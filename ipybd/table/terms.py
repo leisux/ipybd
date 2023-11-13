@@ -6,11 +6,11 @@ from ipybd.function.bioname import BioName
 
 class CvhTerms(Enum):
     条形码_ = UniqueID('$catalogNumber')
-    馆代码_ = RadioInput('$collectionCode', 'collectionCode')
+    馆代码_ = RadioInput(['$collectionCode', '$institutionCode'], 'collectionCode')
     流水号_ = UniqueID('$otherCatalogNumbers')
     模式类型_ = RadioInput('$typeStatus', 'typeStatus')
     库存_ = RadioInput('$disposition', 'disposition')
-    标本状态_ = RadioInput('$reproductiveCondition', 'reproductiveCondition')
+    标本状态_ = RadioInput(['$reproductiveCondition', '$lifeStage'], 'reproductiveCondition')
     采集人_ = HumanName('$recordedBy')
     采集号_ = '$recordNumber'
     采集日期_ = DateTime('$eventDate')
@@ -23,11 +23,11 @@ class CvhTerms(Enum):
     区县_ = '$county'
     小地点_ = ('$locality', '$mountain', '$waterBody', ',')
     生境_ = '$habitat'
-    科_ = '$family'
+    # 科_ = '$family'
     属__种__定名人__种下等级__种下加词__种下等级定名人_ = BioName(['$scientificName', ('$genus', '$specificEpithet', '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='fullPlantSplitName')
     种下等级 = ('$种下等级', '$种下加词', ' ')
     拉丁名__ = ('$属', '$种', '$定名人', '$种下等级', '$种下等级定名人', ' ')
-    中文名_ = '$chineseName'
+    中文名_ = ['$chineseName', '$vernacularName']
     鉴定人_ = HumanName('$identifiedBy')
     鉴定日期_ = DateTime('$dateIdentified')
     纬度__经度_ = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
