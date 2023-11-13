@@ -47,7 +47,7 @@ class Label(RestructureTable):
                     record[key] = ""
         return records
 
-    def mustachify(self, start_code=None):
+    def mustachify(self, start_code=None, id_name="catalogNumber", copies_name="duplicatesOfLabel"):
         """
         Converts a Dict object containing herbarium specimen records
         into a list of Mustache-templated HTML articles.
@@ -73,7 +73,7 @@ class Label(RestructureTable):
             for r in records:
                 try:
                     if start_code:
-                        for _ in range(r['duplicatesOfLabel']):
+                        for _ in range(r[copies_name]):
                             code = self.code_maker(
                                 prefix, str(num), num_length)
                             # add code image path to HerbLabel instance properties
@@ -82,13 +82,13 @@ class Label(RestructureTable):
                                 "./barcodes", code+".png")
                             labels.append(HerbLabel(r))
                             del r['code_path']
-                            r['catalogNumber'] = code
+                            r[id_name] = code
                             new_table.append(r.copy())
                             num += 1
                     else:
-                        if r['catalogNumber'] != "" and r['duplicatesOfLabel'] == 1:
+                        if r[id_name] != "" and r[copies_name] == 1:
                             prefix, num, num_length = self.barcode_analyzer(
-                                r['catalogNumber'])
+                                r[id_name])
                             code = self.code_maker(
                                 prefix, str(num), num_length)
                             r['code_path'] = os.path.join(
@@ -96,7 +96,7 @@ class Label(RestructureTable):
                             labels.append(HerbLabel(r))
                         else:
                             labels.extend([HerbLabel(r)] *
-                                          r['duplicatesOfLabel'])
+                                          r[copies_name])
                 # if the field value not a valid number, default repeat = 1
                 except:
                     if start_code:
@@ -105,13 +105,13 @@ class Label(RestructureTable):
                             "./barcodes", code+".png")
                         labels.append(HerbLabel(r))
                         del r['code_path']
-                        r['catalogNumber'] = code
+                        r[id_name] = code
                         new_table.append(r)
                         num += 1
                     else:
-                        if r['catalogNumber'] != "":
+                        if r[id_name] != "":
                             prefix, num, num_length = self.barcode_analyzer(
-                                r['catalogNumber'])
+                                r[id_name])
                             code = self.code_maker(
                                 prefix, str(num), num_length)
                             r['code_path'] = os.path.join(
@@ -128,13 +128,13 @@ class Label(RestructureTable):
                             "./barcodes", code+".png")
                         labels.append(HerbLabel(r))
                         del r['code_path']
-                        r['catalogNumber'] = code
+                        r[id_name] = code
                         new_table.append(r.copy())
                         num += 1
                 else:
-                    if r['catalogNumber'] != "" and self.repeat == 1:
+                    if r[id_name] != "" and self.repeat == 1:
                         prefix, num, num_length = self.barcode_analyzer(
-                            r['catalogNumber'])
+                            r[id_name])
                         code = self.code_maker(prefix, str(num), num_length)
                         r['code_path'] = os.path.join(
                             "./barcodes", code+".png")
@@ -151,7 +151,7 @@ class Label(RestructureTable):
                 self.path, "DarwinCore_Specimens.xlsx"), index=False)
         return labels
 
-    def write_html(self, columns=2, rows=3, page_height=297, start_code=None, template='plant'):
+    def write_html(self, columns=2, rows=3, page_height=297, start_code=None, template='plant', id_name="catalogNumber", copies_name="duplicatesOfLabel"):
         """
         Makes list of Mustache-templated HTML articles, then iterates over list
         to generate complete HTML code containing all of the articles.
@@ -159,7 +159,7 @@ class Label(RestructureTable):
         count = 0
         page_num = columns * rows
         label_height = (page_height - (rows - 1)*0.5)/rows
-        labels = self.mustachify(start_code)
+        labels = self.mustachify(start_code, id_name, copies_name)
         renderer = pystache.Renderer()
         tpl_path = os.path.join(HERE, template + '.mustache')
         css_path = os.path.join(HERE, template + '.css')
