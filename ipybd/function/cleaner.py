@@ -2,6 +2,7 @@ import json
 import os
 import re
 from datetime import date
+import math
 from types import FunctionType, MethodType
 from typing import Union
 import warnings
@@ -516,20 +517,19 @@ class AdminDiv:
                 n = stdregion[j:].find("::"+region[i:i+k])
                 m = 0  # 记录最终匹配的字符数
                 if n != -1:
-                    # 白云城矿区可能会错误的匹配“中国,内蒙古自治区,白云鄂博矿区”
-                    if region[-2] in stdregion:
-                        while n != -1 and k <= region_index - i + 1:
-                            k += 1
-                            m = n
-                            n = stdregion[j:].find(region[i:i+k])
-                        i += k-1
-                        j += m+k-1
-                        each_score += k-1
+                    while n != -1 and k <= region_index - i + 1:
+                        k += 1
+                        m = n
+                        n = stdregion[j:].find(region[i:i+k])
+                    if region[i:i+k-1].endswith("::"):
+                        each_score += k-3
                     else:
-                        each_score = 2
-                        break
+                        each_score += k-1
+                    i += k-1
+                    j += m+k-1
                 else:
                     i += 1
+            # 白云城矿区可能会错误的匹配“中国,内蒙古自治区,白云鄂博矿区”
             if each_score < 2:
                 continue
             elif each_score == score[0]:
@@ -541,7 +541,11 @@ class AdminDiv:
                     self.region_mapping[raw_region] = "!"+stdregion
             elif each_score > score[0]:
                 score = each_score, len_stdregion
-                self.region_mapping[raw_region] = stdregion
+                if region[-2] in stdregion:
+                    self.region_mapping[raw_region] = stdregion
+                else:
+                    self.region_mapping[raw_region] = "!"+stdregion
+            # print(raw_region, stdregion, score)
         if score == (0, 0):
             if raw_region == "中国":
                 self.region_mapping[raw_region] = "中国"
@@ -701,6 +705,45 @@ class Number:
 class GeoCoordinate:
     def __init__(self, coordinates: Union[list, pd.Series, tuple]):
         self.coordinates = coordinates
+    
+    def deg2biogrid(self, lat_deg, lon_deg, zoom):
+        xtile, ytile = self.deg2num3857(lat_deg, lon_deg, zoom)
+        code = self.num2biogrid(xtile, ytile, zoom)
+        return code
+    
+    def deg2num3857(self, lat_deg, lon_deg, zoom):
+        lat_rad = math.radians(lat_deg)
+        n = 2.0 ** zoom
+        xtile = int((lon_deg + 180.0) / 360.0 * n)
+        ytile = int((1.0 - math.asinh(math.tan(lat_rad)) / math.pi) / 2.0 * n)
+        return (xtile, ytile)
+
+    def num2deg3857(self, xtile, ytile, zoom):
+        n = 2.0 ** zoom
+        lon_deg = xtile / n * 360.0 - 180.0
+        lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * ytile / n)))
+        lat_deg = math.degrees(lat_rad)
+        return (lat_deg, lon_deg)
+    
+    def num2biogrid(self, x, y, zoom):
+        l1code = {0:'X', 1:'Y'}
+        l2code = {0:'R', 1:'S', 2:'T', 3:'V'}
+        l3code = {0:'G', 1:'H', 2:'J', 3:'K', 4:'L', 5:'M', 6:'P', 7:'Q'} 
+        mapping = {0:lambda z: hex(z)[2:].upper(), 1:lambda z:l1code[z], 2:lambda z:l2code[z], 3:lambda z:l3code[z]}
+        master_levels = zoom//4
+        sub_level = zoom%4
+        code = ''
+        if sub_level:
+            x, y, xcode, ycode = self._xy2levelcode(x, y, 2<<sub_level-1)
+            code = mapping[sub_level](xcode) + mapping[sub_level](ycode)
+        for i in range(master_levels):
+            x, y, xcode, ycode = self._xy2levelcode(x, y, 16)
+            code = ''.join([mapping[0](xcode), mapping[0](ycode), code])
+        return code
+
+    def _xy2levelcode(self, x, y, base):
+        return x//base, y//base, x%base, y%base
+
 
     def format_coordinates(self):
         new_lng = [None]*len(self.coordinates)
