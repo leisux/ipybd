@@ -26,11 +26,11 @@ class MyModel(Enum):
 
   `学名 = ('$属', '$种', '$种下等级', ' ') ` 就表示将原数据集中的`属`,`种`,`种下等级`数据通过空格按序连接，合并为新数据集中的`学名`字段。合并表达式的最后一个元素为各个字段间的连接符。
 
-当用一个 CVH 样式的 Excel 数据表实例化 `MyModel` 对象， 它会在内存中自动完成数据表结构的转换，生成一个符合模型定义的新的数据表：
+当用一个 CVH 样式的 Excel 数据表实例化 `MyModel` 对象, 然后调用`rebuild_table`会在内存中自动完成数据表结构的转换，生成一个符合模型定义的新的数据表：
 
 ```python
 cvh = MyModel(r"/Users/.../cvh.xlsx") 
-
+cvh.rebuild_table()
 cvh.df.head()                                                                                                                                                          
 Out: 
             记录人                    记录编号      记录时间    省     市                          学名
@@ -63,7 +63,7 @@ class MySmartModel(Enum):
     记录人 = '$recordedBy'  
     记录编号 = '$recordNumber'  
     采集日期 = '$eventDate' 
-    省__市 = {('$province', '$city'): ','} 
+    省__市 = {('$province', '$prefecture'): ','} 
     学名 = ['$scientificName',  ('$genus', '$specificEpithet', '$taxonRank', '$infraspecificEpithet', ' ')] 
     
 ```
@@ -71,7 +71,7 @@ class MySmartModel(Enum):
 如上所示，对于具备字段映射功能的 `ipybd` 数据模型，其数据对象的表达不再是具体真实的字段名，而是采用了一套新的标准字段名以指代同一语义的不同字段名。比如上面代码中的 "recordedBy" 就可以同时指代"采集人"、"采集人员"、"记录人"、"记录者"、"记录人员"、"COLLECTOR" .... 等一批不同名称但意义相同的字段。`ipybd` 就是依靠这种标准字段名称的泛化关系实现了众源数据集结构的转换。目前 `ipybd` 的标准字段名称库主要基于 [DarwinCore](https://dwc.tdwg.org/terms/) 定义，其中也有部分字段名称会根据国内数据的现实情况，做了一些调整和扩展。标准字段名称库相当于一类对象的基本构成元素库。使用它进行模型的定义，会存在一些特殊的表达方式，比如上述 `MySmartModel` 模型中：
 
 ```python
-省__市 = {('$province', '$city'): ','} 
+省__市 = {('$province', '$prefecture'): ','} 
 ```
 
 与 `MyModel` 中`$省市`的表达方式就有很大差异：
@@ -80,7 +80,7 @@ class MySmartModel(Enum):
 省__市 = {'$省市':','}
 ```
 
-这是因为在 `ipybd` 的标准字段名称库中，并不存在与"省市"完全等同的标准字段名，而只存在 "province" 和 "city" 两个标准字段名。显然“省市”应该是由"province"和"city"两个标准字段组合而成，因此在 `MySmartModel`中就需要以表示合并语义的元组表达`$省市`这个概念。
+这是因为在 `ipybd` 的标准字段名称库中，并不存在与"省市"完全等同的标准字段名，而只存在 "province" 和 "prefecture" 两个标准字段名。显然“省市”应该是由"province"和"prefecture"两个标准字段组合而成，因此在 `MySmartModel`中就需要以表示合并语义的元组表达`$省市`这个概念。
 
 同理，对于`学名`的表示：
 
@@ -98,6 +98,7 @@ class MySmartModel(Enum):
 # 3.1 中示范的 cvh 数据表，仍然可以通过 MySmartModel 执行数据结构转换
 # 需要注意的是使用映射功能的模型，在调用时需要设置 fields_mapping=True
 cvh = MySmartModel(r"/Users/.../cvh.xlsx", fields_mapping=True) 
+cvh.rebuild_table()
 cvh.df.head()
 
 Out: 
@@ -113,6 +114,7 @@ Out:
 还可以实现不同数据源的数据结构转换，比如不同于 CVH 的数据表，biotracks.cn 导出的数据集中省、市是分列的，同时学名也不是分开的，而是聚合的。这种差异明显的数据集，仍然可以通过 `MySmartModel` 实现结构的转换。
 ```python
 bio = MySmartModel(r'/Users/.../biotracks.xlsx', fields_mapping=True)
+bio.rebuild_table()
 bio.df.head()
 
 Out: 
@@ -196,6 +198,7 @@ class DataCleaner(Enum):
 
 ```python
 cleandata = DataCleaner(r"/Users/.../dirtydata.xlsx")
+cleandata.rebuild_table()
 cleandata.df.head()                                                                                                                                                       
 Out: 
              拉丁名           经度       纬度    采集日期    海拔  海拔高   国     省                 市      县
@@ -214,7 +217,7 @@ Out:
 
 + `AdminDiv(address: Union[list, pd.Series, tuple])`
 
-  清洗`address`中的中文行政区划，最终返回由`country` `province` `city` `country` 组成的`DataFrame` 对象；对于非中文书写的地址会忽略。
+  清洗`address`中的中文行政区划，最终返回由`country` `province` `prefecture` `country` 组成的`DataFrame` 对象；对于非中文书写的地址会忽略。
 
 + `Number(min_column: Union[list, pd.Series, tuple], max_column: Union[list, pd.Series, tuple] = None, typ=float, min_num=0, max_num=8848)`
 
@@ -259,7 +262,7 @@ class SmartCleaner(Enum):
     经度__纬度 = GeoCoordinate(('$decimalLatitude', '$decimalLongitude', ';')) 
     采集日期 = DateTime('$eventDate') 
     海拔__海拔高 = Number('$minimumElevationInMeters', '$maximumElevationInMeters', int) 
-    国__省__市__县 = AdminDiv(('$country', '$province', '$city', '$county', ',')) 
+    国__省__市__县 = AdminDiv(('$country', '$province', '$prefecture', '$county', ',')) 
 
 ```
 
@@ -267,6 +270,7 @@ class SmartCleaner(Enum):
 
 ```python
 cleandata = SmartCleaner(r"/Users/.../dirtydata.xlsx", fields_mapping=True)
+cleandata.rebuild_table()
 cleandata.df.head()                                                                                                                                                       
 Out: 
              拉丁名           经度       纬度    采集日期    海拔  海拔高   国     省                 市      县
@@ -302,7 +306,7 @@ class MyFuncModel(Enum):
     
     
 mydata = MyFuncModel(cleandata.copy())  
-
+mydata.rebuild_table()
 mydata.df.head()
 
 Out: 
@@ -333,7 +337,7 @@ class MyFuncModel(Enum):
     #枚举元素的key也要写成多个字段名，以匹配 avg 的返回结果
     海拔低__海拔高__海拔 = avg('$海拔1', '$海拔2')
                                                                                                                                                
-mydata = MyFuncModel(cleandata.copy())                                                                                                                 mydata.df.head()                                                                                                                                                         
+mydata = MyFuncModel(cleandata.copy())                                                  mydata.rebuild_table()                                                               mydata.df.head()                                                                                                                                                         
 Out: 
                        拉丁名         经度          纬度     海拔低  海拔高    海拔
 0               Trifolium repens L.  28.574633   99.818817  1400  1800  1600.0
@@ -359,8 +363,9 @@ Out:
 
 **`NOIOccurrence`**：适用于转数据集为 noi.link 平台注册数据集；
 
-使用这些模型，只需将数据对象直接传递给它即可：
+使用这些模型，只需将数据对象直接传递给它, 然后调用 `rebuild_table` 即可：
 
 ```python
 mycollection = Occurrence(your dataset object)
+mycollection.rebuild_table()
 ```

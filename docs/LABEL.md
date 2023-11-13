@@ -8,6 +8,10 @@ from ipybd import Label
 # 清洗数据，repeat 参数指定没条记录生成的标签数量，默认为 1
 # 如果设置为 0 ，程序会使用数据中指代标本份数的字段 duplicatesOfLabel 设定的数值作为打印数量
 printer = Label(r"/Users/.../record20201001.xlsx', repeat=2)
+
+# 对数据结构进行重塑以满足打印模版需求
+# 如果数据表结构本身与打印模版一致,可以不执行本步骤
+printer.rebuild_table()
                 
 # 打印标签，start_code 定义了起始条形码号
 # columns 定义了纸张每页内标签的列数
