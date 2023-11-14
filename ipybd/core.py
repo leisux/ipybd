@@ -602,9 +602,6 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
         self.fcol = fcol  # 设置填充缺失列的默认值
         self.fields_mapping = fields_mapping
         self.cut = cut
-        self.raw_columns = tuple(self.df.columns)
-        self.__unmapped_columns = dict.fromkeys(self.df.columns)
-        self._build_headers_lib()
     
     def _build_headers_lib(self):
         if self.fields_mapping is False:
@@ -615,6 +612,9 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
             self.__build_headers_lib()
 
     def rebuild_table(self):
+        self.raw_columns = tuple(self.df.columns)
+        self.__unmapped_columns = dict.fromkeys(self.df.columns)
+        self._build_headers_lib()
         # 对表格按照定义的枚举Terms进行重塑
         new_columns = self.__rebuild_columns()
         for header in self.__unmapped_columns:
