@@ -120,6 +120,9 @@ class KingdoniaPlant(RestructureTable):
     def __init__(self, *args, **kwargs):
         super(KingdoniaPlant, self).__init__(
             *args, fields_mapping=True, cut=True, fcol=None, **kwargs)
+    
+    def rebuild_table(self):
+        super().rebuild_table()
         self.cleaning_null_identifications()
 
     def cleaning_null_identifications(self):
