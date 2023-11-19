@@ -22,6 +22,13 @@ def imodel(enum_model):
     return type(cls_name, (RestructureTable,), cls_attrs)
 
 
+class BioGrid(RestructureTable):
+    columns_model = BioGridTerms
+
+    def __init__(self, *args, **kwargs):
+        super(Occurrence, self).__init__(*args, fields_mapping=True, **kwargs)
+
+
 class Occurrence(RestructureTable):
     columns_model = OccurrenceTerms
 

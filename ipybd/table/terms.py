@@ -3,6 +3,41 @@ from enum import Enum
 from ipybd.function.cleaner import *
 from ipybd.function.bioname import BioName
 
+class BioGridTerms(Enum):
+    dataSetName_ = '$dataSetName'
+    recordedBy_ = HumanName('$recordedBy')
+    recordNumber = '$recordNumber'
+    eventDate_ = DateTime('$eventDate', 'datetime')
+    scientificName__scientificNameAuthorship_ = BioName(['$scientificName', ('$genus', '$specificEpithet', '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='apiName')
+    chineseName = '$chineseName'
+    organismQuantity = Number('$organismQuantity', None, int)
+    organismQuantityType = RadioInput('$organismQuantityType', 'organismQuantityType')
+    establishmentMean_ = RadioInput('$establishmentMean', 'establishmentMean')
+    country__stateProvince__prefecture__county = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
+    locality = ('$locality', '$mountain', '$waterBody', ',')
+    habitat = '$habitat'
+    decimalLatitude__decimalLongitude_ = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
+    elevationInMeters = Number('$elevationInMeters')
+    occurrenceRemark = '$occurrenceRemark'
+    verbatimIdentification = '$verbatimIdentification'
+    identifiedBy_ = HumanName('$identifiedBy')
+    dateIdentified_ = DateTime('$dateIdentified', 'datetime')
+    identificationVerificationStatus_ = RadioInput('$identificationVerificationStatus', 'identificationVerificationStatus')
+    license_ = RadioInput('$license', 'license')
+    associatedMedia = Url('$associatedMedia')
+    individualCount = Number('$individualCount', None, int)
+    threatenedFactors = RadioInput('$threatenedFactors', 'threatenedFactors')
+    molecularMaterialSample = RadioInput('$molecularMaterialSample', 'molecularMaterialSample')
+    lifeForm = RadioInput('$lifeForm', 'lifeForm')
+    frequency = RadioInput('$frequency', 'frequency')
+    DBH = Number('$DBH')
+    heightInMeters = Number('$heightInMeters')
+    reproductiveOrgans = '$reproductiveOrgans'
+    propagulum = '$propagulum'
+    leaf = '$leaf'
+    stem = '$stem'
+    root = '$root'
+    host = '$host'
 
 class CvhTerms(Enum):
     条形码_ = UniqueID('$catalogNumber')
