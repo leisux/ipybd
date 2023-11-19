@@ -4,7 +4,7 @@ from ipybd.function.cleaner import *
 from ipybd.function.bioname import BioName
 
 class BioGridTerms(Enum):
-    dataSetName_ = '$dataSetName'
+    datasetName = '$datasetName'
     recordedBy_ = HumanName('$recordedBy')
     recordNumber = '$recordNumber'
     eventDate_ = DateTime('$eventDate', 'datetime')
@@ -12,17 +12,17 @@ class BioGridTerms(Enum):
     chineseName = '$chineseName'
     organismQuantity = Number('$organismQuantity', None, int)
     organismQuantityType = RadioInput('$organismQuantityType', 'organismQuantityType')
-    establishmentMean_ = RadioInput('$establishmentMean', 'establishmentMean')
+    establishmentMeans_ = RadioInput('$establishmentMeans', 'establishmentMeans')
     country__stateProvince__prefecture__county = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     habitat = '$habitat'
     decimalLatitude__decimalLongitude_ = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
-    elevationInMeters = Number('$elevationInMeters')
-    occurrenceRemark = '$occurrenceRemark'
+    elevationInMeters_ = Number('$elevationInMeters')
     verbatimIdentification = '$verbatimIdentification'
     identifiedBy_ = HumanName('$identifiedBy')
     dateIdentified_ = DateTime('$dateIdentified', 'datetime')
     identificationVerificationStatus_ = RadioInput('$identificationVerificationStatus', 'identificationVerificationStatus')
+    occurrenceRemarks = '$occurrenceRemarks'
     license_ = RadioInput('$license', 'license')
     associatedMedia = Url('$associatedMedia')
     individualCount = Number('$individualCount', None, int)

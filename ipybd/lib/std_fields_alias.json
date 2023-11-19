@@ -1,4 +1,8 @@
 {
+    "threatenedFactors": [
+        "威胁因素",
+        "THREATENEDFACTORS"
+    ],
     "taxonDistribution":[
         "分布区域",
         "TAXONDISTRIBUTION"
@@ -873,6 +877,9 @@
         "最小距离",
         "MINIMUMDISTANCEABOVESURFACEINMETERS"
     ],
+    "elevationInMeters": [
+        "ELEVATIONINMETERS"
+    ],
     "minimumElevationInMeters": [
         "最低海拔",
         "最低海拔（米）",
@@ -1118,6 +1125,11 @@
         "COLLECTOR_NUMBER",
         "COLLECTNUMBER",
         "RECORDNUMBER"
+    ],
+    "recordedByID":[
+        "记录人ID",
+        "采集人ID",
+        "RECORDEDBYID"
     ],
     "recordedBy": [
         "采集人",
