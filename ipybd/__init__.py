@@ -16,5 +16,5 @@ from ipybd.occurrence import noi
 
 from ipybd.occurrence.cvh import LinkCVH
 
-from ipybd.table.model import (CVH, NSII, KingdoniaPlant, NoiOccurrence,
-                               Occurrence, imodel)
+from ipybd.table.model import (BioGrid, CVH, NSII, KingdoniaPlant, 
+                               NoiOccurrence, Occurrence, imodel)
