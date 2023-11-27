@@ -39,6 +39,7 @@ setup(
             'pystrich>=0.8',
             'jsonschema>=2.6.0',
             'thefuzz>=0.19.0',
-            'python-Levenshtein>=0.12.2'
+            'python-Levenshtein>=0.12.2',
+            'pillow==9.5'
         ]
 )
