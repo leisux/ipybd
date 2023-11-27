@@ -3,6 +3,10 @@ from enum import Enum
 from ipybd.function.cleaner import *
 from ipybd.function.bioname import BioName
 
+
+
+
+
 class BioGridTerms(Enum):
     datasetName = '$datasetName'
     recordedBy_ = HumanName('$recordedBy')
@@ -13,7 +17,7 @@ class BioGridTerms(Enum):
     organismQuantity = Number('$organismQuantity', None, int)
     organismQuantityType = RadioInput('$organismQuantityType', 'organismQuantityType')
     establishmentMeans_ = RadioInput('$establishmentMeans', 'establishmentMeans')
-    country__stateProvince__prefecture__county = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
+    country__Province__prefecture__county = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     habitat = '$habitat'
     decimalLatitude__decimalLongitude_ = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
@@ -77,7 +81,7 @@ class CvhTerms(Enum):
     树皮_ = '$stem'
     叶_ = '$leaf'
     花_ = '$reproductiveOrgans'
-    果实_ = ('$fruit', '$propagulum')
+    果实_ = ('$fruit', '$propagulum', ', ')
     寄主_ = '$host'
     备注2_ = '$organismRemarks'
 
