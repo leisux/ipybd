@@ -1017,11 +1017,17 @@ class BioName:
             name1 = self.__get_degree(name1, index, authors_group)
             name2 = self.__get_degree(name2, index, authors_group)
             degree_level = ['S3', 'S2', 'S1', 'H3', 'H2', 'H1', 'M3', 'M2', 'M1', 'E3', 'E2', 'E1', 'E0', 'L3', 'L2', 'L1', 'L0']
-            if degree_level.index(name1[-1].upper()) < degree_level.index(name2[-1].upper()):
+            try:
+                degree1 = name1[-1]
+                degree2 = name2[-1]
+            except KeyError:
+                degree1 = name1['match_degree']
+                degree2 = name2['match_degree']
+            if degree_level.index(degree1.upper()) < degree_level.index(degree2.upper()):
                 return name1
-            elif degree_level.index(name1[-1].upper()) > degree_level.index(name2[-1].upper()):
+            elif degree_level.index(degree1.upper()) > degree_level.index(degree2.upper()):
                 return name2
-            elif name1[-1].isupper():
+            elif degree1.isupper():
                 return name1
             else:
                 return name2
