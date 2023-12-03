@@ -535,7 +535,7 @@ class BioName:
                 # 如果查无处理结果，返回默认值
                 return query[-1], name, 'tropicosAccepted'
 
-    def native_get(self, querys, names):
+    def native_get(self, querys, names, strict=True):
         """
             querys: build_querys 形成的待查询名称及其解构信息组成的字典
             names: 由学名组成的 Series, 用于被比较和提取
@@ -544,8 +544,7 @@ class BioName:
         for query in tqdm(querys.values()):
             if query is None:
                 continue
-            homonyms = names[names.str.startswith(query[0])]
-            # homonyms = self.find_similar(query[0], names)
+            homonyms = self.find_similar(query[0], names, strict)
             if not homonyms.empty:
                 name = self.check_native_name(query, homonyms)
                 if name:
@@ -559,12 +558,22 @@ class BioName:
                 continue
         return results
     
-    def find_similar(self, name, series):
-        dist = series.apply(self._name_similarity, args=(name,))
-        names = series[dist < 4]
+    def find_similar(self, name, series, strict):
+        if strict:
+            return series.apply(self._strict_similarity, args=(name,))
+        else:
+            dist = series.apply(self._fuzzy_similarity, args=(name,))
+            names = series[dist < 4]
         return names
 
-    def _name_similarity(self, name1, name2):
+    def _strict_similarity(self, name1, name2):
+        if pd.isnull(name1) or pd.isnull(name2):
+            return None
+        else:
+            name = self.format_latin_name(name1, 'simpleName')
+            return name1 if name == name2 else None
+
+    def _fuzzy_similarity(self, name1, name2):
         if pd.isnull(name1) or pd.isnull(name2):
             return None
         else:
@@ -1008,10 +1017,10 @@ class BioName:
                 author_team.extend(authors)
         scores = self.get_similar_scores(author_team, author_teams)
         scores.sort(key=lambda s: s[0], reverse=True)
-        # 同等得分的可能并不一定是最匹配的，
+        # 得分最高的可能并不一定是最匹配的，
         # 比如['Kunze', 'Chi'] 与 [['Kunze', 'Holttum'],['Kunze', 'Ching']]
-        # 相似得分都是 50，但是按照排序会选择第一个
-        if len(scores) > 1 and scores[0][0] == scores[1][0]:
+        # 得分都是 50，但是按照排序会选择第一个
+        if len(scores) > 1:
             name1 = names[scores[0][1]]
             name2 = names[scores[1][1]]
             name1 = self.__get_degree(name1, index, authors_group)
