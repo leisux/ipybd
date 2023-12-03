@@ -1108,11 +1108,11 @@
         "州省",
         "省名",
         "采集地省",
-        "PROVINCE",
         "STATE_PROVINCE",
         "STATEPROVINCE_LABEL",
         "产地1",
-        "STATEPROVINCE"
+        "STATEPROVINCE",
+        "PROVINCE"
     ],
     "recordNumber": [
         "采集号",
