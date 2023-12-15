@@ -242,12 +242,12 @@ class FormatDataset:
         elif isinstance(separators, str):
             mergers = self.df[columns[0]]
             for column in columns[1:]:
-                mergers = map(
+                mergers = list(map(
                     self.__merge_txt2line,
                     mergers,
                     self.df[column],
                     (separators for _ in range(self.df.shape[0]))
-                )
+                ))
         elif isinstance(separators, tuple):
             mergers = self.df[columns[0]]
             for column, sepa in zip(columns[1:], separators):
@@ -266,12 +266,9 @@ class FormatDataset:
                 self.df.rename({new_header: ''.join([new_header, '_'])}, axis=1, inplace=True)
             else:
                 pass
-            self.df[new_header] = pd.Series(mergers)
+            self.df[new_header] = pd.Series(mergers, index=self.df.index)
         else:
-            if isinstance(mergers, map):
-                return list(mergers)
-            else:
-                return mergers
+            return mergers
 
     def _merge2pairs(self, columns, typ='dict'):
         try:
