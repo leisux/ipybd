@@ -558,28 +558,37 @@ class BioName:
                 continue
         return results
     
-    def find_similar(self, name, series, strict):
+    def find_similar(self, name, names, strict):
         if strict:
-            return series.apply(self._strict_similarity, args=(name,))
+            series = names[names.str.startswith(name)]
+            if not series.empty:
+                # series = self._strict_similarity(series, name)
+                series = series[series.apply(self._strict_similarity, args=(name,))]
         else:
-            dist = series.apply(self._fuzzy_similarity, args=(name,))
-            names = series[dist < 4]
-        return names
+            dist = names.apply(self._fuzzy_similarity, args=(name,))
+            series = names[dist < 4]
+        return series
 
-    def _strict_similarity(self, name1, name2):
-        if pd.isnull(name1) or pd.isnull(name2):
+    def _strict_similarity(self, name_with_authors, name_without_authors):
+        name = self.format_latin_name(name_with_authors, 'simpleName')
+        return True if name == name_without_authors else False
+
+    # def _strict_similarity(self, series, name):
+    #     sp = "((?:!×\s?|×\s?|!)?[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*(×\s+|X\s+|x\s+|×)?([a-zàâäèéêëîïôœùûüÿç][a-zàâäèéêëîïôœùûüÿç-]+)?\s*(.*)"
+    #     ssp = "(^[\"\'A-ZŠÁÅ\(\.].*?[^A-Z-\s]\s*(?=$|var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form\.|forma|nothosp\.|cv\.|cultivar\.))?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form\.|forma|nothosp\.|cv\.|cultivar\.)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*([\"\'（A-ZÅÁŠ\(].*?[^A-Z-])?$"
+    #     split1 = series.str.extract(sp)
+    #     species = split1[0].str.cat([split1[1], split1[2]], sep=' ', na_rep='').str.replace('  ', ' ').str.strip()
+    #     split2 = split1[3].str.extract(ssp)
+    #     species = species.str.cat([split2[1], split2[2]], sep=' ', na_rep='').str.replace('  ', ' ').str.strip()
+    #     return series[species == name]
+
+    def _fuzzy_similarity(self, name_with_authors, name_without_authors):
+        if pd.isnull(name_without_authors):
             return None
         else:
-            name = self.format_latin_name(name1, 'simpleName')
-            return name1 if name == name2 else None
-
-    def _fuzzy_similarity(self, name1, name2):
-        if pd.isnull(name1) or pd.isnull(name2):
-            return None
-        else:
-            name1 = self.format_latin_name(name1, 'simpleName')
-            if name1:
-                return distance(name1, name2)
+            name = self.format_latin_name(name_with_authors, 'simpleName')
+            if name:
+                return distance(name_with_authors, name_without_authors)
             else:
                 return None
     
