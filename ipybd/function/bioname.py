@@ -535,22 +535,20 @@ class BioName:
                 # 如果查无处理结果，返回默认值
                 return query[-1], name, 'tropicosAccepted'
 
-    def native_get(self, querys, names, strict=True):
+    def native_get(self, querys, names, strict=False):
         """
             querys: build_querys 形成的待查询名称及其解构信息组成的字典
             names: 由学名组成的 Series, 用于被比较和提取
         """
         results = {}
+        species = self._get_simple_names(names)
         for query in tqdm(querys.values()):
             if query is None:
                 continue
-            homonyms = self.find_similar(query[0], names, strict)
+            homonyms = self.find_similar(query[0], names, species, strict)
             if not homonyms.empty:
                 name = self.check_native_name(query, homonyms)
                 if name:
-                    dist = distance(query[0], name[0])
-                    if dist > 0:
-                        name = name[0], name[1], name[-1].lower()
                     results[query[-1]] = name
                 else:
                     continue
@@ -558,14 +556,13 @@ class BioName:
                 continue
         return results
     
-    def find_similar(self, name, names, strict):
+    def find_similar(self, name, names, species, strict):
         if strict:
-            series = names[names.str.startswith(name)]
-            if not series.empty:
-                # series = self._strict_similarity(series, name)
-                series = series[series.apply(self._strict_similarity, args=(name,))]
+            series = names[species==name]
+            # series = series[series.apply(self._strict_similarity, args=(name,))]
         else:
-            dist = names.apply(self._fuzzy_similarity, args=(name,))
+            # series = self._get_simple_names(names)
+            dist = species.apply(self._fuzzy_similarity, args=(name,))
             series = names[dist < 4]
         return series
 
@@ -573,22 +570,22 @@ class BioName:
         name = self.format_latin_name(name_with_authors, 'simpleName')
         return True if name == name_without_authors else False
 
-    # def _strict_similarity(self, series, name):
-    #     sp = "((?:!×\s?|×\s?|!)?[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*(×\s+|X\s+|x\s+|×)?([a-zàâäèéêëîïôœùûüÿç][a-zàâäèéêëîïôœùûüÿç-]+)?\s*(.*)"
-    #     ssp = "(^[\"\'A-ZŠÁÅ\(\.].*?[^A-Z-\s]\s*(?=$|var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form\.|forma|nothosp\.|cv\.|cultivar\.))?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form\.|forma|nothosp\.|cv\.|cultivar\.)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*([\"\'（A-ZÅÁŠ\(].*?[^A-Z-])?$"
-    #     split1 = series.str.extract(sp)
-    #     species = split1[0].str.cat([split1[1], split1[2]], sep=' ', na_rep='').str.replace('  ', ' ').str.strip()
-    #     split2 = split1[3].str.extract(ssp)
-    #     species = species.str.cat([split2[1], split2[2]], sep=' ', na_rep='').str.replace('  ', ' ').str.strip()
-    #     return series[species == name]
+    def _get_simple_names(self, series):
+        sp = "((?:!×\s?|×\s?|!)?[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*(×\s+|X\s+|x\s+|×)?([a-zàâäèéêëîïôœùûüÿç][a-zàâäèéêëîïôœùûüÿç-]+)?\s*(.*)"
+        ssp = "(^[\"\'A-ZŠÁÅ\(\.].*?[^A-Z-\s]\s*(?=$|var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form\.|forma|nothosp\.|cv\.|cultivar\.))?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form\.|forma|nothosp\.|cv\.|cultivar\.)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*([\"\'（A-ZÅÁŠ\(].*?[^A-Z-])?$"
+        split1 = series.str.extract(sp)
+        species = split1[0].str.cat([split1[1], split1[2]], sep=' ', na_rep='').str.replace('  ', ' ').str.strip()
+        split2 = split1[3].str.extract(ssp)
+        species = species.str.cat([split2[1], split2[2]], sep=' ', na_rep='').str.replace('  ', ' ').str.strip()
+        return species
 
-    def _fuzzy_similarity(self, name_with_authors, name_without_authors):
+    def _fuzzy_similarity(self, name, name_without_authors):
         if pd.isnull(name_without_authors):
             return None
         else:
-            name = self.format_latin_name(name_with_authors, 'simpleName')
+            # name = self.format_latin_name(name, 'simpleName')
             if name:
-                return distance(name_with_authors, name_without_authors)
+                return distance(name, name_without_authors)
             else:
                 return None
     
@@ -603,7 +600,7 @@ class BioName:
             if not org_author_team:
                 return homonym[0] + ('E0',)
             # 如果查询名称和可匹配名称均不缺少命名人, 进行命名人比较，确定最优
-            return self.get_similar_name(org_author_team, homonym, 1)
+            return self.get_similar_name(query[0], org_author_team, homonym, (0,1))
         else:
             return None
 
@@ -626,7 +623,7 @@ class BioName:
                 names[0]['match_degree'] = 'E0'
                 return names[0]
             else:
-                return self.get_similar_name(authors, names, 'Author')
+                return self.get_similar_name(query[0], authors, names, ('ScientificName', 'Author'))
 
     async def check_col_name(self, query, session):
         """ 对 COL 返回的结果逐一进行检查
@@ -667,7 +664,7 @@ class BioName:
                 names[0]['match_degree'] = 'E0'
                 return names[0]
             else:
-                return self.get_similar_name(authors, names, 'author')
+                return self.get_similar_name(query[0], authors, names, ('scientific_name', 'author'))
 
     async def check_ipni_name(self, query, session):
         """ 对 KEW 返回结果逐一进行检查
@@ -691,7 +688,7 @@ class BioName:
                 names[0]['match_degree'] = 'E0'
                 return names[0]
             else:
-                return self.get_similar_name(authors, names, 'authors')
+                return self.get_similar_name(query[0], authors, names, ('name', 'authors'))
 
     async def check_powo_name(self, query, session):
         """ 对 KEW 返回结果逐一进行检查
@@ -721,7 +718,7 @@ class BioName:
                 names[0]['match_degree'] = 'E0'
                 return names[0]
             else:
-                return self.get_similar_name(authors, names, 'author')
+                return self.get_similar_name(query[0], authors, names, ('name', 'author'))
 
 
     async def tropicos_search(self, api, query, filters, session):
@@ -1004,9 +1001,10 @@ class BioName:
             raise ValueError("学名处理参数错误，不存在{}".format(pattern))
 
 
-    def get_similar_name(self, authors_group, names, index):
+    def get_similar_name(self, orgname, authors_group, names, index):
         """
         args:
+            name_withort_authors: 目标名称的简名
             authors_group: 待比较学名的命名人组，如 [["Hook. f.", "Thomson"], ["Wall."]]
             names: 待选学名组，可能是 list 也可能是 dict 类型
             index: names 中 authors 属性的索引，可能是 str 也可能是 int 类型
@@ -1015,7 +1013,7 @@ class BioName:
         author_teams = []
         for name in names:
             try:
-                authors = self.get_author_team(name[index])
+                authors = self.get_author_team(name[index[1]])
                 author_teams.append(authors)
             except KeyError:
                 author_teams.append([])
@@ -1032,8 +1030,8 @@ class BioName:
         if len(scores) > 1:
             name1 = names[scores[0][1]]
             name2 = names[scores[1][1]]
-            name1 = self.__get_degree(name1, index, authors_group)
-            name2 = self.__get_degree(name2, index, authors_group)
+            name1 = self.__get_degree(orgname, name1, index, authors_group)
+            name2 = self.__get_degree(orgname, name2, index, authors_group)
             degree_level = ['S3', 'S2', 'S1', 'H3', 'H2', 'H1', 'M3', 'M2', 'M1', 'E3', 'E2', 'E1', 'E0', 'L3', 'L2', 'L1', 'L0']
             try:
                 degree1 = name1[-1]
@@ -1051,18 +1049,19 @@ class BioName:
                 return name2
         else:
             name = names[scores[0][1]]
-            return self.__get_degree(name, index, authors_group)
+            return self.__get_degree(orgname, name, index, authors_group)
     
-    def __get_degree(self, name, index, authors_group):
+    def __get_degree(self, orgname, name, index, authors_group):
         """ 对相似的命名人进行评级
         """
         try:
-            authors_group2 = self.get_author_team(name[index], nested=True)
+            authors_group2 = self.get_author_team(name[index[1]], nested=True)
             degree = self.get_similar_degree(authors_group, authors_group2)
-            name['match_degree'] = degree
+            name['match_degree'] = degree if orgname == name[index[0]] else degree.lower()
         except KeyError:
-            name['match_degree'] = 'E0'
+            name['match_degree'] = 'E0' if orgname == name[index[0]] else 'e0'
         except TypeError:
+            degree = degree if orgname == name[index[0]] else degree.lower()
             name = name + (degree,)
         return name
     
