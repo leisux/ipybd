@@ -572,12 +572,22 @@ class BioName:
 
     def _get_simple_names(self, series):
         sp = "((?:!×\s?|×\s?|!)?[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*(×\s+|X\s+|x\s+|×)?([a-zàâäèéêëîïôœùûüÿç][a-zàâäèéêëîïôœùûüÿç-]+)?\s*(.*)"
-        ssp = "(^[\"\'A-ZŠÁÅ\(\.].*?[^A-Z-\s]\s*(?=$|var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form\.|forma|nothosp\.|cv\.|cultivar\.))?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form\.|forma|nothosp\.|cv\.|cultivar\.)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*([\"\'（A-ZÅÁŠ\(].*?[^A-Z-])?$"
-        split1 = series.str.extract(sp)
-        species = split1[0].str.cat([split1[1], split1[2]], sep=' ', na_rep='').str.replace('  ', ' ').str.strip()
-        split2 = split1[3].str.extract(ssp)
-        species = species.str.cat([split2[1], split2[2]], sep=' ', na_rep='').str.replace('  ', ' ').str.strip()
+        ssp = "(^[\"\'A-ZŠÁÅ\(\.].*?[^A-Z-\s]\s*(?=$|var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form\.|forma|nothosp\.|cv\.|cultivar\.|lusus\s|\[unranked\]|×|monstr\.|proles\s))?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form\.|forma|nothosp\.|cv\.|cultivar\.|lusus\s|\[unranked\]|×|monstr\.|proles\s)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*([\"\'（A-ZÅÁŠ\(].*?[^A-Z-])?$"
+        species = series.str.extract(sp)
+        subsp = species[3].str.extract(ssp)
+        species = pd.concat([species[[0, 1, 2]], subsp], axis=1)
+        species.columns = range(len(species.columns))
+        subsp = species.apply(self.__format_subspecies, axis=1)
+        species = species[0].str.cat([species[1], species[2], subsp], sep=' ', na_rep='').str.replace('  ', ' ').str.strip()
         return species
+
+    def __format_subspecies(self, subsp):
+        if pd.notna(subsp[5]) and subsp[5] != subsp[2]:
+            try: 
+                return ' '.join([subsp[4], subsp[5]])
+            except TypeError:
+                # print(subsp)
+                return subsp[5]
 
     def _fuzzy_similarity(self, name, name_without_authors):
         if pd.isnull(name_without_authors):
@@ -596,9 +606,13 @@ class BioName:
             homonym.append(name)
         if homonym:
             org_author_team = self.get_author_team(query[2], nested=True)
-            # 如果查询名称没有命名人, 或者匹配名称没有命名人, 返回匹配同名结果第一个
+            # 如果查询名称没有命名人, 或者匹配名称没有命名人, 尽可能返回一个同名结果
             if not org_author_team:
-                return homonym[0] + ('E0',)
+                if len(homonym) == 1:
+                    return homonym[0] + ('E0',) if homonym[0][0] == query[0] else homonym[0] + ('e0',)
+                else:
+                    homo = [hom for hom in homonym if hom[0] == query[0]]
+                    return homonym[0] + ('E0',) if homo else homonym[0] + ('e0',)
             # 如果查询名称和可匹配名称均不缺少命名人, 进行命名人比较，确定最优
             return self.get_similar_name(query[0], org_author_team, homonym, (0,1))
         else:
@@ -1004,59 +1018,76 @@ class BioName:
     def get_similar_name(self, orgname, authors_group, names, index):
         """
         args:
-            name_withort_authors: 目标名称的简名
-            authors_group: 待比较学名的命名人组，如 [["Hook. f.", "Thomson"], ["Wall."]]
-            names: 待选学名组，可能是 list 也可能是 dict 类型
-            index: names 中 authors 属性的索引，可能是 str 也可能是 int 类型
+            orgname: 目标名称的简名
+            authors_group: 目标名称的命名人组，如 [["Hook. f.", "Thomson"], ["Wall."]]
+            names: 待选学名组，是 list
+            index: names 中name 的 authors 属性的索引，可能是 str 也可能是 int 类型
         return: 从 names 中选取与 authors_group 最相似的学名信息，如果没有，则返回 None
         """
-        author_teams = []
-        for name in names:
+        length = len(names)
+        new_names = list(map(self.__get_degree, (orgname for _ in range(length)), names, (index for _ in range(length)), (authors_group for _ in range(length))))
+        if len(new_names) == 1:
+            return new_names[0]
+        else:
+            degree_level = ['S3', 'S2', 'S1', 'H3', 'H2', 'H1', 'M3', 'M2', 'M1', 'E3', 'E2', 'E1', 'E0','s3', 's2', 's1', 'h3', 'h2', 'h1', 'm3', 'm2', 'm1', 'e3', 'e2', 'e1', 'e0', 'L3', 'L2', 'L1', 'L0', 'l3', 'l2', 'l1', 'l0']
+            new_names.sort(key=lambda d: degree_level.index(d[-1]) if isinstance(d, tuple) else degree_level.index(d['match_degree']))
             try:
-                authors = self.get_author_team(name[index[1]])
-                author_teams.append(authors)
+                degree1 = new_names[0][-1]
+                degree2 = new_names[1][-1]
             except KeyError:
-                author_teams.append([])
-        # 先根据整体的相似度获得最相似的命名人索引
-        author_team = []
-        for authors in authors_group:
-            if authors:
-                author_team.extend(authors)
-        scores = self.get_similar_scores(author_team, author_teams)
-        scores.sort(key=lambda s: s[0], reverse=True)
+                degree1 = new_names[0]['match_degree']
+                degree2 = new_names[1]['match_degree']
+            if degree1 == degree2 and degree1[0] in ['S', 'H', 'M']:
+                print(f'\n{orgname} 在比较集中在 {degree1} 级可能有多个同名结果\n')
+            return new_names[0]
+
+        # author_teams = []
+        # for name in names:
+        #     try:
+        #         authors = self.get_author_team(name[index[1]])
+        #         author_teams.append(authors)
+        #     except KeyError:
+        #         author_teams.append([])
+        # # 先根据整体的相似度获得最相似的命名人索引
+        # author_team = []
+        # for authors in authors_group:
+        #     if authors:
+        #         author_team.extend(authors)
+        # scores = self.get_similar_scores(author_team, author_teams)
+        # scores.sort(key=lambda s: s[0], reverse=True)
         # 得分最高的可能并不一定是最匹配的，
         # 比如['Kunze', 'Chi'] 与 [['Kunze', 'Holttum'],['Kunze', 'Ching']]
         # 得分都是 50，但是按照排序会选择第一个
-        if len(scores) > 1:
-            name1 = names[scores[0][1]]
-            name2 = names[scores[1][1]]
-            name1 = self.__get_degree(orgname, name1, index, authors_group)
-            name2 = self.__get_degree(orgname, name2, index, authors_group)
-            degree_level = ['S3', 'S2', 'S1', 'H3', 'H2', 'H1', 'M3', 'M2', 'M1', 'E3', 'E2', 'E1', 'E0', 'L3', 'L2', 'L1', 'L0']
-            try:
-                degree1 = name1[-1]
-                degree2 = name2[-1]
-            except KeyError:
-                degree1 = name1['match_degree']
-                degree2 = name2['match_degree']
-            if degree_level.index(degree1.upper()) < degree_level.index(degree2.upper()):
-                return name1
-            elif degree_level.index(degree1.upper()) > degree_level.index(degree2.upper()):
-                return name2
-            elif degree1.isupper():
-                return name1
-            else:
-                return name2
-        else:
-            name = names[scores[0][1]]
-            return self.__get_degree(orgname, name, index, authors_group)
+        # if len(scores) > 1:
+        #     name1 = names[scores[0][1]]
+        #     name2 = names[scores[1][1]]
+        #     name1 = self.__get_degree(orgname, name1, index, authors_group)
+        #     name2 = self.__get_degree(orgname, name2, index, authors_group)
+        #     degree_level = ['S3', 'S2', 'S1', 'H3', 'H2', 'H1', 'M3', 'M2', 'M1', 'E3', 'E2', 'E1', 'E0', 'L3', 'L2', 'L1', 'L0']
+        #     try:
+        #         degree1 = name1[-1]
+        #         degree2 = name2[-1]
+        #     except KeyError:
+        #         degree1 = name1['match_degree']
+        #         degree2 = name2['match_degree']
+        #     if degree_level.index(degree1.upper()) < degree_level.index(degree2.upper()):
+        #         return name1
+        #     elif degree_level.index(degree1.upper()) > degree_level.index(degree2.upper()):
+        #         return name2
+        #     elif degree1.isupper():
+        #         return name1
+        #     else:
+        #         return name2
+        # else:
+        #     name = names[scores[0][1]]
+        #     return self.__get_degree(orgname, name, index, authors_group)
     
     def __get_degree(self, orgname, name, index, authors_group):
         """ 对相似的命名人进行评级
         """
         try:
             authors_group2 = self.get_author_team(name[index[1]], nested=True)
-            degree = self.get_similar_degree(authors_group, authors_group2)
+            degree = self.get_similar_degree(authors_group.copy(), authors_group2)
             name['match_degree'] = degree if orgname == name[index[0]] else degree.lower()
         except KeyError:
             name['match_degree'] = 'E0' if orgname == name[index[0]] else 'e0'
@@ -1353,7 +1384,7 @@ class BioName:
 
         Returns:
             3: 是同一个人
-            2: 极有可能是同一个人, 但拼写上可能有错
+            2: 很有可能是同一个人, 但拼写上可能有错
             1: 有可能是同一个人, 但需要核查
             0: 不是同一个人
         """
@@ -1768,3 +1799,9 @@ class BioName:
         else:
             print("\n学名处理参数有误，不存在{}\n".format(self.style))
             return pd.DataFrame(self.names)
+
+if __name__ == '__main__':
+    name = BioName(['Hypericum petiolulatum Hook. f. et Thoms. ex. Dyer'])
+    names = pd.Series(['Hypericum petiolulatum Hook.f. & Thomson ex Dyer'])
+    mathced = name.get(names)
+    print(mathced)
