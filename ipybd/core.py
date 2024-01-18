@@ -488,7 +488,7 @@ class FormatDataset:
         return 'colTaxonTree', headers, concat, new_headers 
 
     @get_name
-    def get_col_name(self, *headers, new_headers=('colName', 'colAuthors', 'colFamily', 'colCode', 'colMatchedDegree'), concat=False):
+    def get_col_name(self, *headers, new_headers=('colName', 'colAuthors', 'colFamily', 'colNameID', 'colMatchedDegree'), concat=False):
         return 'colName', headers, concat, new_headers
 
     @get_name
