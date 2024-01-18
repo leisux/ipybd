@@ -612,7 +612,7 @@ class BioName:
                     return homonym[0] + ('E0',) if homonym[0][0] == query[0] else homonym[0] + ('e0',)
                 else:
                     homo = [hom for hom in homonym if hom[0] == query[0]]
-                    return homonym[0] + ('E0',) if homo else homonym[0] + ('e0',)
+                    return homo[0] + ('E0',) if homo else homonym[0] + ('e0',)
             # 如果查询名称和可匹配名称均不缺少命名人, 进行命名人比较，确定最优
             return self.get_similar_name(query[0], org_author_team, homonym, (0,1))
         else:
@@ -1034,11 +1034,11 @@ class BioName:
             try:
                 degree1 = new_names[0][-1]
                 degree2 = new_names[1][-1]
+                if degree1 == degree2 and degree1[0] in ['S', 'H', 'M']:
+                    print(f'\n{orgname} 在比较集中在 {degree1} 级可能有多个同名结果\n')
             except KeyError:
                 degree1 = new_names[0]['match_degree']
                 degree2 = new_names[1]['match_degree']
-            if degree1 == degree2 and degree1[0] in ['S', 'H', 'M']:
-                print(f'\n{orgname} 在比较集中在 {degree1} 级可能有多个同名结果\n')
             return new_names[0]
 
         # author_teams = []
@@ -1801,7 +1801,8 @@ class BioName:
             return pd.DataFrame(self.names)
 
 if __name__ == '__main__':
-    name = BioName(['Hypericum petiolulatum Hook. f. et Thoms. ex. Dyer'])
-    names = pd.Series(['Hypericum petiolulatum Hook.f. & Thomson ex Dyer'])
+    name = BioName(['Adonis caerulea'])
+    table = pd.read_excel(r"/Users/xuzhoufeng/Library/CloudStorage/OneDrive-个人/PDP/noiname/test/Version1.0.0.xlsx")
+    names = table['fullName']
     mathced = name.get(names)
     print(mathced)
