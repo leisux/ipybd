@@ -461,7 +461,7 @@ class FormatDataset:
         return 'tropicosAccepted', headers, concat, new_header
 
     @get_name
-    def get_tropicos_name(self, *headers, new_headers=('tropicosName', 'tropicosAuthors', 'tropicosFamily', 'tropicosNameId', 'tropicosMatchedDegree'), concat=False):
+    def get_tropicos_name(self, *headers, new_headers=('tropicosName', 'tropicosAuthors', 'tropicosFamily', 'tropicosNameID', 'tropicosMatchedDegree'), concat=False):
         return 'tropicosName', headers, concat, new_headers
     @get_name
     def get_ipni_name(self, *headers, new_headers=('ipniName', 'ipniAuthors', 'ipniFamily', 'ipniNameLsid', 'ipniMatchedDegree'), concat=False):
