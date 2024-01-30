@@ -90,6 +90,8 @@ class BioName:
             self.querys = self.build_querys()
         if isinstance(action, pd.Series):
             results = self.native_get(self.querys, action)
+        elif isinstance(action, tuple):
+            results = self.native_get(self.querys, action[0], strict=True)
         elif action == 'bestName':
             results = self.get_best_names()
         elif isinstance(action, str):
