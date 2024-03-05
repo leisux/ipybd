@@ -620,10 +620,10 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
             # 则会直接修改模型新增的同名列, 从而导致最终结果与预期不一致
             # 因此这里将保留现有数据列,不再对这些列名按照手动映射的关系进行重塑
             if header in new_columns:
-                pass
-            else:
-                # 对枚举中尚未定义的列按照人工给定的映射关系进行重塑
-                self.table_mapping(self.__unmapped_columns)
+                self.__unmapped_columns[header] = header
+        # 对枚举中尚未定义的列按照人工给定的映射关系进行重塑
+        if self.__unmapped_columns:
+           self.table_mapping(self.__unmapped_columns)
         self.reindex_columns(new_columns, self.cut)
 
     def __check_old_lib(self):
@@ -1012,11 +1012,15 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
             org_columns_name, column_name = arg_name
             # 只是修改列名, 在此直接修改
             if isinstance(params, str):
+                if model_key in self.df.columns:
+                    self.df.rename(columns={model_key: model_key+'_'}, inplace=True)
                 self.df.rename(
                     columns={column_name: model_key}, inplace=True)
                 new_columns.extend(fields_name)
             # 列名是由模型 [...] 表达式中的相应的选项列直接修改列名获得
             elif isinstance(params, list) and column_name != model_key:
+                if model_key in self.df.columns:
+                    self.df.rename(columns={model_key: model_key+'_'}, inplace=True)
                 self.df.rename(
                     columns={column_name: model_key}, inplace=True)
                 new_columns.extend(fields_name)
