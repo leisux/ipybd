@@ -116,7 +116,7 @@ class OccurrenceTerms(Enum):
     establishmentMeans = RadioInput('$establishmentMeans', 'establishmentMeans')
     molecularMaterialSample = RadioInput('$molecularMaterialSample', 'molecularMaterialSample')
     # Event
-    eventDate = DateTime('$eventDate', 'date')
+    eventDate = DateTime(['$eventDate', '$verbatimEventDate'], 'date')
     habitat = '$habitat'
     substrate = '$substrate'
     samplingProtocol = RadioInput('$samplingProtocol', 'samplingProtocol')
@@ -124,10 +124,10 @@ class OccurrenceTerms(Enum):
     fieldNotes = '$fieldNotes'
     fundedBy = '$fundedBy'
     # Location
-    # country__province__prefecture__county__ = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
+    country__province__prefecture__county__ = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
     locality = ('$locality', '$mountain', '$waterBody', ',')
     decimalLatitude__decimalLongitude = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
-    # minimumElevationInMeters__maximumElevationInMeters__ = {'$verbatimElevation': '-'}
+    minimumElevationInMeters__maximumElevationInMeters__ = {'$verbatimElevation': '-'}
     minimumElevationInMeters = Number('$minimumElevationInMeters')
     maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
