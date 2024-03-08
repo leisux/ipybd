@@ -477,15 +477,15 @@ class FormatDataset:
 
     @get_name
     def get_powo_images(self, *headers, new_headers=('powoImage1', 'powoImage2', 'powoImage3'), concat=False):
-        return 'powoImages', headers, concat, new_headers 
+        return 'powoImages', headers, concat, new_headers
 
     @get_name
     def get_powo_accepted(self, *headers, new_header=('powoAccepted',), concat=False):
-        return 'powoAccepted', headers, concat, new_header 
+        return 'powoAccepted', headers, concat, new_header
 
     @get_name
     def get_col_taxontree(self, *headers, new_headers=('colGenus', 'colFamily', 'colOrder', 'colClass', 'colPhylum', 'colKingdom'), concat=False):
-        return 'colTaxonTree', headers, concat, new_headers 
+        return 'colTaxonTree', headers, concat, new_headers
 
     @get_name
     def get_col_name(self, *headers, new_headers=('colName', 'colAuthors', 'colFamily', 'colNameID', 'colMatchedDegree'), concat=False):
@@ -515,7 +515,7 @@ class FormatDataset:
             else:
                 return new_columns
         return format_func
-    
+
     @drop_and_concat_columns
     def format_authorship(self, header, inplace=True):
         bioname = BioName([])
@@ -599,7 +599,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
         self.fcol = fcol  # 设置填充缺失列的默认值
         self.fields_mapping = fields_mapping
         self.cut = cut
-    
+
     def _build_headers_lib(self):
         if self.fields_mapping is False:
             for key in self.__unmapped_columns:
@@ -1012,7 +1012,7 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
             org_columns_name, column_name = arg_name
             # 只是修改列名, 在此直接修改
             if isinstance(params, str):
-                if model_key in self.df.columns:
+                if model_key in self.df.columns and column_name != model_key:
                     self.df.rename(columns={model_key: model_key+'_'}, inplace=True)
                 self.df.rename(
                     columns={column_name: model_key}, inplace=True)
