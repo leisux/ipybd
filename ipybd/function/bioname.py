@@ -537,17 +537,17 @@ class BioName:
                 # 如果查无处理结果，返回默认值
                 return query[-1], name, 'tropicosAccepted'
 
-    def native_get(self, querys, names, strict=False):
+    def native_get(self, querys, org_lib, strict=False):
         """
             querys: build_querys 形成的待查询名称及其解构信息组成的字典
-            names: 由学名组成的 Series, 用于被比较和提取
+            org_lib: 由学名组成的 Series, 用于被比较和提取
         """
         results = {}
-        species = self._get_simple_names(names)
+        lib_names = self._get_simple_names(org_lib)
         for query in tqdm(querys.values()):
             if query is None:
                 continue
-            homonyms = self.find_similar(query[0], names, species, strict)
+            homonyms = self.find_similar(query[0], org_lib, lib_names, strict)
             if not homonyms.empty:
                 name = self.check_native_name(query, homonyms)
                 if name:
@@ -558,14 +558,14 @@ class BioName:
                 continue
         return results
     
-    def find_similar(self, name, names, species, strict):
+    def find_similar(self, name, org_lib, lib_names, strict):
         if strict:
-            series = names[species==name]
+            series = org_lib[lib_names==name]
             # series = series[series.apply(self._strict_similarity, args=(name,))]
         else:
             # series = self._get_simple_names(names)
-            dist = species.apply(self._fuzzy_similarity, args=(name,))
-            series = names[dist < 4]
+            dist = lib_names.apply(self._fuzzy_similarity, args=(name,))
+            series = org_lib[dist < 4]
         return series
 
     def _strict_similarity(self, name_with_authors, name_without_authors):
