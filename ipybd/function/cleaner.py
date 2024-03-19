@@ -515,7 +515,7 @@ class AdminDiv:
             while i < region_index and j < len_stdregion-1:  # 单字无法匹配
                 k = 2  # 用于初始化、递增可匹配的字符长度
                 n = stdregion[j:].find("::"+region[i:i+k])
-                m = 0  # 记录最终匹配的字符数
+                m = 0 
                 if n != -1:
                     while n != -1 and k <= region_index - i + 1:
                         k += 1
@@ -523,6 +523,9 @@ class AdminDiv:
                         n = stdregion[j:].find(region[i:i+k])
                     if region[i:i+k-1].endswith("::"):
                         each_score += k-3
+                    # 防止“广东省::阳山县”匹配为“中国::广东省::阳江市”
+                    elif region[i:i+k-2].endswith("::"):
+                        each_score += k-4
                     else:
                         each_score += k-1
                     i += k-1
