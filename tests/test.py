@@ -77,6 +77,8 @@ import pandas as pd
 from ipybd import AdminDiv
 
 admindiv = [
+    "广东省,阳山",
+    "四川省,南川县",
     "内蒙古阿左旗贺兰山南寺沟",
     "内蒙古",
     "辽宁省，朝阳市，努鲁儿虎山自然保护区",

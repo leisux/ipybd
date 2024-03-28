@@ -9,7 +9,7 @@ body{
   padding: 0px;
   font-size: 9.5px;
   font-family: "Palatino Linotype", "Book Antiqua", Palatino, "SimSun", serif;
-  line-height: 1.2;
+  line-height: 1;
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
@@ -24,27 +24,37 @@ article {
   padding: 10px 17px 0px 16px;
   /*margin-bottom: 10px;*/
   page-break-inside: avoid;
-  line-height: 1.4;
+  line-height: 1;
   box-sizing: border-box;
 }
 
 h1 {
   font-family: SimHei, STXihei, "MicrosoftJhengHei", STHeiti, MingLiu, "Palatino Linotype", "Book Antiqua", Palatino, "SimSun", serif;
   font-size: 14px;
-	line-height: 1.1;
+	line-height: 1;
   text-align: center;
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
 }
 
 h2 {
   font-variant: small-caps;
   font-size: 10px;
-  line-height: 1.2;
+  line-height: 1;
   text-align: center;
+  margin-block-start: 0.5em;
+  margin-block-end: 0;
 }
 
 .title {
   font-family: SimHei, STXihei, "MicrosoftJhengHei", STHeiti, MingLiu;
   font-weight: bold;
+}
+
+p {
+  display: block;
+  margin-block-start: 0;
+  margin-block-end: 0;
 }
 
 img {
