@@ -1,4 +1,26 @@
 {
+    "englishName": [
+        "英文名",
+        "ENGLISHNAME"
+    ],
+    "processingMethod" :[
+        "处理方法",
+        "加工方法",
+        "处理方式",
+        "炮制方法",
+        "PROCESSINGMETHOD"
+    ],
+    "materialEntityRemarks": [
+        "藏品描述",
+        "生物材料备注",
+        "材料备注",
+        "标本备注",
+        "鉴定者联系方式",
+        "材料实体备注",
+        "材料实体描述",
+        "材料实体备注信息",
+        "MATERIALENTITYREMARKS"
+    ],
     "threatenedFactors": [
         "威胁因素",
         "THREATENEDFACTORS"
@@ -978,7 +1000,6 @@
         "发现备注",
         "采集备注",
         "其他描述",
-        "图片",
         "备注",
         "REMARKS",
         "NOTES",
@@ -1006,11 +1027,12 @@
         "ORGANISMQUANTITYTYPE"
     ],
     "organismRemarks": [
-        "生物材料备注",
-        "材料备注",
-        "标本备注",
+        "功效",
+        "用途",
+        "用途描述",
+        "USE",
+        "入药部位",
         "形态描述",
-        "鉴定者联系方式",
         "备注2",
         "ORGANISMREMARKS"
     ],
@@ -1231,6 +1253,7 @@
         "样品尺寸",
         "样品尺寸值",
         "样品尺寸数",
+        "外形尺寸",
         "SAMPLESIZEVALUE"
     ],
     "samplingEffort": [
@@ -1270,6 +1293,8 @@
         "种",
         "种名",
         "拉丁名",
+        "基原学名",
+        "基原拉丁名",
         "NAMELA",
         "CANONICAL_NAME",
         "IDENTIFICATIONS",
@@ -1369,6 +1394,7 @@
         "科拉丁名",
         "拉丁科名",
         "科学名",
+        "基原拉丁科名",
         "fAMILYNAME",
         "FAMILY"
     ],
@@ -1417,6 +1443,7 @@
         "中文科名",
         "科中文名",
         "科名",
+        "基原中文科名",
         "FAMILYNAMEZH",
         "FAMILY_C",
         "CHINESEFAMILYNAME",
@@ -1438,6 +1465,7 @@
         "中文种名",
         "中名",
         "种中文名",
+        "基原中文名",
         "SPECIES_C",
         "CNNAME",
         "COMMONNAME",
@@ -1450,6 +1478,8 @@
         "当地名",
         "当地俗名",
         "俗名",
+        "中药名",
+        "藏品名",
         "LOCAL_NAME",
         "DIALECTNAME",
         "DIALECTALNAME",

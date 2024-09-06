@@ -561,9 +561,8 @@ class BioName:
     def find_similar(self, name, org_lib, lib_names, strict):
         if strict:
             series = org_lib[lib_names==name]
-            # series = series[series.apply(self._strict_similarity, args=(name,))]
         else:
-            # series = self._get_simple_names(names)
+            # 这里可以进一步提高效率，绝大多数情况下，并不需要为每个名字计算字符距离
             dist = lib_names.apply(self._fuzzy_similarity, args=(name,))
             series = org_lib[dist < 4]
         return series

@@ -1,0 +1,15 @@
+<article class="label-item">
+  <h1>{{标签标题}}</h1>
+  <h2>{{#标签副标题}}（{{标签副标题}}）{{/标签副标题}}</h2>
+  <p><span style="float:center;"><span class="title">分类号：</span>{{分类号}}</span></p>
+  <p><span class="title">藏品名：</span>{{藏品名}}<span style="float:right;"><span class="title">英文名：</span>{{英文名}}</span></p>
+  <p><span class="title">功效：</span>{{功效及入药部位}}</p>
+  <p>{{#出土地及年代}}<span class="title">出土地及年代:</span>{{出土地及年代}}</p>{{/出土地及年代}}
+  <p>{{#genus}}<span class="title">基原名：</span>{{#基原中文名}}{{基原中文名}}，{{/基原中文名}}<i>{{genus}} {{specificEpithet}}</i>{{#taxonRank}} {{taxonRank}}{{/taxonRank}}<i> {{infraspecificEpithet}}</i> {{scientificNameAuthorship}}{{/genus}}</p>
+  <p>{{#基原拉丁科名}}<span class="title">基原中文科名：</span>{{基原中文科名}}<span style="float:right;"><span class="title">基原拉丁科名：</span>{{基原拉丁科名}}</span>{{/基原拉丁科名}}</p>
+  <p><span class="title">采集人：</span>{{{采集人}}}</p>
+  <p>{{#采集号}}<span class="title">采集号：</span>{{采集号}}{{/采集号}}{{#采集日期}}{{^采集号}}<span style="float:right;">采集日期：</span>{{/采集号}}<b>{{采集日期}}</b>{{/采集日期}}</p>
+  <p><span class="title">采集地：</span>{{#采集地国}}{{采集地国}}{{/采集地国}}{{#采集地省}}，{{采集地省}}{{/采集地省}}{{#采集地市}}，{{采集地市}}{{/采集地市}}{{#采集地县}}，{{采集地县}}{{/采集地县}}{{#小地名}}，{{{小地名}}}{{/小地名}}{{#生境}}，{{{生境}}}{{/生境}}{{#经度}}{{经度}}&deg; {{纬度}}&deg;{{/经度}}{{#海拔}}，{{海拔}}{{#海拔高}}-{{海拔高}}{{/海拔高}} m{{/海拔}}</p>
+  <p><span class="title">鉴定人：</span>{{鉴定人}}{{#code_path}}<span style="float:right;"><img src={{code_path}}></span>{{/code_path}}</p>
+  <p><span class="title">鉴定日期：</span>{{鉴定日期}}</span></p>
+</article>
