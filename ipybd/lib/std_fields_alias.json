@@ -1,14 +1,38 @@
 {
+    "chemistry": [
+        "化学成分",
+        "化学成分描述",
+        "化学成分信息",
+        "CHEMISTRY"
+    ],
+    "efficacy":[
+        "功效"
+    ],
     "englishName": [
         "英文名",
         "ENGLISHNAME"
     ],
-    "processingMethod" :[
-        "处理方法",
+    "medicineScientificName": [
+        "中药学名",
+        "中药拉丁名",
+        "药典拉丁名",
+        "药典学名",
+        "药用拉丁名", 
+        "药用学名", 
+        "药材拉丁名", 
+        "药材学名", 
+        "药材拉丁名", 
+        "药物学名", 
+        "药品拉丁名", 
+        "药品学名", 
+        "药用植物学名",
+        "MEDICINESCIENTIFICNAME"
+    ],
+    "medicinePreparations" :[
         "加工方法",
-        "处理方式",
+        "药物制备方法",
         "炮制方法",
-        "PROCESSINGMETHOD"
+        "MEDICINEPREPARATIONS"
     ],
     "materialEntityRemarks": [
         "藏品描述",
@@ -813,6 +837,7 @@
         "LOCATIONID"
     ],
     "locationRemarks": [
+        "出土地及年代",
         "地名备注",
         "LOCATIONREMARKS"
     ],
@@ -1027,10 +1052,10 @@
         "ORGANISMQUANTITYTYPE"
     ],
     "organismRemarks": [
-        "功效",
         "用途",
         "用途描述",
         "USE",
+        "药用部位",
         "入药部位",
         "形态描述",
         "备注2",
@@ -1465,7 +1490,6 @@
         "中文种名",
         "中名",
         "种中文名",
-        "基原中文名",
         "SPECIES_C",
         "CNNAME",
         "COMMONNAME",
@@ -1480,6 +1504,7 @@
         "俗名",
         "中药名",
         "藏品名",
+        "基原中文名",
         "LOCAL_NAME",
         "DIALECTNAME",
         "DIALECTALNAME",

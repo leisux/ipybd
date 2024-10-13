@@ -18,7 +18,7 @@ class BioGridTerms(Enum):
     organismQuantityType = RadioInput('$organismQuantityType', 'organismQuantityType')
     establishmentMeans_ = RadioInput('$establishmentMeans', 'establishmentMeans')
     country__Province__prefecture__county = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
-    locality = ('$locality', '$mountain', '$waterBody', ',')
+    locality = ('$township', '$locality', '$mountain', '$waterBody', ',')
     habitat = '$habitat'
     decimalLatitude__decimalLongitude_ = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
     elevationInMeters_ = Number('$elevationInMeters')
