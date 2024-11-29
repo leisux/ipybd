@@ -748,7 +748,7 @@ class GeoCoordinate:
         return x//base, y//base, x%base, y%base
 
 
-    def format_coordinates(self):
+    def format_coordinates(self, accuracy=7):
         new_lng = [None]*len(self.coordinates)
         new_lat = [None]*len(self.coordinates)
         gps_p_1 = re.compile(
@@ -769,8 +769,8 @@ class GeoCoordinate:
                         if len(gps_elements) == 2 and abs(
                                 float(gps_elements[0])) <= 90 and abs(
                                 float(gps_elements[1])) <= 180:
-                            new_lng[i] = round(float(gps_elements[1]), 6)
-                            new_lat[i] = round(float(gps_elements[0]), 6)
+                            new_lng[i] = round(float(gps_elements[1]), accuracy)
+                            new_lat[i] = round(float(gps_elements[0]), accuracy)
                             continue
                         else:
                             # print(gps_elements ,type(gps_elements[1]))
@@ -817,38 +817,38 @@ class GeoCoordinate:
                                 int(gps_fir_num[0]) +
                                 float(gps_fir_num[1] + "." +
                                       gps_fir_num[2]) / 60,
-                                6)
+                                accuracy)
                             new_lng[i] = direct[direct_sec] * round(
                                 int(gps_sec_num[0]) +
                                 float(gps_sec_num[1] + "." +
                                       gps_sec_num[2]) / 60,
-                                6)
+                                accuracy)
                         else:
                             new_lng[i] = direct[direct_fir] * round(
                                 int(gps_fir_num[0]) +
                                 float(gps_fir_num[1] + "." +
                                       gps_fir_num[2]) / 60,
-                                6)
+                                accuracy)
                             new_lat[i] = direct[direct_sec] * round(
                                 int(gps_sec_num[0]) +
                                 float(gps_sec_num[1] + "." +
                                       gps_sec_num[2]) / 60,
-                                6)
+                                accuracy)
                     else:  # 度分秒表示法
                         if direct_fir_seq == 1:
                             new_lat[i] = direct[direct_fir] * round(
                                 int(gps_fir_num[0]) + int(gps_fir_num[1]) / 60 +
-                                float(gps_fir_num[2]) / 3600, 6)
+                                float(gps_fir_num[2]) / 3600, accuracy)
                             new_lng[i] = direct[direct_sec] * round(
                                 int(gps_sec_num[0]) + int(gps_sec_num[1]) / 60 +
-                                float(gps_sec_num[2]) / 3600, 6)
+                                float(gps_sec_num[2]) / 3600, accuracy)
                         else:
                             new_lng[i] = direct[direct_fir] * round(
                                 int(gps_fir_num[0]) + int(gps_fir_num[1]) / 60 +
-                                float(gps_fir_num[2]) / 3600, 6)
+                                float(gps_fir_num[2]) / 3600, accuracy)
                             new_lat[i] = direct[direct_sec] * round(
                                 int(gps_sec_num[0]) + int(gps_sec_num[1]) / 60 +
-                                float(gps_sec_num[2]) / 3600, 6)
+                                float(gps_sec_num[2]) / 3600, accuracy)
                 elif len(gps_fir_num) == 2 and len(gps_sec_num) == 2:  # 度分表示法
                     if float(gps_fir_num[1]) >= 60:
                         new_lng[i] = "!" + gps_elements[1]
@@ -856,25 +856,25 @@ class GeoCoordinate:
                         continue
                     if direct_fir_seq == 1:
                         new_lat[i] = direct[direct_fir] * round(
-                            int(gps_fir_num[0]) + float(gps_fir_num[1]) / 60, 6)
+                            int(gps_fir_num[0]) + float(gps_fir_num[1]) / 60, accuracy)
                         new_lng[i] = direct[direct_sec] * round(
-                            int(gps_sec_num[0]) + float(gps_sec_num[1]) / 60, 6)
+                            int(gps_sec_num[0]) + float(gps_sec_num[1]) / 60, accuracy)
                     else:
                         new_lng[i] = direct[direct_fir] * round(
-                            int(gps_fir_num[0]) + float(gps_fir_num[1]) / 60, 6)
+                            int(gps_fir_num[0]) + float(gps_fir_num[1]) / 60, accuracy)
                         new_lat[i] = direct[direct_sec] * round(
-                            int(gps_sec_num[0]) + float(gps_sec_num[1]) / 60, 6)
+                            int(gps_sec_num[0]) + float(gps_sec_num[1]) / 60, accuracy)
                 elif len(gps_fir_num) == 1 and len(gps_sec_num) == 1:  # 度表示法
                     if direct_fir_seq == 1:
                         new_lat[i] = direct[direct_fir] * \
-                            round(float(gps_fir_num[0]), 6)
+                            round(float(gps_fir_num[0]), accuracy)
                         new_lng[i] = direct[direct_sec] * \
-                            round(float(gps_sec_num[0]), 6)
+                            round(float(gps_sec_num[0]), accuracy)
                     else:
                         new_lng[i] = direct[direct_fir] * \
-                            round(float(gps_fir_num[0]), 6)
+                            round(float(gps_fir_num[0]), accuracy)
                         new_lat[i] = direct[direct_sec] * \
-                            round(float(gps_sec_num[0]), 6)
+                            round(float(gps_sec_num[0]), accuracy)
                 # 处理度分/度分秒表示法中，纬度、经度最后一项正好为0被省略导致经纬度不等长的问题
                 elif len(gps_fir_num) < 4 and len(gps_sec_num) < 4:
                     if False not in [
@@ -887,14 +887,14 @@ class GeoCoordinate:
                                 [-1]: "." not in n)():
                             if direct_fir_seq == 1:
                                 new_lat[i] = direct[direct_fir]*round(
-                                    sum([float(gps_fir_num[i])/pow(60, i) for i in range(len(gps_fir_num))]), 6)
+                                    sum([float(gps_fir_num[i])/pow(60, i) for i in range(len(gps_fir_num))]), accuracy)
                                 new_lng[i] = direct[direct_sec]*round(
-                                    sum([float(gps_sec_num[i])/pow(60, i) for i in range(len(gps_sec_num))]), 6)
+                                    sum([float(gps_sec_num[i])/pow(60, i) for i in range(len(gps_sec_num))]), accuracy)
                             else:
                                 new_lng[i] = direct[direct_fir]*round(
-                                    sum([float(gps_fir_num[i])/pow(60, i) for i in range(len(gps_fir_num))]), 6)
+                                    sum([float(gps_fir_num[i])/pow(60, i) for i in range(len(gps_fir_num))]), accuracy)
                                 new_lat[i] = direct[direct_sec]*round(
-                                    sum([float(gps_sec_num[i])/pow(60, i) for i in range(len(gps_sec_num))]), 6)
+                                    sum([float(gps_sec_num[i])/pow(60, i) for i in range(len(gps_sec_num))]), accuracy)
                         else:
                             new_lng[i] = "!" + gps_elements[1]
                             new_lat[i] = "!" + gps_elements[0]
