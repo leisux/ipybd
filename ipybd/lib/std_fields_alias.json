@@ -1,4 +1,15 @@
 {
+    "crownDiameterInMeters": [
+        "冠径",
+        "冠径（米）",
+        "冠径(m)",
+        "冠径(m)",
+        "冠幅直径",
+        "冠幅直径（米）",
+        "冠幅直径(m)",
+        "冠幅直径(m)",
+        "CROWNDIAMETERINMETERS"
+    ],
     "chemistry": [
         "化学成分",
         "化学成分描述",
