@@ -373,28 +373,43 @@ class FormatDataset:
             return args[0]
         if isinstance(args[0], str):
             path_elms = os.path.splitext(args[0])
-            if path_elms[1].lower() in [".xls", ".xlsx"]:
-                print(
-                    "\n开始载入数据表格...\n\n如果数据表格太大，此处可能会耗时很长...\n如果长时间无法载入，请将 Excel 表转换为 CSV 格式后重新尝试...\n")
-                table = pd.read_excel(*args, dtype=str, engine='openpyxl', **kwargs)
-            elif path_elms[1].lower() == '.csv':
-                table = self.read_csv(*args, **kwargs)
-            elif path_elms[1].lower() == '.txt':
-                table = pd.read_data(*args, **kwargs)
-            elif path_elms[1].lower() == ".json":
-                table = pd.read_json(*args, **kwargs)
-            elif path_elms[1].lower() == "":
-                table = pd.read_sql(*args, **kwargs)
-            else:
-                raise ValueError("\n文件后缀不支持\n")
-        return table
+            file_ext = path_elms[1].lower()
+            try:
+                if file_ext in [".xls", ".xlsx"]:
+                    return self._read_excel(*args, **kwargs)
+                elif file_ext == '.csv':
+                    return self.read_csv(*args, **kwargs)
+                elif file_ext == '.txt':
+                    return self._read_txt(*args, **kwargs)
+                elif file_ext == ".json":
+                    return self._read_json(*args, **kwargs)
+                elif file_ext == "":
+                    return self._read_sql(*args, **kwargs)
+                else:
+                    raise ValueError("\n文件后缀不支持\n")
+            except Exception as e:
+                print(f"文件读取失败: {e}")
+                return None
+        return None
+
+    def _read_excel(self, *args, **kwargs):
+        print(
+            "\n开始载入数据表格...\n\n如果数据表格太大，此处可能会耗时很长...\n如果长时间无法载入，请将 Excel 表转换为 CSV 格式后重新尝试...\n")
+        return pd.read_excel(*args, dtype=str, engine='openpyxl', **kwargs)
+
+    def _read_txt(self, *args, **kwargs):
+        return pd.read_table(*args, dtype=str, **kwargs)
+
+    def _read_json(self, *args, **kwargs):
+        return pd.read_json(*args, **kwargs)
+
+    def _read_sql(self, *args, **kwargs):
+        return pd.read_sql(*args, **kwargs)
 
     def read_csv(self, *args, dtype=str, chunksize=20000, **kwargs):
         reader = pd.read_csv(*args, dtype=str, chunksize=20000, **kwargs)
-        table = []
-        for chunk in reader:
-            table.append(chunk)
-        table = pd.concat(table, axis=0)
+        # 使用生成器表达式代替列表存储数据块
+        table = pd.concat((chunk for chunk in reader), axis=0)
         return table
 
     def get_name(func):
