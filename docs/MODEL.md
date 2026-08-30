@@ -127,6 +127,65 @@ Out:
 
 ```
 
+### 模型字段名的下划线后缀修饰符
+
+`ipybd` 模型枚举元素的 `name` 除用于命名新数据集的字段外，其**结尾的下划线数量**还承载着控制字段转换行为的特殊语义。字段名中间出现的 `__` 仅用于连接多个新列名（如 `省__市` 表示拆分为 `省`、`市` 两列），而**结尾**的下划线才是修饰符。修饰符控制两个彼此独立的行为开关：
+
++ **inplace**（是否覆盖原列）：转换时原始数据列被新列替换，还是保留原列、另行新建结果列；
++ **fcol**（是否填充缺失列）：当模型在原数据集中找不到相应数据对象时，是新建一个以 `fcol` 默认值填充的空列，还是直接跳过该字段。
+
+四种后缀形式与两个开关的对应关系如下：
+
+| 结尾后缀 | inplace | fcol | 原列存在时 | 原列不存在时 |
+|:---:|:---:|:---:|---|---|
+| 无后缀 | True | False | 用新列覆盖原列 | 不建列 |
+| `_` | True | True | 用新列覆盖原列 | 新建空列 |
+| `__` | False | False | 保留原列，另建新列 | 不建列 |
+| `___` | False | True | 保留原列，另建新列 | 新建空列 |
+
+`inplace` 与 `fcol` 的作用范围会因字段 `value` 的表达形式不同而存在差异：
+
++ **函数/类表达式**（如 `Number('$field')`、`BioName(...)`）：两个开关均生效。`inplace=False` 时原始数据列会被保留（若与新列同名，原列自动改名为带 `_` 后缀的列），新列以干净的标准名加入。
++ **合并表达式**（`tuple`，如 `('$a', '$b', ' ')`）与**拆分表达式**（`dict`，如 `{'$a': ','}`）：两个开关均生效。`inplace=False` 时参与合并或拆分的原始列会保留，新列另建。
++ **更名表达式**（`str`，如 `'$field'`）与**优先选择表达式**（`list`，如 `['$a', '$b']`）：**`inplace` 开关不生效**，无论后缀如何，程序都会将原列直接更名映射为目标列名；只有 `fcol` 开关仍然有效。
+
+其中更名表达式与优先选择表达式忽略 `inplace` 是**人为设计的结果**：这两种表达式表达的语义是"该数据对象就是目标字段本身"，如果保留原列，表单中就会出现内容完全相同而标题却不同的两列。例如：
+
+```python
+duplicatesOfLabel___ = '$individualCount'
+```
+
+若允许"保留原列"，结果表单中将同时存在 `individualCount` 与 `duplicatesOfLabel` 两个内容一致、标题不同的列，既冗余又易引发歧义，因此程序对这类表达式强制执行更名。若确实需要在结果中同时保留内容一致的两列（比如复份数与标本份数同源），则应改用函数表达式，让程序以"取数转换"的方式生成新列：
+
+```python
+duplicatesOfLabel___ = Number(['$duplicatesOfLabel', '$individualCount'], None, int)
+```
+
+函数表达式会先暂存原列、生成新列，最后将原列放回，从而在保留 `individualCount` 的同时生成清洗后的 `duplicatesOfLabel`。
+
+#### 字段名前缀下划线
+
+与结尾修饰符不同，字段名**开头**的下划线不参与任何转换语义——`strip('_')` 会连同结尾下划线一并去除，输出列名不受影响。前缀下划线用于解决两个实际问题：
+
+1. **规避 Python 关键字冲突**：部分标准字段名是 Python 关键字（如 `class`），无法直接作为枚举元素名使用，需要以前缀下划线占位，例如：
+
+   ```python
+   _class = '$class'
+   ```
+
+   处理时 `strip('_')` 会将其恢复为真实的字段名 `class`。
+
+2. **同一字段名的重复处理**：`Enum` 要求元素名唯一，当模型需要对同一个字段名执行多次处理（例如先将海拔文本拆分为上下限两列，再分别对两列做数值校验）时，可以给后续处理的字段名加前缀下划线以规避重名限制，例如：
+
+   ```python
+   _minimumDepthInMeters__maximumDepthInMeters = {'$verbatimDepth': '-'}  # 先拆分
+   minimumDepthInMeters = Number('$minimumDepthInMeters')                  # 再校验
+   maximumDepthInMeters = Number('$maximumDepthInMeters')
+   minimumDepthInMeters__maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters')
+   ```
+
+   上例中 `_minimumDepthInMeters__maximumDepthInMeters` 与 `minimumDepthInMeters__maximumDepthInMeters` 去掉前缀后指向同一组输出列，靠前缀下划线实现同一枚举内的共存。
+
 ### 标准字段名映射引导
 
 需要注意的是：`ipybd` 的字段映射完全基于内置的标准字段名称关系库，对于常见的标准字段别名`ipybd`通常可以自动完成对应，然而对于一些库中没有的别名，`ipybd` 会开启手动映射引导模式，以帮助用户完成数据集字段到标准字段的对应。通常引导模式会是这样的：

@@ -5,9 +5,9 @@
 ```python
 from ipybd import Label
 
-# 清洗数据，repeat 参数指定没条记录生成的标签数量，默认为 1
+# 清洗数据，repeat 参数指定每条记录生成的标签数量，默认为 0
 # 如果设置为 0 ，程序会使用数据中指代标本份数的字段 duplicatesOfLabel 设定的数值作为打印数量
-printer = Label(r"/Users/.../record20201001.xlsx', repeat=2)
+printer = Label(r"/Users/.../record20201001.xlsx", repeat=2)
 
 # 对数据结构进行重塑以满足打印模版需求
 # 如果数据表结构本身与打印模版一致,可以不执行本步骤
@@ -18,12 +18,31 @@ printer.rebuild_table()
 # rows 定义了纸质每页内标签的行数
 # page_height 定义了所用纸质的高度，单位为 mm
 # 比如如果是 A4 纸张纵向打印，高度为 297 mm，横向打印，高度为 210 mm
-# template 定义了标枪的样式，目前提供了四种样式：
+# template 定义了标签的样式，目前提供的样式包括：
+#   plant：中文通用植物标签（默认）；
+#   plant_en：英文通用植物标签；
 #   flora_code：带条形码的维管植物标签；
+#   flora_qrcode：带二维码的维管植物标签；
 #   cryptoflora_code：带条形码的隐花植物标签；
-#   plant：中文通用植物标签；
-#   plant_en：英文通用植物标签。
-printer.write_html(columns=2, rows=3, page_height=297, start_code="KUN004123", template="flora_code")
+#   cryptoflora_qrcode：带二维码的隐花植物标签；
+#   bjm_medicine：中药材标本标签；
+#   bjm_medicine_origin：中药材基原标本标签；
+#   bjm_plant：中药材植物标本标签；
+#   bjm_cryptoflora：中药材隐花植物标本标签；
+#   bjm_fungi_simple：中药材真菌简化标签；
+#   bjm_painting：中药材绘画标本标签。
+# base_url 默认为 None，此时标签使用 Code128 条形码，编码内容为
+# start_code 自动编排的序号或 catalogNumber 字段中的已有编号。
+# 如果给 base_url 一个值，则改用二维码，二维码编码的内容为
+# base_url 与上述编号拼接后的字符串（例如
+# base_url="https://cstr.cn/33295.10.IBSC."、start_code="P01234" 时，
+# 编码内容为 https://cstr.cn/33295.10.IBSC.P01234、...P01235、...），
+# 二维码底部同时打印不含 base_url 的编号本身。图片文件仍生成在
+# barcodes/ 目录下，文件名与引用路径与条形码模式一致。
+printer.write_html(columns=2, rows=3, page_height=297, start_code="KUN004123", template="plant")
+# 使用二维码的示例：
+# printer.write_html(columns=2, rows=3, page_height=297, start_code="P01234",
+#                    template="flora_code", base_url="https://cstr.cn/33295.10.IBSC.")
 ```
 
 `printer` 实例会自动完成数据的清洗和转换，对于一些只是单纯格式有问题的数据，程序会自动纠正，另外一些可能有错误的数据，程序会以英文 `!` 标注，如果想检查一下清洗和转换结果，可以先输出为表格`printer.save_data(r"/User/.../check.xlsx")`进行查看，再重新以新表格实例化 `Label` 即可（对于怕麻烦的用户，其实也可以在输出标签之后直接在 html 文件上检查和修改） 。执行`write_html` 方法可以直接输出标签：`ipybd` 会在原文件路径下生成一个同名的 html 文件，使用浏览器打开该文件，按 `ctrl+p` 或 `command+p` 即可生成打印预览： 

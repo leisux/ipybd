@@ -1,4 +1,35 @@
 {
+    "habitatType": [
+        "栖息地类型",
+        "生境类型",
+        "栖息地",
+        "HABITATTYPE"
+    ],
+    "xCoordinateInMeters": [
+        "X坐标",
+        "X坐标（米）",
+        "X坐标(m)",
+        "横坐标",
+        "横坐标(m)",
+        "横坐标（米）",
+        "XCOORDINATEINMETERS"
+    ],
+    "yCoordinateInMeters": [
+        "Y坐标",
+        "Y坐标（米）",
+        "Y坐标(m)",
+        "纵坐标",
+        "纵坐标(m)",
+        "纵坐标（米）",
+        "YCOORDINATEINMETERS"
+    ],
+    "plotNumber": [
+        "样地号",
+        "样地编号",
+        "样方号",
+        "样方编号",
+        "PLOTNUMBER"
+    ],
     "crownDiameterInMeters": [
         "冠径",
         "冠径（米）",
@@ -16,7 +47,7 @@
         "化学成分信息",
         "CHEMISTRY"
     ],
-    "efficacy":[
+    "efficacy": [
         "功效"
     ],
     "englishName": [
@@ -28,18 +59,18 @@
         "中药拉丁名",
         "药典拉丁名",
         "药典学名",
-        "药用拉丁名", 
-        "药用学名", 
-        "药材拉丁名", 
-        "药材学名", 
-        "药材拉丁名", 
-        "药物学名", 
-        "药品拉丁名", 
-        "药品学名", 
+        "药用拉丁名",
+        "药用学名",
+        "药材拉丁名",
+        "药材学名",
+        "药材拉丁名",
+        "药物学名",
+        "药品拉丁名",
+        "药品学名",
         "药用植物学名",
         "MEDICINESCIENTIFICNAME"
     ],
-    "medicinePreparations" :[
+    "medicinePreparations": [
         "加工方法",
         "药物制备方法",
         "炮制方法",
@@ -60,12 +91,11 @@
         "威胁因素",
         "THREATENEDFACTORS"
     ],
-    "taxonDistribution":[
+    "taxonDistribution": [
         "分布区域",
         "TAXONDISTRIBUTION"
     ],
-    "cultivarEpithet":
-    [
+    "cultivarEpithet": [
         "栽培品种",
         "CULTIVAREPITHET"
     ],
@@ -78,12 +108,11 @@
         "IUCN",
         "IUCNSTATUS"
     ],
-    "pinYinOfVernacularNames":
-    [
+    "pinYinOfVernacularNames": [
         "中文别名拼音",
         "PINYINOFVERNACULARNAMES"
     ],
-    "pinYin":[
+    "pinYin": [
         "拼音",
         "中文拼音",
         "SPECIES_C_PY",
@@ -95,7 +124,19 @@
         "入库批号",
         "BATCHNUMBER"
     ],
-    "creator": [
+    "createdByID": [
+        "创建者ID",
+        "创造者ID",
+        "发明者ID",
+        "创作人ID",
+        "创造人ID",
+        "发明人ID",
+        "绘制人ID",
+        "CREATORID",
+        "CREATEDBYID"
+    ],
+    "createdBy": [
+        "创建者",
         "创作者",
         "创造者",
         "发明者",
@@ -103,7 +144,8 @@
         "创造人",
         "发明人",
         "绘制人",
-        "CREATOR"
+        "CREATOR",
+        "CREATEDBY"
     ],
     "dateCreated": [
         "创作日期",
@@ -112,7 +154,7 @@
         "绘制日期",
         "DATECREATED"
     ],
-    "protectedStatusOfChina":[
+    "protectedStatusOfChina": [
         "保护级别",
         "保护等级",
         "国保等级",
@@ -700,15 +742,15 @@
         "单位"
     ],
     "individualCount": [
+        "份数",
+        "个体数量",
         "标本份数",
         "凭证标本份数",
         "副份数量",
-        "个体数量",
         "标本数量",
-        "份数",
-        "数量", 
+        "数量",
         "INDIVIDUALCOUNT"
-   ],
+    ],
     "informationWithheld": [
         "保留信息",
         "INFORMATIONWITHHELD"
@@ -1040,6 +1082,7 @@
         "REMARKS",
         "NOTES",
         "ATTRIBUTES",
+        "OCCURRENCEREMARK",
         "OCCURRENCEREMARKS"
     ],
     "occurrenceStatus": [
@@ -1184,7 +1227,7 @@
         "COLLECTNUMBER",
         "RECORDNUMBER"
     ],
-    "recordedByID":[
+    "recordedByID": [
         "记录人ID",
         "采集人ID",
         "RECORDEDBYID"
@@ -1312,7 +1355,7 @@
         "原始拉丁学名",
         "VERBATIMSCIENTIFICNAME"
     ],
-    "scientificNameID":[
+    "scientificNameID": [
         "学名ID",
         "NAME_CODE",
         "SCIENTIFICNAMEID"
@@ -1357,7 +1400,7 @@
         "AUTHOR_OF_INFRASPECIFIC_RANK",
         "SCIENTIFICNAMEAUTHORSHIP"
     ],
-    "propagulum":[
+    "propagulum": [
         "繁殖体",
         "种质",
         "种子",
@@ -1682,5 +1725,141 @@
     "菌柄": [],
     "菌盖": [],
     "菌肉": [],
-    "配子体": []
+    "配子体": [],
+    "objectCSTR": [
+        "实体对象标识符",
+        "OBJECTCSTR"
+    ],
+    "relatedObjectCSTR": [
+        "关联的实体对象标识符",
+        "RELATEDOBJECTCSTR"
+    ],
+    "spaceCSTR": [
+        "空间对象标识符",
+        "SPACECSTR"
+    ],
+    "fragmentCSTR": [
+        "片段对象标识符",
+        "FRAGMENTCSTR"
+    ],
+    "soilpH": [
+        "土壤pH",
+        "土壤酸碱度",
+        "SOILPH"
+    ],
+    "landForm": [
+        "地貌",
+        "地形",
+        "LANDFORM"
+    ],
+    "landUsage": [
+        "土地利用",
+        "土地利用类型",
+        "LANDUSAGE"
+    ],
+    "soilColor": [
+        "土壤颜色",
+        "土色",
+        "SOILCOLOR"
+    ],
+    "soilTexture": [
+        "土壤质地",
+        "SOILTEXTURE"
+    ],
+    "aspectHeading": [
+        "坡向",
+        "坡向方位",
+        "ASPECTHEADING"
+    ],
+    "slopePosition": [
+        "坡位",
+        "SLOPEPOSITION"
+    ],
+    "slopeInDegrees": [
+        "坡度",
+        "坡度(度)",
+        "SLOPEINDEGREES"
+    ],
+    "soilParentMaterial": [
+        "土壤母质",
+        "母质",
+        "SOILPARENTMATERIAL"
+    ],
+    "specimensCount": [
+        "标本份数",
+        "标本数量",
+        "SPECIMENSCOUNT"
+    ],
+    "seedCount": [
+        "种子数",
+        "种子数量",
+        "SEEDCOUNT"
+    ],
+    "plantCount": [
+        "植株数",
+        "植株数量",
+        "PLANTCOUNT"
+    ],
+    "samplingArea": [
+        "样方面积",
+        "取样面积",
+        "SAMPLINGAREA"
+    ],
+    "bearingPlantRate": [
+        "结实率",
+        "结实植株率",
+        "BEARINGPLANTRATE"
+    ],
+    "seedHarvestStage": [
+        "种子采收期",
+        "采种期",
+        "SEEDHARVESTSTAGE"
+    ],
+    "bearingPlantCount": [
+        "结实植株数",
+        "BEARINGPLANTCOUNT"
+    ],
+    "seedCollectionWay": [
+        "采种方式",
+        "种子采集方式",
+        "SEEDCOLLECTIONWAY"
+    ],
+    "seedHumidityLevel": [
+        "种子湿度",
+        "种子含水率",
+        "SEEDHUMIDITYLEVEL"
+    ],
+    "seedlingPlantCount": [
+        "幼苗数",
+        "实生苗数",
+        "SEEDLINGPLANTCOUNT"
+    ],
+    "livingSpecimensCount": [
+        "活体标本数",
+        "活体份数",
+        "LIVINGSPECIMENSCOUNT"
+    ],
+    "communityType": [
+        "群落类型",
+        "COMMUNITYTYPE"
+    ],
+    "associatedHerb": [
+        "伴生草本",
+        "伴生草本植物",
+        "ASSOCIATEDHERB"
+    ],
+    "associatedTree": [
+        "伴生乔木",
+        "伴生树种",
+        "ASSOCIATEDTREE"
+    ],
+    "associatedShrub": [
+        "伴生灌木",
+        "ASSOCIATEDSHRUB"
+    ],
+    "threatenedDegree": [
+        "濒危等级",
+        "受威胁程度",
+        "THREATENEDDEGREE"
+    ]
 }

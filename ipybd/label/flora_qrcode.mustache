@@ -1,7 +1,7 @@
 <article class="label-item">
   <h1>{{labelTitle}}{{#labelNote}}（{{labelNote}}）{{/labelNote}}</h1>
   <h2>{{labelSubtitle}}</h2>
-  <p>{{#family}}<b>{{family}}</b>{{/family}}</p>
+  <p>{{#family}}<b>{{family}}</b>{{/family}}{{#catalogNumber}}<span style="float:right;">{{catalogNumber}}</span>{{/catalogNumber}}</p>
   <p>{{#chineseName}}{{chineseName}}，{{/chineseName}}<i>{{genus}} {{specificEpithet}}</i>{{#taxonRank}} {{taxonRank}}{{/taxonRank}}<i> {{infraspecificEpithet}}</i> {{scientificNameAuthorship}}</p>
   {{#identifiedBy}}<p><span class="title">鉴定人：</span>{{identifiedBy}}<span style="float:right">{{dateIdentified}}</span></p>{{/identifiedBy}}
   <p><span class="title">采集地：</span>{{#country}}{{country}}{{/country}}{{#province}}，{{province}}{{/province}}{{#prefecture}}，{{prefecture}}{{/prefecture}}{{#county}}，{{county}}{{/county}}{{#locality}}，{{{locality}}}{{/locality}}{{#habitat}}，{{{habitat}}}{{/habitat}}</p>

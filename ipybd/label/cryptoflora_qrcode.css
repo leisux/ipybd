@@ -18,7 +18,8 @@ body{
 
 article {
   flex-basis: 45%;
-  padding: 9px 17px 0px 16px;
+  padding: 10px 30px 0px 30px;
+  /*margin-bottom: 10px;*/
   page-break-inside: avoid;
   line-height: 1.4;
   box-sizing: border-box;
@@ -27,12 +28,12 @@ article {
 h1 {
   font-family: SimHei, STXihei, "MicrosoftJhengHei", STHeiti, MingLiu, "Palatino Linotype", "Book Antiqua", Palatino, "SimSun", serif;
   font-size: 14px;
-	line-height: 1.1;
+  line-height: 1.1;
   text-align: center;
 }
 
 h2 {
-  /* font-variant: small-caps; */
+  font-variant: small-caps;
   font-size: 10px;
   line-height: 1.2;
   text-align: center;
@@ -44,9 +45,9 @@ h2 {
 }
 
 img {
-  height: 45px;
+  /* 二维码打印尺寸：90px ≈ 23.8mm，其中二维码本体约 20mm，
+     模块尺寸约 0.55mm；图片位于标题行，尺寸略保守以免压挤文字 */
+  height: 75px;
   display: block;
-  margin: -3px -8px 0 auto;
+  margin: -8px -8px 0 auto;
 }
-
-

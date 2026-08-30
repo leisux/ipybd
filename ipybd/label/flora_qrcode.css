@@ -44,9 +44,8 @@ h2 {
 }
 
 img {
-  height: 45px;
+  /* 二维码打印尺寸：85px ≈ 22.5mm，二维码本体约 22mm */
+  height: 85px;
   display: block;
-  margin: -3px -8px 0 auto;
+  margin: -40px -8px 0 auto;
 }
-
-

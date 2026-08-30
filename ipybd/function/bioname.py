@@ -1,4 +1,3 @@
-
 import asyncio
 import re
 import unicodedata
@@ -16,14 +15,47 @@ from tqdm import tqdm
 
 
 SP2000_API = 'http://www.sp2000.org.cn/api/v2'
-IPNI_API = 'http://beta.ipni.org/api/1'
+IPNI_API = 'https://www.ipni.org/api/1'
 POWO_API = 'https://powo.science.kew.org/api/2'
-TROPICOS_API = 'https://services.tropicos.org/Name'
+TROPICOS_API = 'http://services.tropicos.org/Name'
 
 
 @ifunc
 class BioName:
+    """Scientific name parser and validator using multiple botanical databases.
+
+    Provides functionality to parse, standardize, and validate scientific names
+    against IPNI, POWO, Tropicos, and COL databases. Supports batch processing
+    with async API calls and intelligent authorship matching.
+
+    Args:
+        names: List, Series, or tuple of scientific names to process.
+        style: Output format for scientific names. Options include:
+            - 'scientificName': Full name with author (e.g., "Abies alba Mill.")
+            - 'simpleName': Name without author (e.g., "Abies alba")
+            - 'apiName': Tuple of (name, author)
+            - 'plantSplitName': Tuple split into (genus, species, rank, infraspecies, author)
+            - 'fullPlantSplitName': Full split including first authors
+            - 'animalSplitName': Tuple split for animal names
+
+    Attributes:
+        names: Original input names.
+        querys: Parsed query dictionary mapping raw names to structured queries.
+        cache: Cache for API results from multiple databases.
+        style: Current output style setting.
+
+    Example:
+        >>> names = BioName(['Abies alba Mill.', 'Pinus sylvestris L.'])
+        >>> results = names.get('stdName')
+    """
+
     def __init__(self, names: Union[list, pd.Series, tuple], style='scientificName'):
+        """Initialize BioName with scientific names.
+
+        Args:
+            names: List, Series, or tuple of scientific names.
+            style: Output format style (default 'scientificName').
+        """
         self.names = names
         self.querys = {}
         self.cache = {'ipni': {}, 'col': {}, 'powo': {}, 'tropicos': {
@@ -31,7 +63,14 @@ class BioName:
         self.style = style
     
     def get_best_names(self):
-        """ 从 self.names 中的每个元素中提取最佳的作者信息
+        """Extract best authorship information for each name in self.names.
+
+        Queries multiple databases (powo, tropicos, ipni, col) to find the
+        best matching scientific name with authorship information.
+
+        Returns:
+            Dictionary mapping original names to tuples of:
+            (simpleName, authorship, similar_authorship, degree)
         """
         tasks = self.querys
         names = {}
@@ -58,6 +97,17 @@ class BioName:
         return names
             
     def _get_best_authorship(self, name, authorship, databases={'powo':'author', 'tropicos':'Author', 'ipni':'authors', 'col':'author'}):
+        """Find best authorship match across databases.
+
+        Args:
+            name: Scientific name to match.
+            authorship: Original authorship string.
+            databases: Mapping of database names to their author field names.
+
+        Returns:
+            Tuple of (authorship, similar_authorship, degree) where degree
+            is a string like 'S3', 'H2', 'E0' indicating match quality.
+        """
         for dgr in ('S', 'H', 'M', 'L', 'E'):
             for database in databases:
                 try:
@@ -86,6 +136,23 @@ class BioName:
         return authorship, similar_authorship, degree
     
     def get(self, action, typ=list, mark=False):
+        """Execute a query action and return results.
+
+        Args:
+            action: Query action - can be:
+                - 'bestName': Get best names with authorship
+                - 'colTaxonTree', 'colName', 'colSynonyms', 'colAccepted': COL queries
+                - 'ipniName', 'ipniReference': IPNI queries
+                - 'powoName', 'powoAccepted', 'powoImages': POWO queries
+                - 'tropicosName', 'tropicosAccepted': Tropicos queries
+                - pd.Series: Native name matching against provided library
+                - tuple: Native matching with strict mode
+            typ: Return type - list or dict (default list).
+            mark: If True, mark failed queries with '!' prefix.
+
+        Returns:
+            Query results in specified type, or empty list/dict if no results.
+        """
         if self.querys == {}:
             self.querys = self.build_querys()
         if isinstance(action, pd.Series):
@@ -111,14 +178,15 @@ class BioName:
                 return {}
 
     def _results2list(self, results: dict, mark):
-        """ 对 get 的结果进行组装
+        """Assemble and format query results into a list.
 
-        results: 从 self.cache 中解析得到的结果字典, 每个元素都为元组
-        mark: 如果为 True，没有获得结果的检索词会被当成结果返回并以!标记
-              如果为 None，没有检索结果则返回由 None 组成的与其他结果等长的元组
+        Args:
+            results: Dictionary of results from self.cache.
+            mark: If True, failed queries are marked with '!' prefix.
+                If None, failed queries return tuples of None matching result length.
 
-        return: 按照 self.names 中的元素顺序排列的检索结果 list，list 中的元素
-                由元组组成。
+        Returns:
+            List of results ordered by self.names, where each element is a tuple.
         """
         result_len = len(list(results.values())[0])
         for name in self.querys:
@@ -145,15 +213,17 @@ class BioName:
     # 以下多个方法用于组装 get 协程
     # 跟踪协程的执行，并将执行结果生成缓存
     def get_query_results(self, action, leftover=None):
-        """ 构建查询缓存、返回查询结果
+        """Build query cache and return query results.
 
-        action: 要进行的查询操作描述字符串
-        leftover: 没有缓存，需要进行 WEB 查询的检索词
-                     由 self.querys 部分元素组成解字典
+        Args:
+            action: Query action string (e.g., 'stdName', 'colName').
+            leftover: Search terms without cache, requiring web query.
+                Dictionary derived from self.querys.
 
-         返回检索结果字典 results，字典由原始检索词:检索结果组成
-               若没有任何结果，返回 {}
-               检索过程中，会一并生成 self.names 在相应平台的检索返回内容缓存
+        Returns:
+            Dictionary of results {raw_name: result}.
+            Returns empty dict if no results found.
+            Results are also written to self.cache during retrieval.
         """
         cache_mapping = {
             'stdName': {
@@ -176,14 +246,14 @@ class BioName:
             'tropicosSynonyms': self.cache['tropicosSynonyms']
         }
         cache = cache_mapping[action]
+        results, search_terms = {}, {}
         if cache:
             names = leftover if leftover else self.querys
             results, search_terms = self.get_cache_results(names, cache, action)
-        else:
-            if not leftover:
-                # 如果没有缓存，所有检索词执行一次 web 搜索
-                results = {}
-                search_terms = self.querys
+        elif not leftover:
+            # 如果没有缓存，所有检索词执行一次 web 搜索
+            results = {}
+            search_terms = self.querys
         # 为防止 search_terms 不存在，这里的条件判断应放置在后面
         if not leftover and search_terms:
             # 若leftover 是 None, 说明 web 请求是首次发起，执行一次递归检索
@@ -197,6 +267,18 @@ class BioName:
         return results
     
     def get_cache_results(self, names, cache, action):
+        """Extract results from cache and identify terms needing web lookup.
+
+        Args:
+            names: Dictionary of search terms.
+            cache: Cache dictionary to extract results from.
+            action: Action string determining which parsing function to use.
+
+        Returns:
+            Tuple of (results_dict, search_terms_dict).
+            results_dict contains cached results.
+            search_terms_dict contains terms that need web queries.
+        """
         action_func = {
             # 注意 stdName 的 col 函数置于元组最后，
             # 以避免 ipni/powo 中与 col 同名的字段
@@ -234,13 +316,16 @@ class BioName:
         return results, search_terms
 
     def get_cache_result(self, query_result, get_result):
-        """ 从检索缓存中提取数据
+        """Extract specific data from cached query result.
 
-        query_result: raw_name 的检索结果
-        get_result: 从检索结果中提取特定检索结果的方法，
-                    可能是一个方法，也可能是多个方法组成的元组
-        return: 返回的结果样式，由检索方法决定
+        Args:
+            query_result: Raw query result from cache.
+            get_result: Function or tuple of functions to extract specific data.
+                When tuple, functions are tried in order until one succeeds.
 
+        Returns:
+            Extracted data in format determined by the get_result function.
+            Returns None if no function succeeds.
         """
         try:
             return get_result(query_result)
@@ -260,12 +345,15 @@ class BioName:
                     continue
 
     def web_get(self, action, search_terms):
-        """ 检索 WEB API，获得名称检索结果
+        """Query web APIs to retrieve name information.
 
-        action: str 类型，用于说明要执行的操作
-        search_terms: 搜索条件, 由self.querys 的全部或部分元素组成的字典
-                      元素样式为：raw_name:(simpleName, rank ,author, raw_name)
-        return: 返回 None, 检索结果会直接写入 self.cache
+        Args:
+            action: Action string describing the operation to perform.
+            search_terms: Search conditions as dict from self.querys.
+                Format: raw_name: (simpleName, rank, author, raw_name)
+
+        Returns:
+            None. Results are written directly to self.cache.
         """
         get_action = {
             'stdName': self.get_name,
@@ -301,6 +389,15 @@ class BioName:
                 pass
 
     async def build_tasks(self, action_func, search_terms):
+        """Build async tasks for concurrent API requests.
+
+        Args:
+            action_func: Function to call for each search term.
+            search_terms: Dictionary of search terms.
+
+        Returns:
+            List of results from asyncio.gather.
+        """
         async with aiohttp.ClientSession() as session:
             tasks = [
                 self.web_get_track(
@@ -314,6 +411,16 @@ class BioName:
             return await asyncio.gather(*tasks)
 
     async def web_get_track(self, func, param, session):
+        """Fetch single record with semaphore control.
+
+        Args:
+            func: Async function to call.
+            param: Parameters for the function.
+            session: aiohttp session.
+
+        Returns:
+            Result from the async function call.
+        """
         async with self.sema:
             result = await func(param, session)
             self.pbar.update(1)
@@ -323,11 +430,19 @@ class BioName:
     # 以下多个方法用于对 Api 返回结果进行有针对性的处理
     # 并根据具体调用的方法，返回用户所需要的数据
     def powo_images(self, query_result):
-        """ 解析 self.cache['powo'] 中的图片
+        """Parse images from POWO cache result.
 
-            powo 接口获得的图片有缩略图和原图 url
-            每个名字的图片有且仅有三张
-            返回的 iamges 通常是由最多三个 url 构成的元组
+        POWO returns thumbnail and fullsize URLs for images.
+        Each name has at most three images.
+
+        Args:
+            query_result: POWO query result dictionary.
+
+        Returns:
+            Tuple of fullsize image URLs (up to 3).
+
+        Raises:
+            ValueError: If no images in result or result is empty.
         """
         try:
             images = [image['fullsize'] for image in query_result['images']]
@@ -337,6 +452,14 @@ class BioName:
         return images
 
     def powo_accepted(self, query_result):
+        """Extract accepted name from POWO query result.
+
+        Args:
+            query_result: POWO query result dictionary.
+
+        Returns:
+            Tuple of (accepted_name_with_author,) or (None,) if no accepted name.
+        """
         try:
             query_result = query_result['synonymOf']
         except KeyError:
@@ -353,6 +476,15 @@ class BioName:
             return query_result['name'],
 
     def powo_name(self, query_result):
+        """Extract name details from POWO query result.
+
+        Args:
+            query_result: POWO query result dictionary.
+
+        Returns:
+            Tuple of (scientific_name, author, family, ipni_lsid, match_degree).
+            Returns (None, None, None, None, None) if query_result is empty.
+        """
         if query_result:
             scientific_name = query_result["name"]
             author = query_result["author"]
@@ -364,6 +496,14 @@ class BioName:
             return None, None, None, None, None
 
     def col_accepted(self, query_result):
+        """Extract accepted name from COL query result.
+
+        Args:
+            query_result: COL query result dictionary.
+
+        Returns:
+            Tuple of (accepted_name_with_author,) or (None,) if no accepted name.
+        """
         try:
             scientific_name = query_result['accepted_name_info']['scientificName']
             author = query_result['accepted_name_info']['author']
@@ -372,6 +512,17 @@ class BioName:
             return None,
 
     def col_synonyms(self, query_result):
+        """Extract synonyms from COL query result.
+
+        Args:
+            query_result: COL query result dictionary.
+
+        Returns:
+            List of synonym names.
+
+        Raises:
+            ValueError: If no synonyms found in result.
+        """
         try:
             synonyms = [
                 synonym['synonym'] for synonym
@@ -382,6 +533,15 @@ class BioName:
             raise ValueError
 
     def col_taxontree(self, query_result):
+        """Extract taxonomic hierarchy from COL query result.
+
+        Args:
+            query_result: COL query result dictionary.
+
+        Returns:
+            Tuple of (genus, family, order, class, phylum, kingdom).
+            Returns (None, None, None, None, None, None) if result is empty.
+        """
         try:
             genus = query_result['accepted_name_info']['taxonTree']['genus']
             family = query_result['accepted_name_info']['taxonTree']['family']
@@ -409,6 +569,17 @@ class BioName:
         return genus, family, order, _class, phylum, kingdom
 
     def col_name(self, query_result):
+        """Extract name details from COL query result.
+
+        Handles species, subspecies, genus, and family level results.
+
+        Args:
+            query_result: COL query result dictionary.
+
+        Returns:
+            Tuple of (scientific_name, author, family, col_name_code, degree).
+            Returns (None, None, None, None, None) if result is empty.
+        """
         try:  # 种及种下检索结果
             degree = query_result['match_degree']
             col_name_code = query_result['name_code']
@@ -431,6 +602,15 @@ class BioName:
         return scientific_name, author, family, col_name_code, degree
 
     def ipni_name(self, query_result):
+        """Extract name details from IPNI query result.
+
+        Args:
+            query_result: IPNI query result dictionary.
+
+        Returns:
+            Tuple of (scientific_name, author, family, ipni_lsid, match_degree).
+            Returns (None, None, None, None, None) if result is empty.
+        """
         try:
             scientific_name = query_result["name"]
             author = query_result["authors"]
@@ -443,6 +623,17 @@ class BioName:
         return scientific_name, author, family, ipni_lsid, degree
 
     def ipni_reference(self, query_result):
+        """Extract publication references from IPNI query result.
+
+        Args:
+            query_result: IPNI query result dictionary.
+
+        Returns:
+            List of reference information:
+            [publishingAuthor, publication, referenceCollation, publicationYear,
+             publicationYearNote, referenceRemarks, reference, bhlLink, linkedPublicationId]
+            Returns [None,...] if result is empty.
+        """
         try:
             result = []
             keys = ['publishingAuthor', 'publication', 'referenceCollation', 'publicationYear',
@@ -465,6 +656,15 @@ class BioName:
         return result
 
     def tropicos_name(self, query_result):
+        """Extract name details from Tropicos query result.
+
+        Args:
+            query_result: Tropicos query result dictionary.
+
+        Returns:
+            Tuple of (scientific_name, author, family, name_id, match_degree).
+            Returns (None, None, None, None, None) if result is empty.
+        """
         if query_result:
             scientific_name = query_result['ScientificName']
             author = query_result['Author']
@@ -476,6 +676,14 @@ class BioName:
             return None, None, None, None, None
 
     def tropicos_accepted(self, query_result):
+        """Extract accepted name from Tropicos query result.
+
+        Args:
+            query_result: Tropicos query result dictionary.
+
+        Returns:
+            Tuple of (accepted_name_with_authors,) or (None,) if no accepted name.
+        """
         try:
             return query_result['AcceptedName']['ScientificNameWithAuthors'],
         except KeyError:
@@ -484,6 +692,17 @@ class BioName:
             return None,
 
     async def get_name(self, query, session):
+        """Get standardized name by querying multiple databases.
+
+        Tries IPNI, POWO, Tropicos, and COL in order until a valid result is found.
+
+        Args:
+            query: Query tuple (simple_name, rank, author, raw_name).
+            session: aiohttp session.
+
+        Returns:
+            Tuple of (raw_name, name_result, database) or last attempt's result.
+        """
         name = await self.get_ipni_name(query, session)
         if name and name[1]:
             return name
@@ -499,32 +718,71 @@ class BioName:
                     return await self.get_col_name(query, session)
 
     async def get_col_name(self, query, session):
+        """Get name from COL (Catalogue of Life) database.
+
+        Args:
+            query: Query tuple (simple_name, rank, author, raw_name).
+            session: aiohttp session.
+
+        Returns:
+            Tuple of (raw_name, result, 'col').
+        """
         name = await self.check_col_name(query, session)
         if name or name is None:
             return query[-1], name, 'col'
 
     async def get_ipni_name(self, query, session):
+        """Get name from IPNI (International Plant Names Index) database.
+
+        Args:
+            query: Query tuple (simple_name, rank, author, raw_name).
+            session: aiohttp session.
+
+        Returns:
+            Tuple of (raw_name, result, 'ipni').
+        """
         name = await self.check_ipni_name(query, session)
         if name or name is None:
             return query[-1], name, 'ipni'
 
     async def get_powo_name(self, query, session):
-        """ 从 KEW API 返回的最佳匹配中，获得学名及其科属分类阶元信息
+        """Get name from KEW POWO (Plants of the World Online) database.
 
-            query: (simple_name, rank, author, raw_name)
-            api: KEW 的数据接口地址
-            return：raw_name, scientificName, family, genus
+        Args:
+            query: Query tuple (simple_name, rank, author, raw_name).
+            session: aiohttp session.
+
+        Returns:
+            Tuple of (raw_name, result, 'powo').
         """
         name = await self.check_powo_name(query, session)
         if name or name is None:
             return query[-1], name, 'powo'
 
     async def get_tropicos_name(self, query, session):
+        """Get name from Tropicos database.
+
+        Args:
+            query: Query tuple (simple_name, rank, author, raw_name).
+            session: aiohttp session.
+
+        Returns:
+            Tuple of (raw_name, result, 'tropicos').
+        """
         name = await self.check_tropicos_name(query, session)
         if name or name is None:
             return query[-1], name, 'tropicos'
 
     async def get_tropicos_accepted(self, query, session):
+        """Get accepted name from Tropicos database.
+
+        Args:
+            query: Query tuple (simple_name, rank, author, raw_name).
+            session: aiohttp session.
+
+        Returns:
+            Tuple of (raw_name, accepted_name, 'tropicosAccepted').
+        """
         name = await self.check_tropicos_name(query, session)
         if name is None:
             return query[-1], None, 'tropicosAccepted'
@@ -538,9 +796,15 @@ class BioName:
                 return query[-1], name, 'tropicosAccepted'
 
     def native_get(self, querys, org_lib, strict=False):
-        """
-            querys: build_querys 形成的待查询名称及其解构信息组成的字典
-            org_lib: 由学名组成的 Series, 用于被比较和提取
+        """Match queries against native library without web requests.
+
+        Args:
+            querys: Dictionary from build_querys with name and structure info.
+            org_lib: Series of scientific names for matching.
+            strict: If True, only exact matches are returned.
+
+        Returns:
+            Dictionary of matched results {raw_name: matched_name}.
         """
         results = {}
         lib_names = self._get_simple_names(org_lib)
@@ -559,6 +823,17 @@ class BioName:
         return results
     
     def find_similar(self, name, org_lib, lib_names, strict):
+        """Find similar names in library using fuzzy matching.
+
+        Args:
+            name: Name to match.
+            org_lib: Original series of names.
+            lib_names: Series of simplified names for comparison.
+            strict: If True, only exact matches are returned.
+
+        Returns:
+            Series of matching names from org_lib.
+        """
         if strict:
             series = org_lib[lib_names==name]
         else:
@@ -568,12 +843,31 @@ class BioName:
         return series
 
     def _strict_similarity(self, name_with_authors, name_without_authors):
+        """Check strict similarity between names.
+
+        Args:
+            name_with_authors: Name including authorship.
+            name_without_authors: Name without authorship.
+
+        Returns:
+            True if names match exactly, False otherwise.
+        """
         name = self.format_latin_name(name_with_authors, 'simpleName')
         return True if name == name_without_authors else False
 
     def _get_simple_names(self, series):
-        sp = "((?:!×\s?|×\s?|!)?[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*(×\s+|X\s+|x\s+|×)?([a-zàâäèéêëîïôœùûüÿç][a-zàâäèéêëîïôœùûüÿç-]+)?\s*(.*)"
-        ssp = "(^[\"\'（A-ZŠÁÅČ\(\.].*?[^A-Z-\s]\s*(?=$|var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form\.|forma|nothosp\.|cv\.|cultivar\.|lusus\s|\[unranked\]|×|monstr\.|proles\s))?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form\.|forma|nothosp\.|cv\.|cultivar\.|lusus\s|\[unranked\]|×|monstr\.|proles\s)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*([\"\'（A-ZÅÁŠČ\(].*?[^A-Z-])?$"
+        """Extract simple names from scientific names series.
+
+        Parses scientific names into genus, species, and other components.
+
+        Args:
+            series: Series of scientific names.
+
+        Returns:
+            Series of simplified names (genus + species only).
+        """
+        sp = r"((?:!×\s?|×\s?|!)?[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*(×\s+|X\s+|x\s+|×)?([a-zàâäèéêëîïôœùûüÿç][a-zàâäèéêëîïôœùûüÿç-]+)?\s*(.*)"
+        ssp = r"(^[\"\'（A-ZŠÁÅČ\(\.].*?[^A-Z-\s]\s*(?=$|var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form\.|forma|nothosp\.|cv\.|cultivar\.|lusus\s|\[unranked\]|×|monstr\.|proles\s))?(var\.|subvar\.|subsp\.|ssp\.|f\.|fo\.|subf\.|form\.|forma|nothosp\.|cv\.|cultivar\.|lusus\s|\[unranked\]|×|monstr\.|proles\s)?\s*([a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï][a-zàäçéèêëöôùûüîï-]+)?\s*([\"\'（A-ZÅÁŠČ\(].*?[^A-Z-])?$"
         species = series.str.extract(sp)
         subsp = species[3].str.extract(ssp)
         species = pd.concat([species[[0, 1, 2]], subsp], axis=1)
@@ -583,6 +877,14 @@ class BioName:
         return species
 
     def __format_subspecies(self, subsp):
+        """Format subspecies/infraspecies name.
+
+        Args:
+            subsp: Tuple of parsed subspecies components.
+
+        Returns:
+            Formatted subspecies name string.
+        """
         if pd.notna(subsp[5]) and subsp[5] != subsp[2]:
             try: 
                 return ' '.join([subsp[4], subsp[5]])
@@ -591,6 +893,15 @@ class BioName:
                 return subsp[5]
 
     def _fuzzy_similarity(self, name, name_without_authors):
+        """Calculate fuzzy similarity distance between names.
+
+        Args:
+            name: Name to compare.
+            name_without_authors: Reference name without authorship.
+
+        Returns:
+            Levenshtein distance between names, or None if name is null.
+        """
         if pd.isnull(name_without_authors):
             return None
         else:
@@ -601,6 +912,15 @@ class BioName:
                 return None
     
     def check_native_name(self, query, similar_names):
+        """Check and select best match from similar native names.
+
+        Args:
+            query: Query tuple (simple_name, rank, author, raw_name).
+            similar_names: Series of similar names found in library.
+
+        Returns:
+            Best matching name tuple with match degree, or None.
+        """
         homonym = []
         for name in similar_names:
             name = self.format_latin_name(name, 'apiName')
@@ -620,6 +940,15 @@ class BioName:
             return None
 
     async def check_tropicos_name(self, query, session):
+        """Find best matching Tropicos name for query.
+
+        Args:
+            query: Query tuple (simple_name, rank, author, raw_name).
+            session: aiohttp session.
+
+        Returns:
+            Best matching Tropicos name dict with match_degree, or None.
+        """
         names = await self.tropicos_search(TROPICOS_API, query[0], query[1], session)
         if not names:
             return names
@@ -641,9 +970,14 @@ class BioName:
                 return self.get_similar_name(query[0], authors, names, ('ScientificName', 'Author'))
 
     async def check_col_name(self, query, session):
-        """ 对 COL 返回的结果逐一进行检查
+        """Find best matching COL name for query.
 
-        return: 返回最能满足 query 条件的学名 dict
+        Args:
+            query: Query tuple (simple_name, rank, author, raw_name).
+            session: aiohttp session.
+
+        Returns:
+            Best matching COL name dict, or None.
         """
         results = await self.col_search(query[0], query[1], session)
         # print(results)
@@ -682,9 +1016,14 @@ class BioName:
                 return self.get_similar_name(query[0], authors, names, ('scientific_name', 'author'))
 
     async def check_ipni_name(self, query, session):
-        """ 对 KEW 返回结果逐一进行检查
+        """Find best matching IPNI name for query.
 
-        return: 返回最满足 query 条件的学名 dict
+        Args:
+            query: Query tuple (simple_name, rank, author, raw_name).
+            session: aiohttp session.
+
+        Returns:
+            Best matching IPNI name dict, or None.
         """
         results = await self.kew_search(query[0], query[1], IPNI_API, session)
         if not results:
@@ -706,9 +1045,14 @@ class BioName:
                 return self.get_similar_name(query[0], authors, names, ('name', 'authors'))
 
     async def check_powo_name(self, query, session):
-        """ 对 KEW 返回结果逐一进行检查
+        """Find best matching POWO name for query.
 
-        return: 返回最满足 query 条件的学名 dict
+        Args:
+            query: Query tuple (simple_name, rank, author, raw_name).
+            session: aiohttp session.
+
+        Returns:
+            Best matching POWO name dict, or None.
         """
         results = await self.kew_search(query[0], query[1], POWO_API, session)
         if not results:
@@ -737,6 +1081,17 @@ class BioName:
 
 
     async def tropicos_search(self, api, query, filters, session):
+        """Search Tropicos API for scientific name.
+
+        Args:
+            api: Tropicos API base URL.
+            query: Search query string.
+            filters: Filter enum for taxonomic rank.
+            session: aiohttp session.
+
+        Returns:
+            List of matching names, None if error, or False if no results.
+        """
         params = self._build_tropicos_params(query, filters)
         url = self.build_url(api, filters.value['tropicos'], params)
         resp = await self.async_request(url, session)
@@ -749,6 +1104,15 @@ class BioName:
             return False
 
     def _build_tropicos_params(self, query, filters):
+        """Build query parameters for Tropicos API.
+
+        Args:
+            query: Search query string.
+            filters: Filter enum for taxonomic rank.
+
+        Returns:
+            Dictionary of API parameters.
+        """
         params = {}
         if filters in [Filters.familial, Filters.infrafamilial, Filters.generic, Filters.infrageneric, Filters.specific, Filters.infraspecific]:
             # tropicos 可能对 "." 字符无法正常获取
@@ -763,6 +1127,16 @@ class BioName:
         return params
 
     async def col_search(self, query, filters, session):
+        """Search COL (Catalogue of Life) API.
+
+        Args:
+            query: Search query string.
+            filters: Filter enum for taxonomic rank.
+            session: aiohttp session.
+
+        Returns:
+            List of matching species/families, None if error, False if network issue.
+        """
         params = self._build_col_params(query, filters)
         url = self.build_url(SP2000_API, filters.value['col'], params)
         # print(url)
@@ -791,6 +1165,15 @@ class BioName:
             return False
 
     def _build_col_params(self, query, filters):
+        """Build query parameters for COL API.
+
+        Args:
+            query: Search query string.
+            filters: Filter enum for taxonomic rank.
+
+        Returns:
+            Dictionary of API parameters.
+        """
         params = {'apiKey': '42ad0f57ae46407686d1903fd44aa34c'}
         if filters is Filters.familial:
             params['familyName'] = query
@@ -802,6 +1185,17 @@ class BioName:
         return params
 
     async def kew_search(self, query, filters, api, session):
+        """Search KEW API (IPNI or POWO).
+
+        Args:
+            query: Search query string.
+            filters: Filter enum for taxonomic rank.
+            api: API base URL (IPNI_API or POWO_API).
+            session: aiohttp session.
+
+        Returns:
+            List of results, None if not found, False if network error.
+        """
         params = self._build_kew_params(query, filters)
         resp = await self.async_request(self.build_url(api, 'search', params), session)
         try:
@@ -814,6 +1208,15 @@ class BioName:
             return None
 
     def _build_kew_params(self, query, filters):
+        """Build query parameters for KEW APIs.
+
+        Args:
+            query: Search query string or dict.
+            filters: Filter enum or list of filters.
+
+        Returns:
+            Dictionary of API parameters.
+        """
         params = {'perPage': 500, 'cursor': '*'}
         if query:
             params['q'] = self._format_kew_query(query)
@@ -822,6 +1225,14 @@ class BioName:
         return params
 
     def _format_kew_query(self, query):
+        """Format query string for KEW API.
+
+        Args:
+            query: Query string or dict of field:value pairs.
+
+        Returns:
+            Formatted query string.
+        """
         if isinstance(query, dict):
             terms = [k.value + ':' + v for k, v in query.items()]
             return ",".join(terms)
@@ -829,6 +1240,14 @@ class BioName:
             return query
 
     def _format_kew_filters(self, filters):
+        """Format filters for KEW API.
+
+        Args:
+            filters: Filter enum or list of filter enums.
+
+        Returns:
+            Formatted filter string for API.
+        """
         if isinstance(filters, list):
             terms = [f.value['kew'] for f in filters]
             return ",".join(terms)
@@ -836,6 +1255,16 @@ class BioName:
             return filters.value['kew']
 
     def build_url(self, api, method, params):
+        """Build complete URL with query parameters.
+
+        Args:
+            api: API base URL.
+            method: API method/endpoint.
+            params: Dictionary of query parameters.
+
+        Returns:
+            Complete URL string.
+        """
         return '{base}/{method}?{opt}'.format(
             base=api,
             method=method,
@@ -843,8 +1272,12 @@ class BioName:
         )
 
     def build_querys(self):
-        """
-        return: simple_name, Filters(platform_rank), authors, raw_name
+        """Parse and build query dictionary from input names.
+
+        Returns:
+            Dictionary mapping raw_name to tuple of
+            (simple_name, Filters(rank), authors, raw_name).
+            Returns None for names that cannot be parsed.
         """
         raw2stdname = dict.fromkeys(self.names)
         for raw_name in raw2stdname:
@@ -862,6 +1295,15 @@ class BioName:
         return raw2stdname
 
     async def async_request(self, url, session):
+        """Perform async HTTP GET request with retry on rate limiting.
+
+        Args:
+            url: URL to fetch.
+            session: aiohttp session.
+
+        Returns:
+            JSON response or None if network timeout.
+        """
         try:
             while True:
                 # print(url)
@@ -879,6 +1321,16 @@ class BioName:
         return response  # 返回 None 表示网络有问题
 
     async def normal_request(self, url):
+        """Fallback synchronous GET request.
+
+        Used when async request fails.
+
+        Args:
+            url: URL to fetch.
+
+        Returns:
+            JSON response or None on error.
+        """
         try:
             while True:
                 rps = requests.get(url)
@@ -892,24 +1344,45 @@ class BioName:
 
     
     def format_latin_names(self, pattern):
+        """Format all names according to pattern.
+
+        Args:
+            pattern: Output format (simpleName, scientificName, apiName, etc.).
+
+        Returns:
+            List of formatted names.
+        """
         raw2stdname = dict.fromkeys(self.names)
         for raw_name in raw2stdname:
             raw2stdname[raw_name] = self.format_latin_name(raw_name, pattern)
         return [raw2stdname[name] for name in self.names]
     
     def format_latin_name(self, raw_name, pattern):
+        """Format a single scientific name according to pattern.
+
+        Args:
+            raw_name: Raw scientific name string.
+            pattern: Output format (simpleName, scientificName, apiName, etc.).
+
+        Returns:
+            Formatted name in specified pattern.
+        """
         split_name = self.parse_name(raw_name)
         return self.built_name_style(split_name, pattern)
 
     def parse_name(self, raw_name):
-        """ 将手写学名转成规范格式
+        """Parse scientific name into component parts.
 
-            raw_name: 各类动植物学名字符串，目前仅支持:
-                        属名 x 种名 种命名人 种下等级 种下加词 种下命名人
-                        这类学名格式的清洗，
-                        其中杂交符、种命名人、种下等级、种下命名人均可缺省。
-            return: 命名人的各个组成部分构成的元组
-                    如果无法提取合法的学名，则返回 None
+        Supports format: genus x species author rank infraspecies infraspecific_author
+
+        Args:
+            raw_name: Scientific name string to parse. Supports hybrid symbols,
+                author names, and infraspecific ranks (var., subsp., f., etc.).
+
+        Returns:
+            Tuple of (genus, species, taxon_rank, infraspecies, authors,
+            first_authors, platform_rank, raw_name).
+            Returns None if name cannot be parsed.
         """
         species_pattern = re.compile(
             r"((?:!×\s?|×\s?|!)?[A-Z][a-zàäçéèêëöôùûüîï-]+)\s*(×\s+|X\s+|x\s+|×)?([a-zàâäèéêëîïôœùûüÿç][a-zàâäèéêëîïôœùûüÿç-]+)?\s*(.*)")
@@ -961,6 +1434,17 @@ class BioName:
         return genus, species, taxon_rank, infraspecies, authors, first_authors, platform_rank, raw_name
 
     def built_name_style(self, split_name, pattern):
+        """Build formatted name from parsed components.
+
+        Args:
+            split_name: Tuple of parsed name components from parse_name().
+            pattern: Output format (simpleName, scientificName, apiName,
+                plantSplitName, fullPlantSplitName, animalSplitName).
+
+        Returns:
+            Formatted name string or tuple in specified pattern.
+            Returns None values for pattern if split_name is None.
+        """
         if split_name is None:
             return self.fill_blank_name(pattern)
         if pattern == 'simpleName':
@@ -1000,6 +1484,16 @@ class BioName:
             raise ValueError("学名处理参数错误，不存在{}".format(pattern))
 
     def fill_blank_name(self, pattern):
+        """Return blank values for a given pattern.
+
+        Used when name cannot be parsed.
+
+        Args:
+            pattern: Output format pattern.
+
+        Returns:
+            None or tuple of Nones matching pattern structure.
+        """
         if pattern == 'simpleName':
             return None
         elif pattern == 'apiName':
@@ -1017,13 +1511,17 @@ class BioName:
 
 
     def get_similar_name(self, orgname, authors_group, names, index):
-        """
-        args:
-            orgname: 目标名称的简名
-            authors_group: 目标名称的命名人组，如 [["Hook. f.", "Thomson"], ["Wall."]]
-            names: 待选学名组，是 list
-            index: names 中name 的 authors 属性的索引，可能是 str 也可能是 int 类型
-        return: 从 names 中选取与 authors_group 最相似的学名信息，如果没有，则返回 None
+        """Select best matching name from candidates based on author similarity.
+
+        Args:
+            orgname: Original name's simple name.
+            authors_group: Author team from original name, e.g., [["Hook. f.", "Thomson"], ["Wall."]].
+            names: List of candidate names with their authors.
+            index: Tuple of (name_key, author_key) to access name and author in each name dict.
+
+        Returns:
+            Best matching name from candidates with match_degree set.
+            Returns None if no suitable match found.
         """
         length = len(names)
         new_names = list(map(self.__get_degree, (orgname for _ in range(length)), names, (index for _ in range(length)), (authors_group for _ in range(length))))
@@ -1084,7 +1582,16 @@ class BioName:
         #     return self.__get_degree(orgname, name, index, authors_group)
     
     def __get_degree(self, orgname, name, index, authors_group):
-        """ 对相似的命名人进行评级
+        """Calculate match degree for a name against author group.
+
+        Args:
+            orgname: Original name.
+            name: Candidate name dict to evaluate.
+            index: Tuple of keys to access name and author in name dict.
+            authors_group: Target author team to match against.
+
+        Returns:
+            Name dict with match_degree added.
         """
         try:
             authors_group2 = self.get_author_team(name[index[1]], nested=True)
@@ -1098,14 +1605,14 @@ class BioName:
         return name
     
     def get_similar_scores(self, author_team, author_teams):
-        """ 将一个学名的命名人和一组学名的命名人编码进行比较，以确定最匹配的
+        """Compare one author's team against multiple candidates.
 
-        author_team: 一个学名命名人列表, 如["Hook. f.", "Thomos."], 不可以为 []
+        Args:
+            author_team: Single author team list, e.g., ["Hook. f.", "Thomos."].
+            author_teams: List of author teams to compare against.
 
-        author_teams: 一组包含多个学名命名人列表的的列表，一般来自于多个同名拉丁名的命
-                      名人, 可以为 [[]], 不可以为 None
-
-        return: 返回一个与原命名人匹配亲近关系排列的list
+        Returns:
+            List of (score, index) tuples sorted by match score descending.
         """
         s_teams_score = []
         for n, std_team in enumerate(author_teams):
@@ -1115,12 +1622,14 @@ class BioName:
         return s_teams_score
 
     def _caculate_similar_score(self, author_team1, author_team2):
-        """
-        Args:
-            author_team1: 一个学名命名人列表, 如["Hook. f.", "Thomos."], 不可以为 []
-            author_team2: 一个学名命名人列表, 如["Hook. f.", "Thomos."], 可以为 []
+        """Calculate similarity scores between two author teams.
 
-        return: 返回一个与 author_team1 等长的最佳匹配得分的 list
+        Args:
+            author_team1: Author team list, e.g., ["Hook. f.", "Thomos."]. Cannot be empty.
+            author_team2: Author team list to compare against. Can be empty.
+
+        Returns:
+            Tuple of (scores_list, degrees_list) with length matching author_team1.
         """
         scores = []
         degrees = []
@@ -1160,25 +1669,19 @@ class BioName:
         return scores, degrees
 
     def get_similar_degree(self, authors_group1, authors_group2):
-        """比较两个学名的命名人, 并返回相似等级
+        """Compare authorship between two names and return similarity degree.
 
         Args:
-            authors_group1 (list): 命名人列表，如 [["Hook. f.", "Thomson"], ["Regel"]]
-            authors_group2 (list): 命名人列表，如 [["Wall."]]
+            authors_group1: First author team, e.g., [["Hook. f.", "Thomson"], ["Regel"]].
+            authors_group2: Second author team, e.g., [["Wall."]].
 
         Returns:
-
-            degree (int): 命名人等级评估
-                'S': 两组命名人来自于同一个学名, 并且命名人可以一一对应 
-                'H': 两组命名人来自于同一个学名, 但是其中有学名可能省略了一些命名人
-                'M': 两组命名人可能来自于同一个学名, 但命名人需要人工进一步考证
-                'L': 两组命名人可能来自于不同人发表的同名名称，或者两个名称的命名人存在明显的冲突
-                'E': 命名人写法可能存在错误，无法比较
-            similar (float): 通过核心人名对degree的可信度进行评价
-                0: 仅与 L 和 E 组合，由命名人完全不同或规则限制导致的评级
-                1: 可与 SHMLE 组合，表示关键命名人需要人工核查
-                2: 可与 SHMLE 组合，表示关键命名人拼写上存在一些差异，需人工核查
-                3: 可与 SHMLE 组合，表示关键命名人相同
+            String degree code:
+            - 'S0'-'S3': Same publication, authors match
+            - 'H0'-'H3': Same publication, some authors omitted
+            - 'M0'-'M3': Possibly same, needs verification
+            - 'L0'-'L3': Different publications or conflicting authors
+            - 'E0'-'E3': Author spelling error, cannot compare
         """
         try:
             degree, similar = self._is_same_authorship(authors_group1, authors_group2)
@@ -1189,22 +1692,23 @@ class BioName:
         return degree
 
     def _is_same_authorship(self, authors_group1, authors_group2):
-        """根据两个命名人的构成模式, 选择不同的相似度计算方法，返回两组学名命名人的相似度等级
-            
+        """Compare authorship between two names using pattern matching.
+
         Args:
-            authors_group1 (list): 命名人列表，如 [["Hook. f.", "Thomson"], ["Regel"]]
-            authors_group2 (list): 命名人列表，如 [["Wall."]]
-        
+            authors_group1: First author team, e.g., [["Hook. f.", "Thomson"], ["Regel"]].
+            authors_group2: Second author team, e.g., [["Wall."]].
+
         Returns:
-            degree (int): 同名等级评估
-                3: 完全相同的人名组合
-                2: 其中一个学名命名人的组合缺失了一些命名人信息
-                1: 两组命名人比较相像，但是命名人之间的发表关系需要进一步澄清
-                0: 不同的命名人组合
-            similar (int): 相似度评估
-                ... 
+            Tuple of (degree, similar):
+            - degree (int): Match level (0-3)
+              3: Identical author组合
+              2: One has fewer authors (some omitted)
+              1: Authors similar but relationship unclear
+              0: Different authors
+            - similar (int): Confidence score (0-3)
+
         Raises:
-            ValueError: 两组命名人的组合无法比较
+            ValueError: Authors cannot be compared.
         """
         authors1, authors2 = sorted([authors_group1, authors_group2], key=lambda v: len(v))
         comb = len(authors1), len(authors2)
@@ -1289,6 +1793,17 @@ class BioName:
         return degree, similar
     
     def _a_vs_aexb(self, degree1, degree2, similar1, similar2):
+        """Compare a vs a ex b author pattern.
+
+        Args:
+            degree1: Degree from first comparison.
+            degree2: Degree from second comparison.
+            similar1: Similarity from first comparison.
+            similar2: Similarity from second comparison.
+
+        Returns:
+            Tuple of (degree, similar).
+        """
         if degree1 == 0 and degree2 == 0:
             return 0, max(similar1, similar2)
         elif degree1 == 0:
@@ -1303,12 +1818,31 @@ class BioName:
             return 1, similar1
             
     def _a_vs_ab(self, degree2):
+        """Compare a vs (a)b author pattern.
+
+        Args:
+            degree2: Degree from comparing b parts.
+
+        Returns:
+            Degree int (0 or 1).
+        """
         if degree2 > 0:
             return 1
         else:
             return 0
     
     def _aexb_vs_aexb(self, degree1, degree2, similar1, similar2):
+        """Compare a ex b vs a ex b author pattern.
+
+        Args:
+            degree1: Degree from first author comparison.
+            degree2: Degree from second author comparison.
+            similar1: Similarity from first comparison.
+            similar2: Similarity from second comparison.
+
+        Returns:
+            Tuple of (degree, similar).
+        """
         if degree1 == 0:
             return 0, similar1
         elif degree2 == 0:
@@ -1323,6 +1857,17 @@ class BioName:
             return 2, min(similar1, similar2)
 
     def _ab_vs_ab(self, degree1, degree2, similar1, similar2):
+        """Compare (a)b vs (a)b author pattern.
+
+        Args:
+            degree1: Degree from first part comparison.
+            degree2: Degree from second part comparison.
+            similar1: Similarity from first comparison.
+            similar2: Similarity from second comparison.
+
+        Returns:
+            Tuple of (degree, similar).
+        """
         if degree1 == 0:
             return 0, similar1
         elif degree2 == 0:
@@ -1337,23 +1882,20 @@ class BioName:
             return 2, min(similar1, similar2) 
 
     def _is_same_authors(self, authors1, authors2):
-        """评价 authors2 与 authors1 的相似度
+        """Evaluate similarity between two author names.
 
         Args:
-            authors1 (list): 如 ["Hook. f.", "Thomson"]
-            authors2 (list): 如 ["Wall."]
+            authors1: First author list, e.g., ["Hook. f.", "Thomson"].
+            authors2: Second author list, e.g., ["Wall."].
 
         Returns:
-            degree (int): 0, 1, 2, 3
-                3: authors1 和 authors2 内的每个人名都有对应 
-                2: authors1 或者 authors2 中缺失了另一个人名组中的一些命名人
-                1: authors1 和 athours2 中互有一些不同的命名人
-                0: authors1 和 authors2 中没有相同的命名人
-            similar (float): 0, 1, 2, 3
-                取authors1， authors 命名人比较中，影响 degree 可信度最重要的比较值
-                它主要由 _is_same_author() 函数返回的值直接或间接决定
-        Raises:
-            ValueError: 两组命名人的组合无法比较
+            Tuple of (degree, similar):
+            - degree (int): 0-3 indicating match quality
+              3: Each author in authors1 matches one in authors2
+              2: Some authors missing in one group
+              1: Some different authors in both groups
+              0: No matching authors
+            - similar (int): 0-3 indicating confidence based on key author matches.
         """
         scores, similar_degrees = self._caculate_similar_score(authors2, authors1)
         # score= sum(scores)/len(scores)
@@ -1377,17 +1919,18 @@ class BioName:
         return degree, similar
     
     def _is_same_author(self, org_author1, org_author2):
-        """计算两个命名人的相似度
+        """Calculate similarity between two individual authors.
 
         Args:
-            split_author1 (str): 单个命名人1
-            split_author2 (str): 单个命名人2
+            org_author1: First author name string.
+            org_author2: Second author name string.
 
         Returns:
-            3: 是同一个人
-            2: 很有可能是同一个人, 但拼写上可能有错
-            1: 有可能是同一个人, 但需要核查
-            0: 不是同一个人
+            int indicating match quality:
+            3: Same person
+            2: Probably same person, possible spelling difference
+            1: Possibly same person, needs verification
+            0: Different people
         """
         author1 = self._clean_author_for_caculate(org_author1)
         author2 = self._clean_author_for_caculate(org_author2)
@@ -1421,6 +1964,20 @@ class BioName:
         return is_matched
     
     def __is_same_name(self, fname1, fname2, author1, author2, split_author1, split_author2, lastname_matched):
+        """Compare given names to validate last name match.
+
+        Args:
+            fname1: First given name or None.
+            fname2: Second given name or None.
+            author1: First full author string.
+            author2: Second full author string.
+            split_author1: First author split into parts.
+            split_author2: Second author split into parts.
+            lastname_matched: Result from last name comparison.
+
+        Returns:
+            Match quality int (0-3).
+        """
         if lastname_matched:
             if fname1 and fname2:
                 if fname1[0] in author2 and fname2[0] in author1:
@@ -1440,6 +1997,18 @@ class BioName:
         return is_matched
     
     def __is_same_lastname(self, lname1, lname2, org_lname1, fname1, fname2):
+        """Check if last names match considering common suffixes.
+
+        Args:
+            lname1: First last name (shortened).
+            lname2: Second last name (shortened).
+            org_lname1: Original first last name.
+            fname1: First given name or None.
+            fname2: Second given name or None.
+
+        Returns:
+            Match quality int (0-3).
+        """
         if lname2.startswith(lname1[:4]):
             is_matched = self.__is_same_suffix(lname1, lname2, org_lname1, strloss=False)
         else:
@@ -1454,6 +2023,17 @@ class BioName:
         return is_matched
 
     def __is_same_suffix(self, lname1, lname2, org_lname1, strloss=None):
+        """Compare last name suffixes for similarity.
+
+        Args:
+            lname1: First last name.
+            lname2: Second last name.
+            org_lname1: Original first last name.
+            strloss: If False, strict matching; otherwise allow losses.
+
+        Returns:
+            Match quality int (0-3).
+        """
         if lname1 == lname2:
             is_matched = 3
         elif lname2[-3:] in ('ung', 'ang', 'ing', 'ong', 'eng') and lname1[-3:] not in ('ung', 'ang', 'ing', 'ong', 'eng') and len(lname2)-len(lname1) < 3:
@@ -1515,6 +2095,14 @@ class BioName:
         return is_matched
     
     def __is_lastname_abbreviation(self, lname1):
+        """Check if last name is an abbreviation.
+
+        Args:
+            lname1: Last name to check.
+
+        Returns:
+            Match quality int (1-3) based on abbreviation patterns.
+        """
         short_name = self._del_author_aeiou(lname1)
         if len(short_name) == 1:
             is_matched = 1
@@ -1529,6 +2117,17 @@ class BioName:
         return is_matched
 
     def _clean_author_for_caculate(self, author):
+        """Clean author name for similarity calculation.
+
+        Normalizes punctuation, converts special characters, and handles
+        common abbreviations like 'de Candolle' -> 'DC'.
+
+        Args:
+            author: Author name string.
+
+        Returns:
+            Cleaned author string.
+        """
         aut = author.replace("-", "")\
                     .replace(".", " ")\
                     .replace("'", " ")\
@@ -1542,13 +2141,13 @@ class BioName:
         return aut
     
     def _del_author_aeiou(self, author):
-        """删除命名人中的元音字母
+        """Remove vowels from author name for comparison.
 
         Args:
-            author (str): 命名人
+            author: Author name string.
 
         Returns:
-            str: 删除元音字母后的命名人
+            Author name with vowels removed (lowercased).
         """
         author = author.replace('un', '') if 'un' in author[1:] and not author.endswith('un') else author
         author = author.replace('in', '') if 'in' in author[1:] and not author.endswith('in') else author
@@ -1559,14 +2158,19 @@ class BioName:
         return author.lower()
 
     def get_author_team(self, authors, nested=False):
-        """将一个学名的命名人文本拆分为多组命名人构成的列表, 并给出命名人的构成模式
+        """Split authorship string into groups of authors.
 
         Args:
-            authors (str): 学名中的命名人，如 "Hook. f. & Thomson ex Regel"
-            nested (bool, optional): 是否将命名人按照集合以列表嵌套的方式进行返回. Defaults to False.
+            authors: Author string, e.g., "Hook. f. & Thomson ex Regel".
+            nested: If True, return nested list structure showing
+                publication relationships.
 
         Returns:
-            list: 拆分后的命名人列表，如 [("Hook. f.", "Thomson"), ("Regel",)]
+            List of author groups. When nested=False:
+            ["Hook. f.", "Thomson", "Regel"]
+            When nested=True:
+            [["Hook. f.", "Thomson"], ["Regel"]]
+            Returns empty list if authors is empty or invalid.
         """
         try:
             authors = self.format_authorship(authors)
@@ -1577,6 +2181,16 @@ class BioName:
             return [] 
 
     def format_authorship(self, authorship):
+        """Normalize authorship string formatting.
+
+        Standardizes separators like &, et, ex, in, and punctuation.
+
+        Args:
+            authorship: Author string to format.
+
+        Returns:
+            Formatted author string.
+        """
         authorship = authorship.replace('&', ' & ')\
                                 .replace(' et ', '  & ')\
                                 .replace(' ex ', '  ex ')\
@@ -1597,8 +2211,18 @@ class BioName:
         return authorship.strip()
 
     def ascii_authors(self, authors, discard=True):
-        # strip_accents 并不能将所有字符转换为 ascii
-        # 这些字符在返回的结果中会被删除
+        """Convert author names to ASCII characters.
+
+        Handles special characters like ß, æ, Ø, ø, þ, ð.
+
+        Args:
+            authors: Author string to convert.
+            discard: If True, characters that can't be converted are discarded.
+                If False, they're preserved.
+
+        Returns:
+            ASCII-converted author string.
+        """
         pinyin = {'ß': 'ss', 'æ': 'ae', 'Ø': 'O', 'ø': 'o', 'þ': 'th', 'ð': 'd',
                   'Ɖ': 'D', 'ł': 'l', 'đ': 'd', 'ı': 'i', 'Р': 'R', 'Т': 'T'}
         # 先尽可能的将特殊文本转换为大小写英文字母
@@ -1615,17 +2239,15 @@ class BioName:
         return ascii_authors
 
     def strip_accents(self, text):
-        """尽最大可能将字符串中衍生的拉丁字母转换为英文字母
+        """Convert Latin characters to ASCII equivalents.
 
         Args:
-            text (str): 需要处理的字符串，比如 'PančićDiklić & V.NikolićØ的'
+            text: String to convert, e.g., 'PančićDiklić & V.NikolićØ'.
 
         Returns:
-            str: 转换后的字符串，注意 text 中某些字符，可能由于无法转换为英文字母而被删除
+            ASCII-converted string. Some characters may be deleted
+            if they cannot be converted.
         """
-        # 统一一些组合字符的不同写法，以使其等价，比如 é 和 e\u0301
-        # 这里 normalize 的模式必须设置为 NFD 而非 NFC，否则后续decode
-        # 方法将无法给一些非 ascii 字符分配一个合适的 ascii 字符
         text = unicodedata.normalize('NFD', text)
         # 将命名人中的不同字符尽可能转化为 a-ZA-Z
         # 比如 PančićDiklić & V.Nikolić 转换为 PancicDiklic & V.Nikolic
@@ -1634,28 +2256,26 @@ class BioName:
         return ascii_text
 
     def _segment_authorship(self, authorship, nested=False):
-        """将一个学名的命名人文本拆分为多组命名人构成的列表
+        """Split authorship string into groups.
+
+        Handles patterns like:
+        - "Hook. f. & Thomson"
+        - "Hook. f. & Thomson ex Regel"
+        - "(Hayata) Ching"
+        - "(Hayata) Ching ex S.H.Wu"
+        - "(Bedd. ex C.B.Clarke & Baker) Ching"
 
         Args:
-            authorship (str): 学名中的命名人, 如: 
-                "Hook. f. & Thomson", 
-                "Hook. f. & Thomson ex Regel", 
-                "(Hayata) Ching",
-                "(Hayata) Ching ex S.H.Wu", 
-                "(Bedd. ex C.B.Clarke & Baker) Ching"
-            nested (bool, optional): 是否返回嵌套的列表. 
+            authorship: Author string to segment.
+            nested: If True, return nested list showing publication relationships.
 
         Returns:
-            list: 拆分后的命名人列表, 当nested 为 False 时, 结果如:
-                ["Hook. f.", "Thomson", "Regel"]
-            当 nested 为 True 时, 结果如: 
-                a => [["Hook. f.", "Thomson"]], 
-                a ex b => [None, ["Hook. f.", "Thomson"], ["Regel",]], 
-                (a)b => [["Hayata", ], ["Ching", ], None],
-                (a)b ex c => [None, ["Hayata", ], ["Ching", ], ["S.H.Wu", ]], 
-                (a ex b)c => [["Bedd.", ], [C.B.Clarke", "Baker"], ["Ching", ], None]
+            When nested=False: flat list like ["Hook. f.", "Thomson", "Regel"]
+            When nested=True: nested structure showing ex/in relationships.
+            See docstring examples for details.
+
         Raises:
-            ValueError: authorship 书写有误
+            ValueError: If authorship format is invalid.
         """
         p = re.compile(
             r"(?:^|\(\s*|\s+et\s+|\s+ex\s+|\&\s*|\,\s*|\)\s*|\s+and\s+|\[\s*|\（\s*|\）\s*|\，\s*|\{\s*|\}\s*)([^\s\&\(\)\,\;\.\-\?\，\（\）\[\]\{\}][^\&\(\)\,\;\，\（\）\[\]\{\}]+?(?=\s+ex\s+|\s+et\s+|\s*\&|\s*\,|\s*\)|\s*\(|\s+and\s+|\s+in\s+|\s*\）|\s*\（|\s*\，|\s*\;|\s*\]|\s*\[|\s*\}|\s*\{|\s*$))")
@@ -1697,9 +2317,17 @@ class BioName:
         return author_team
     
     def check_author_team(self, author_team):
-        # 判断 author_team 中是否存在全部是小写字母组成的元素
-        # 比如 comb. nov. cons. stat.，这些标识可能会被误认为是命名人
-        # 如果存在，就删除这个元素
+        """Filter out non-author elements from author team.
+
+        Removes lowercase-only elements like "comb. nov." or "cons. stat."
+        that may have been incorrectly parsed as authors.
+
+        Args:
+            author_team: List of author strings.
+
+        Returns:
+            Filtered list with non-author elements removed.
+        """
         new_author_team = []
         for author in author_team:
             if author.islower() and not author.startswith('hort'):
@@ -1711,11 +2339,18 @@ class BioName:
 
 
     def __call__(self, mark=True):
-        """
-        这里定义了对名称进行在线比对后，单纯返回学名，该采用哪种样式的逻辑
-        不管检索结果如何，程序都会返回与相应样式名称匹配的 DataFrame
-        对于检索结果中，有部分名称没有返回值，这些名称默认将使用"!"标注
-        对于检索结果中，所有的名称都没有返回值，则直接返回以对应列数 None 组成的 DataFrame
+        """Process names and return DataFrame with specified style.
+
+        Optionally performs online verification against IPNI, POWO, Tropicos,
+        and COL. Returns DataFrame matching the configured style.
+
+        Args:
+            mark: If True, failed queries are marked with '!' prefix.
+
+        Returns:
+            DataFrame with processed names in the configured style.
+            For failed queries with mark=True, names are prefixed with '!'.
+            If all queries fail, returns DataFrame with None values.
         """
         if self.style == 'scientificName':
             choose = input(

@@ -15,7 +15,7 @@ setup(
         long_description=long_description,
         long_description_content_type="text/markdown",
         package_data = {
-            '':['function/*.py','lib/*.py', 'lib/*.json', 'label/*.py', 'label/*.mustache', 'label/*.css', 'occurrence/*.py', 'table/*.py']
+            '':['function/*.py','lib/*.py', 'lib/*.json', 'lib/*.png', 'lib/*.ico', 'label/*.py', 'label/*.mustache', 'label/*.css', 'occurrence/*.py', 'table/*.py']
             },
         platforms = 'any',
         python_requires=">=3.6.1",
@@ -40,6 +40,7 @@ setup(
             'jsonschema>=2.6.0',
             'thefuzz>=0.19.0',
             'python-Levenshtein>=0.12.2',
-            'pillow==9.5'
+            'pillow>=9.5',
+            'qrcode>=7.0'
         ]
 )

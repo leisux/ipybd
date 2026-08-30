@@ -264,7 +264,10 @@ Name: Time, dtype: object
 
 ```python
 # 使用时直接传递所要清洗的日期列的列名给 foramt_datetime 方法
-# 此外 style 参数可指定清洗后输出的日期格式，可传递的值目前有 "num"/"date"/"datetime"/"utc"，默认为 “num”样式
+# 此外 style 参数可指定清洗后输出的日期格式，可传递的值目前有 “num”/”date”/”datetime”/”utc”，默认为 “datetime”样式
+# 日期时间字符串可携带毫秒级时间（如 "2026-06-11 00:38:12.792000"），毫秒信息在
+# "datetime"/"utc" 样式中会保留三位毫秒输出（无毫秒的时间不受影响），
+# "date"/"num" 样式仅取日期部分
 # mark 参数可指定是否返回带有!标记的错误日期，如果为 False，错误日期返回 None
 # inplace 参数指定是否直接将转换后的列替代原数据表中的列
 collections.format_datetime("Time", style='num', mark=True, inplace=False)
@@ -419,7 +422,7 @@ Out[10]:
 Name: GPS, dtype: object
 
 ```
-调用`format_latlon`方法时需要将经纬度涉及的一列或两列的列名传递给该方法，`format_latlon`会自动纠正前后错位的经度和纬度信息，表格中经纬度的书写可以是十进制格式、度分格式、度分秒格式，或者以上几种的混合，数字之间的分隔符也没有统一的要求。
+调用`format_latlon`方法时需要将经纬度涉及的一列或两列的列名传递给该方法，`format_latlon`会自动纠正前后错位的经度和纬度信息，表格中经纬度的书写可以是十进制格式、度分格式、度分秒格式，或者以上几种的混合，数字之间的分隔符也没有统一的要求。此外 `accuracy` 参数可以控制输出保留的小数位数（默认为 10 位），例如 `format_latlon("GPS", accuracy=6)` 会将经纬度统一保留 6 位小数；在数据模型中则通过 `GeoCoordinate([...], accuracy=6)` 指定。
 
 ```python
 collections.format_latlon("GPS", inplace=False)
@@ -517,7 +520,7 @@ collections.split_column("altitude", "-", new_headers=["minimumElevation","maxim
 
 ```python
 # 调用 format_number 方法清洗数据列
-# 同时指定清洗结果为整形，也可以根据需要将其指定为 float
+# typ 参数可指定清洗结果类型，默认为 float，也可设置为 int
 # 该方法默认会将清洗结果直接替换 df 属性中的相应数据列
 # 如果不希望直接替换被处理的数据列，可以在调用时设置 inplace=False
 # 此外对于非法数值，该方法默认会在返回结果中删除该值，并以空值填充

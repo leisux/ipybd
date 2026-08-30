@@ -26,7 +26,7 @@ class BioGrid(RestructureTable):
     columns_model = BioGridTerms
 
     def __init__(self, *args, **kwargs):
-        super(BioGrid, self).__init__(*args, fields_mapping=True, **kwargs)
+        super(BioGrid, self).__init__(*args, fields_mapping=True, cut=True, **kwargs)
 
 
 class Occurrence(RestructureTable):

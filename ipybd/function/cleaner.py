@@ -19,6 +19,17 @@ ADMIN_DIV_LIB_PATH = os.path.join(PARENT_PATH, 'lib', 'chinese_admin_div.json')
 
 
 def ifunc(obj):
+    """Decorator to enable functions/classes to work with ipybd model expressions.
+
+    When the first argument starts with '$', returns the function and arguments
+    for later processing by the model system. Otherwise, calls the function normally.
+
+    Args:
+        obj: A function or class to decorate.
+
+    Returns:
+        Decorated function that handles both model expressions and normal calls.
+    """
     if isinstance(obj, (type, FunctionType)):
         def handler(*args, **kwargs):
             param = args[0]
@@ -44,13 +55,33 @@ def ifunc(obj):
 
 @ifunc
 class DateTime:
+    """Parse and format date/time values from various input formats.
+
+    Handles multiple date formats including ISO, Chinese, US, and European formats.
+    Converts dates to standardized output formats.
+
+    Args:
+        date_time: Iterable containing date/time values.
+        style: Output format - 'datetime', 'date', 'num', or 'utc'.
+        timezone: Timezone offset (default '+08:00').
+    """
+
     def __init__(self, date_time: Union[list, pd.Series, tuple], style="num", timezone='+08:00'):
+        """Initialize DateTime parser."""
         self.datetime = date_time
         self.zone = timezone
         # 兼容 RestructureTable，供 __call__ 调用
         self.style = style
 
     def format_datetime(self, style):
+        """Parse and format dates according to specified style.
+
+        Args:
+            style: Output format - 'datetime', 'date', 'num', or 'utc'.
+
+        Returns:
+            List of formatted date strings.
+        """
         result = []
         for n, date_time in enumerate(tqdm(self.datetime, desc="日期处理", ascii=True)):
             # 兼容 Kingdonia 无日期写法
@@ -63,12 +94,26 @@ class DateTime:
             datetime = self.datetime_valid(date_time)
             if datetime:
                 if style == "datetime":
-                    result.append(datetime.format("YYYY-MM-DD HH:mm:ss"))
+                    # 携带毫秒的时间，输出保留三位毫秒
+                    if datetime.datetime.microsecond:
+                        result.append(
+                            datetime.format("YYYY-MM-DD HH:mm:ss") +
+                            ".{0:03d}".format(
+                                datetime.datetime.microsecond // 1000))
+                    else:
+                        result.append(datetime.format("YYYY-MM-DD HH:mm:ss"))
                 elif style == "utc":
-                    result.append(
-                        datetime.format(
-                            "YYYY-MM-DDTHH:mm:ss" +
-                            self.zone))
+                    if datetime.datetime.microsecond:
+                        result.append(
+                            datetime.format("YYYY-MM-DDTHH:mm:ss") +
+                            ".{0:03d}".format(
+                                datetime.datetime.microsecond // 1000) +
+                            self.zone)
+                    else:
+                        result.append(
+                            datetime.format(
+                                "YYYY-MM-DDTHH:mm:ss" +
+                                self.zone))
                 else:
                     result.append(
                         self.__format_date_style(
@@ -111,9 +156,23 @@ class DateTime:
         return result
 
     def datetime_valid(self, datetime):
+        """Check if a string is a valid datetime using arrow parser.
+
+        Args:
+            datetime: String to validate.
+
+        Returns:
+            Arrow datetime object if the time part is not all zero,
+            otherwise None (treated as date only).
+        """
         try:
             date_time = arrow.get(datetime)
-            if date_time.datetime.hour:
+            # 小时、分钟、秒、微秒任一非零，即认为携带时间信息
+            # （00:38:12.792 这类零点时段的时间也属于有效时间）
+            if (date_time.datetime.hour
+                    or date_time.datetime.minute
+                    or date_time.datetime.second
+                    or date_time.datetime.microsecond):
                 return date_time
             else:
                 return None
@@ -121,10 +180,21 @@ class DateTime:
             return None
 
     def to_utc(self, datetime, tz, to_tz):
+        """Convert datetime to UTC.
+
+        Args:
+            datetime: Datetime string.
+            tz: Source timezone.
+            to_tz: Target timezone.
+
+        Returns:
+            UTC formatted string.
+        """
         date_time = arrow.get(datetime).replace(tzinfo=tz).to(to_tz)
         return date_time.format("YYYY-MM-DDTHH:MM:SS"+to_tz)
 
     def __format_date_style(self, year, month, day, style='num'):
+        """Format year, month, day according to specified style."""
         if not month:
             if style == "num":
                 return "".join([str(year), "00", "00"])
@@ -181,7 +251,14 @@ class DateTime:
                 raise ValueError
 
     def format_date_elements(self, date_degree, date_elements):
-        """ 判断日期中的每个元素是否符合逻辑
+        """Validate and determine year, month, day from date components.
+
+        Args:
+            date_degree: Number of date elements (1, 2, or 3).
+            date_elements: List of year, month, day values.
+
+        Returns:
+            Tuple of (year, month, day) if valid, else None.
         """
         year, month, day = [None] * 3
         today = date.today()
@@ -258,6 +335,15 @@ class DateTime:
         return year, month, day
 
     def mapping_date_element(self, date_degree, date_elements: list):
+        """Convert month name aliases to numbers.
+
+        Args:
+            date_degree: Number of date elements.
+            date_elements: List with month as string that needs mapping.
+
+        Returns:
+            List with month names converted to integers, or None if invalid.
+        """
         alias_map = {
             "JAN": 1,
             "FEB": 2,
@@ -322,6 +408,16 @@ class DateTime:
         return date_elements
 
     def get_date_elements(self, date_txt):
+        """Extract date elements from text.
+
+        Parses various date string formats into (degree, elements) tuple.
+
+        Args:
+            date_txt: Date string to parse.
+
+        Returns:
+            Tuple of (date_degree, date_elements) or None if parsing fails.
+        """
         dmy_pattern = re.compile(r"[A-Za-z]+|[0-9]+")
         try:
             date_elements = dmy_pattern.findall(date_txt)
@@ -330,7 +426,9 @@ class DateTime:
         except (TypeError, ValueError):
             return None
         date_degree = len(date_elements)
-        if date_degree == 6:
+        # 携带时间甚至毫秒的日期时间字符串（如 2026-06-11 00:00:00.000000），
+        # 仅取前三个日期元素参与日期解析
+        if date_degree >= 6:
             date_degree = 3
             date_elements = date_elements[0:3]
         elif date_degree == 1:
@@ -366,15 +464,26 @@ class DateTime:
 
 @ifunc
 class HumanName:
+    """Parse and format person names (collectors, identifiers, etc.).
+
+    Handles both Western and Chinese name formats, normalizing spacing,
+    initials, and special characters.
+
+    Args:
+        names: Iterable containing person names.
+        separator: Separator between multiple names in output (default '，').
+    """
+
     def __init__(self, names: Union[list, pd.Series, tuple], separator='，'):
+        """Initialize HumanName parser."""
         self.names = names
         self.separator = separator
 
     def format_names(self):
-        """
-        返回以英文逗号分隔的人名字符串，可中英文人名混排“徐洲锋,A. Henry,徐衡”，并以
-        “!“ 标识可能错误写法的字符串，注意尚无法处理“徐洲锋 洪丽林 徐衡” 这样以空格切
-        分的中文人名字符串
+        """Parse and format names in standard format.
+
+        Returns names separated by comma, marking potentially incorrect
+        names with '!' prefix. Handles mixed Chinese/Western names.
         """
         names_mapping = dict.fromkeys(self.names)
         pattern = re.compile(
@@ -425,6 +534,17 @@ class HumanName:
         return [names_mapping[txt] for txt in self.names]
 
     def format_westname(self, name):
+        """Format Western names by normalizing spacing and initials.
+
+        Args:
+            name: Western-style name string.
+
+        Returns:
+            Formatted name with proper initials.
+
+        Raises:
+            ValueError: If name is too short.
+        """
         # 判断名字长度
         if len(name) < 2:
             raise ValueError
@@ -434,12 +554,12 @@ class HumanName:
                 name = name.replace("  ", " ")
             else:
                 break
-        # 纠正”.“后无空格
+        # 纠正"."后无空格
         en_name = [
             e + "."
             if len(e) > 0 else e
             for e in re.split(r"\.\s*", name)]
-        # 去除非简写姓或名后的”.“
+        # 去除非简写姓或名后的"."
         if en_name[-1] == "":
             del en_name[-1]
         else:
@@ -453,27 +573,25 @@ class HumanName:
 
 @ifunc
 class AdminDiv:
-    """中国省市县行政区匹配
+    """Parse and standardize Chinese administrative divisions.
 
-    本程序只会处理中国的行政区,最小行政区划到县级返回的字段值形式为
-    “中国,北京,北京市,朝阳区”， 程序不能保证百分百匹配正确；
-    对于只有“白云区”、“东区”等孤立的容易重名的地点描述，程序最终很可能给予错误
-    的匹配，需要人工核查，匹配结果前有“!”标志；
-    对于“碧江”、"路南县"（云南省）这种孤立的现已撤销的地点描述但在其他省市区还
-    有同名或者其他地区名称被包括其中的行政区名称
-    （中国,贵州省,铜仁市,碧江区，中国,湖南省,益阳市,南县）；程序一定会给出错误
-    匹配且目前并不会给出任何提示；对于“四川省南川”、“云南碧江”这种曾经的行政区
-    归属，程序会匹配字数多的行政区且这种状况下不会给出提示，如前者会匹配
-    “中国,四川省”，对于字数一致的，则匹配短的行政区，但会标识，如后者可能匹配
-    “!中国,云南省”
+    Matches addresses to country, province, city, county levels.
+    Results with '!' prefix indicate potential matching issues.
+
+    Args:
+        address: Iterable containing address strings.
     """
 
     def __init__(self, address: Union[list, pd.Series, tuple]):
+        """Initialize AdminDiv parser."""
         self.org_address = address
         self.region_mapping = dict.fromkeys(self.org_address)
 
     def format_chinese_admindiv(self):
-        new_regions = []
+        """Perform administrative division matching.
+
+        Populates country, province, city, county attributes with results.
+        """
         with open(ADMIN_DIV_LIB_PATH, 'r', encoding='utf-8') as ad:
             std_regions = json.load(ad)
         # country_split = re.compile(r"([\s\S]*?)::([\s\S]*)")
@@ -523,7 +641,7 @@ class AdminDiv:
                         n = stdregion[j:].find(region[i:i+k])
                     if region[i:i+k-1].endswith("::"):
                         each_score += k-3
-                    # 防止“广东省::阳山县”匹配为“中国::广东省::阳江市”
+                    # 防止"广东省::阳山县"匹配为"中国::广东省::阳江市"
                     elif region[i:i+k-2].endswith("::"):
                         each_score += k-4
                     else:
@@ -532,13 +650,13 @@ class AdminDiv:
                     j += m+k-1
                 else:
                     i += 1
-            # 白云城矿区可能会错误的匹配“中国,内蒙古自治区,白云鄂博矿区”
+            # 白云城矿区可能会错误的匹配"中国,内蒙古自治区,白云鄂博矿区"
             if each_score < 2:
                 continue
             elif each_score == score[0]:
                 if self.region_mapping[raw_region] in stdregion:
                     pass
-                # 优先匹配短的行政区，避免“河北”匹配“中国,天津,天津市,河北区“
+                # 优先匹配短的行政区，避免"河北"匹配"中国,天津,天津市,河北区"
                 elif len_stdregion < score[1]:
                     score = each_score, len_stdregion
                     self.region_mapping[raw_region] = "!"+stdregion
@@ -571,15 +689,22 @@ class AdminDiv:
 
 @ifunc
 class Number:
+    """Parse and format numeric values or ranges.
+
+    Handles various number formats including those with units,
+    ranges, and different separators.
+
+    Args:
+        min_column: Column containing minimum/sole numeric values.
+        max_column: Optional column containing maximum values for ranges.
+        typ: Output type - int or float (default float).
+        min_num: Minimum valid value (default -423 m, Dead Sea).
+        max_num: Maximum valid value (default 8848 m, Mt. Everest).
+    """
+
     def __init__(self, min_column: Union[list, pd.Series, tuple], max_column: Union[list, pd.Series, tuple] = None,
                  typ=float, min_num=-423, max_num=8848):
-        """
-            min_column: 可迭代对象，数值区间中的小数值数据列
-            max_column: 可迭代对象, 数据区间中的大数值数据列
-            typ: 数值的类型，支持 float 和 int
-            min_num: 数值区间的低值
-            max_num: 数值区间的高值
-        """
+        """Initialize Number parser."""
         self.min_column = min_column
         self.max_column = max_column
         self.typ = typ
@@ -587,8 +712,13 @@ class Number:
         self.max_num = max_num
 
     def format_number(self, mark=False):
-        """
-        return: 如果出现 keyerro，返回列表参数错误, 否则返回处理好的table
+        """Parse numeric values from text.
+
+        Args:
+            mark: If True, mark invalid values with '!' prefix.
+
+        Returns:
+            List of parsed numeric values.
         """
         pattern = re.compile(r"^[+-]?\d+\.?\d*(?<=\d)|\d+\.?\d*(?<=\d)")
         try:
@@ -620,11 +750,16 @@ class Number:
             raise ValueError("列表参数有误\n")
 
     def _min_max(self, column1, column2, typ, mark=False):
-        """ 修复数值区间中相应的大小数值
+        """Fix min/max value ordering in ranges.
 
-            column1: 小数值 list, 每个元素必须也为 list
-            column2: 大数值 list，每个元素必须也为 list
-            typ: 数值的类型，如 int, flora
+        Args:
+            column1: List of minimum values.
+            column2: List of maximum values.
+            typ: Output type (int or float).
+            mark: If True, mark invalid values with '!'.
+
+        Returns:
+            List of [min, max] pairs.
         """
         for p, q in zip(
             tqdm(column1, desc="数值区间", ascii=True),
@@ -706,15 +841,51 @@ class Number:
 
 @ifunc
 class GeoCoordinate:
-    def __init__(self, coordinates: Union[list, pd.Series, tuple]):
+    """Parse and convert geographic coordinates.
+
+    Handles various coordinate formats (decimal degrees, degrees/minutes/seconds)
+    and converts to standardized decimal format.
+
+    Args:
+        coordinates: Iterable containing coordinate strings.
+    """
+
+    def __init__(self, coordinates: Union[list, pd.Series, tuple], accuracy=10):
+        """Initialize GeoCoordinate parser.
+
+        Args:
+            coordinates: Iterable containing coordinate strings.
+            accuracy: Decimal places to keep in the output (default 10).
+        """
         self.coordinates = coordinates
-    
+        self.accuracy = accuracy
+
     def deg2biogrid(self, lat_deg, lon_deg, zoom):
+        """Convert decimal degrees to BioGrid code.
+
+        Args:
+            lat_deg: Latitude in decimal degrees.
+            lon_deg: Longitude in decimal degrees.
+            zoom: Zoom level for grid code.
+
+        Returns:
+            BioGrid code string.
+        """
         xtile, ytile = self.deg2num3857(lat_deg, lon_deg, zoom)
         code = self.num2biogrid(xtile, ytile, zoom)
         return code
-    
+
     def deg2num3857(self, lat_deg, lon_deg, zoom):
+        """Convert decimal degrees to tile numbers (EPSG:3857).
+
+        Args:
+            lat_deg: Latitude in decimal degrees.
+            lon_deg: Longitude in decimal degrees.
+            zoom: Zoom level.
+
+        Returns:
+            Tuple of (xtile, ytile).
+        """
         lat_rad = math.radians(lat_deg)
         n = 2.0 ** zoom
         xtile = int((lon_deg + 180.0) / 360.0 * n)
@@ -722,16 +893,36 @@ class GeoCoordinate:
         return (xtile, ytile)
 
     def num2deg3857(self, xtile, ytile, zoom):
+        """Convert tile numbers to decimal degrees.
+
+        Args:
+            xtile: X tile number.
+            ytile: Y tile number.
+            zoom: Zoom level.
+
+        Returns:
+            Tuple of (lat_deg, lon_deg).
+        """
         n = 2.0 ** zoom
         lon_deg = xtile / n * 360.0 - 180.0
         lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * ytile / n)))
         lat_deg = math.degrees(lat_rad)
         return (lat_deg, lon_deg)
-    
+
     def num2biogrid(self, x, y, zoom):
+        """Convert tile numbers to BioGrid code.
+
+        Args:
+            x: X coordinate.
+            y: Y coordinate.
+            zoom: Zoom level.
+
+        Returns:
+            BioGrid code string.
+        """
         l1code = {0:'X', 1:'Y'}
         l2code = {0:'R', 1:'S', 2:'T', 3:'V'}
-        l3code = {0:'G', 1:'H', 2:'J', 3:'K', 4:'L', 5:'M', 6:'P', 7:'Q'} 
+        l3code = {0:'G', 1:'H', 2:'J', 3:'K', 4:'L', 5:'M', 6:'P', 7:'Q'}
         mapping = {0:lambda z: hex(z)[2:].upper(), 1:lambda z:l1code[z], 2:lambda z:l2code[z], 3:lambda z:l3code[z]}
         master_levels = zoom//4
         sub_level = zoom%4
@@ -745,10 +936,11 @@ class GeoCoordinate:
         return code
 
     def _xy2levelcode(self, x, y, base):
+        """Calculate level code components."""
         return x//base, y//base, x%base, y%base
 
 
-    def format_coordinates(self, accuracy=7):
+    def format_coordinates(self, accuracy=10):
         new_lng = [None]*len(self.coordinates)
         new_lat = [None]*len(self.coordinates)
         gps_p_1 = re.compile(
@@ -916,7 +1108,7 @@ class GeoCoordinate:
         return new_lat, new_lng
 
     def __call__(self):
-        self.lat, self.lng = self.format_coordinates()
+        self.lat, self.lng = self.format_coordinates(self.accuracy)
         return pd.DataFrame({
             "decimalLatitude": self.lat,
             "decimalLongitude": self.lng
@@ -925,7 +1117,19 @@ class GeoCoordinate:
 
 @ifunc
 class RadioInput:
+    """Standardize values against a controlled vocabulary.
+
+    Maps values to standard terms using aliases, with interactive
+    resolution for unmapped values.
+
+    Args:
+        column: Column containing values to standardize.
+        lib: Either a dict mapping standard values to aliases, or a
+            string naming a built-in vocabulary.
+    """
+
     def __init__(self, column, lib=None):
+        """Initialize RadioInput."""
         self.column = column
         if isinstance(lib, dict):
             self.rewritelib = 0
@@ -939,6 +1143,7 @@ class RadioInput:
             raise ValueError('unvalid lib!')
 
     def format_option(self, std2alias):
+        """Map values to standard terms using alias dictionary."""
         options_mapping = {k:k for k in self.column} 
         std_titles = sorted(list(std2alias.keys()))
         mana2std = []
@@ -997,12 +1202,23 @@ class RadioInput:
 
 @ifunc
 class UniqueID:
+    """Mark duplicate records based on specified columns.
+
+    Args:
+        *columns: One or more columns to check for duplicates.
+    """
+
     def __init__(self, *columns: pd.Series):
+        """Initialize UniqueID with columns to check."""
         # columns 可以包含多个数据列联合判重
         self.df = pd.concat(columns, axis=1)
 
     def mark_duplicate(self):
-        # 重复的行，将以 ! 标记
+        """Mark duplicate values with '!' prefix.
+
+        Returns:
+            List with duplicates marked.
+        """
         self.duplicated = self.df.duplicated(keep=False)
         marks = [
             "".join(["!", str(m)]) if d and not pd.isnull(m) else m
@@ -1011,13 +1227,26 @@ class UniqueID:
         return marks
 
     def __call__(self):
+        """Return DataFrame with marked duplicates."""
         self.df[self.df.columns[0]] = self.mark_duplicate()
         return self.df.iloc[:, [0]]
 
 
 @ifunc
 class FillNa:
+    """Fill missing values in DataFrame.
+
+    Args:
+        *columns: Columns to fill.
+        value: Value to use for filling.
+        method: Fill method (ffill, bfill, etc.).
+        axis: Axis along which to fill.
+        limit: Maximum number of consecutive NaNs to fill.
+        downcast: Type to downcast to.
+    """
+
     def __init__(self, *columns: pd.Series, value=None, method=None, axis=None, limit=None, downcast=None):
+        """Initialize FillNa."""
         self.df = pd.concat(columns, axis=1)
         self.value = value
         self.method = method
@@ -1031,12 +1260,24 @@ class FillNa:
 
 @ifunc
 class Url:
+    """Extract and validate URLs from text.
+
+    Args:
+        column: Column containing URL strings.
+    """
+
     def __init__(self, column: Union[list, pd.Series, tuple]):
+        """Initialize Url extractor."""
         self.urls = column
         self.pattern = re.compile(
             r"http://[^,\|\"\']+|https://[^,\|\"\']+|ftp://[^,\|\"\']+")
 
     def split_url_to_list(self):
+        """Extract URLs from each text value.
+
+        Returns:
+            Map object with lists of found URLs.
+        """
         return map(lambda url: self.pattern.findall(url)
                    if url and not pd.isnull(url) else None, self.urls)
 

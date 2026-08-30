@@ -1,7 +1,14 @@
+"""CVH (China Virtual Herbarium) API client.
+
+Provides access to specimen data from CVH database.
+"""
+
 from argparse import ArgumentError
 import asyncio
 import aiohttp
 import requests
+# Disable SSL verification warnings
+requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
 from time import sleep
 from tqdm import tqdm
 import urllib
@@ -13,12 +20,27 @@ WEB_URL = 'https://www.cvh.ac.cn/spms/detail.php?'
 
 
 class LinkCVH:
+    """Client for CVH (China Virtual Herbarium) API.
+
+    Provides methods to query specimen records with support for
+    pagination and detail retrieval.
+
+    Args:
+        cache: If True, store results in cache.
+        detail: If True, fetch detailed records.
+    """
+
     def __init__(self, cache=True, detail=False):
         self.enable_cache = cache
         self.cache = {}
         self.detail = detail
 
     def build_cache(self, results):
+        """Build cache from query results.
+
+        Args:
+            results: List of specimen records.
+        """
         for res in results:
             try:
                 self.cache[res.pop('collectionID')] = res
@@ -26,24 +48,69 @@ class LinkCVH:
                 pass
 
     def _unpack_pages_result(self, pages_result):
+        """Flatten page results into single list.
+
+        Args:
+            pages_result: List of result lists.
+
+        Returns:
+            Flattened list of results.
+        """
         results = []
         for result in pages_result:
             results.extend(result)
         return results
 
     def _supplement_info(self, params, results):
+        """Add reference URLs and query keywords to results.
+
+        Args:
+            params: Query parameters.
+            results: List of records to supplement.
+
+        Returns:
+            Updated results with references and keywords.
+        """
         del params['offset']
         keywords = '，'.join(list(params.values()))
         for result in results:
             result['references'] = 'id='.join([WEB_URL, result['collectionID']])
             result['queryKeywords'] = keywords
         return results
-        
-    def get(self, taxonName=None, family=None, genus=None, country=None, 
+
+    def get(self, taxonName=None, family=None, genus=None, country=None, stateProvince=None,
             county=None, locality=None, minimumElevation=None, maximumElevation=None,
             recordedBy=None, recordNumber=None, collectedYear=None, institutionCode=None,
             collectionCode=None, identifiedBy=None, dateIdentified=None, withPhoto=False,
             typesOnly=False, hasFruit=False, hasFlower=False, hasMolecularMaterial=False):
+        """Query CVH for specimen records.
+
+        Args:
+            taxonName: Scientific name to search.
+            family: Family name.
+            genus: Genus name.
+            country: Country name.
+            stateProvince: State or province.
+            county: County name.
+            locality: Locality description.
+            minimumElevation: Minimum elevation.
+            maximumElevation: Maximum elevation.
+            recordedBy: Collector name.
+            recordNumber: Collection number.
+            collectedYear: Year collected.
+            institutionCode: Institution code.
+            collectionCode: Collection code.
+            identifiedBy: Identifier name.
+            dateIdentified: Date identified.
+            withPhoto: Only records with photos.
+            typesOnly: Only type specimens.
+            hasFruit: Only records with fruit.
+            hasFlower: Only records with flowers.
+            hasMolecularMaterial: Only records with molecular material.
+
+        Returns:
+            List of specimen records, or None if caching enabled.
+        """
         params = self.build_params(locals())
         headers = self.build_headers()
         pages = self.query(QUERY_API, params, headers)
@@ -62,9 +129,16 @@ class LinkCVH:
             return results
 
     def mult_get(self, api, params, headers, pages_or_ids):
-        """ 检索 WEB API，获得检索结果
+        """Query API for multiple pages or IDs.
 
-        return: 返回由字典组成的列表，每个字典为一个查询结果
+        Args:
+            api: API endpoint URL.
+            params: Query parameters.
+            headers: HTTP headers.
+            pages_or_ids: List of page numbers or record IDs.
+
+        Returns:
+            List of results from all pages/IDs.
         """
         self.pbar = tqdm(total=len(pages_or_ids), desc='列表数据获取', ascii=True)
         loop = asyncio.new_event_loop()
@@ -81,6 +155,17 @@ class LinkCVH:
         return results
 
     async def build_tasks(self, api, params, headers, pages_or_ids):
+        """Build async tasks for concurrent API requests.
+
+        Args:
+            api: API endpoint.
+            params: Query parameters.
+            headers: HTTP headers.
+            pages_or_ids: List of pages or IDs to fetch.
+
+        Returns:
+            List of results from gather.
+        """
         async with aiohttp.ClientSession() as session:
             tasks = [
                 self.get_track(
@@ -93,15 +178,20 @@ class LinkCVH:
             return await asyncio.gather(*tasks)
 
     async def get_track(self, url, headers, session):
+        """Fetch single page/record with semaphore control.
+
+        Args:
+            url: URL to fetch.
+            headers: HTTP headers.
+            session: aiohttp session.
+
+        Returns:
+            Result dictionary from API.
+        """
         async with self.sema:
             response = await self.async_get(url, headers, session)
             self.pbar.update(1)
-            # if response is None:
-            #     raise AttributeError
             result = response['rows']
-            # 将 detail 的结果中 uuid 改名为 collectionID
-            # 以便遵从 DarwinCore ，同时与非 detail 模式下
-            # 返回的页面列表结果保持统一
             try:
                 result['collectionID'] = result['uuid']
                 del result['uuid']
@@ -110,37 +200,65 @@ class LinkCVH:
             return result
 
     def build_url(self, api, params, page_or_id=False):
+        """Build complete API URL with parameters.
+
+        Args:
+            api: API endpoint.
+            params: Query parameters dict.
+            page_or_id: Page number (int) or record ID.
+
+        Returns:
+            Complete URL string.
+        """
         if isinstance(page_or_id, int):
             params['offset'] = page_or_id * 30
         else:
             params['id'] = page_or_id
-        return '{base}&{opt}'.format(
+        url =  '{base}&{opt}'.format(
                base=api,
                opt=urllib.parse.urlencode(params)
         )
+        return url
 
     async def async_get(self, url, headers, session):
+        """Perform async HTTP GET request.
+
+        Args:
+            url: URL to fetch.
+            headers: HTTP headers.
+            session: aiohttp session.
+
+        Returns:
+            JSON response or None on failure.
+        """
         try:
             while True:
-                # print(url)
-                async with session.get(url, headers=headers, timeout=60) as resp:
+                print(url)
+                async with session.get(url, headers=headers, timeout=60, ssl=False) as resp:
                     if resp.status == 429:
                         await asyncio.sleep(10)
                     else:
                         response = await resp.json()
-                        # print(response)
                         break
-        except BaseException:  # 如果异步请求出错，改为正常的 Get 请求以尽可能确保有返回结果
+        except BaseException:
             response = await self.single_get(url, headers)
         if not response:
             print(url, "联网超时，请检查网络连接！")
-        return response  # 返回 None 表示网络有问题
+        return response
 
     async def single_get(self, url, headers):
+        """Fallback synchronous GET request.
+
+        Args:
+            url: URL to fetch.
+            headers: HTTP headers.
+
+        Returns:
+            JSON response or None on failure.
+        """
         try:
             while True:
-                rps = requests.get(url, headers=headers)
-                # print(rps.status_code)
+                rps = requests.get(url, headers=headers, verify=False)
                 if rps.status_code == 429:
                     await asyncio.sleep(10)
                 else:
@@ -149,9 +267,21 @@ class LinkCVH:
             return None
 
     def query(self, api, params, headers):
+        """Query API to get total pages.
+
+        Args:
+            api: API endpoint.
+            params: Query parameters.
+            headers: HTTP headers.
+
+        Returns:
+            Number of pages.
+
+        Raises:
+            ValueError: If no results found.
+        """
         while True:
-            rps = requests.get(api, params, headers=headers)
-            # print(rps.status_code)
+            rps = requests.get(api, params, headers=headers, verify=False)
             if rps.status_code == 429:
                 sleep(3)
             else:
@@ -164,6 +294,11 @@ class LinkCVH:
                     return total//30 + 1
 
     def build_headers(self):
+        """Build HTTP headers for CVH API requests.
+
+        Returns:
+            Dictionary of HTTP headers.
+        """
         return {
             'accept': 'application/json, text/javascript, */*; q=0.01',
             'accept-encoding': 'gzip, deflate, br',
@@ -172,6 +307,14 @@ class LinkCVH:
         }
 
     def build_params(self, arguments):
+        """Build query parameters from arguments.
+
+        Args:
+            arguments: Dictionary of search parameters.
+
+        Returns:
+            Cleaned parameters dict.
+        """
         params = {k: v for k, v in arguments.items() if v}
         del params['self']
         if params:

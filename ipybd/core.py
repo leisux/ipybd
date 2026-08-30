@@ -27,7 +27,21 @@ PERSONAL_TEMPLATE_PATH = os.path.join(HERE, 'lib', 'personal_table_map.json')
 
 
 class NpEncoder(json.JSONEncoder):
+    """JSON encoder that handles numpy types.
+
+    Extends json.JSONEncoder to properly serialize numpy integer,
+    float, and ndarray types to native Python types.
+    """
+
     def default(self, obj):
+        """Convert numpy types to native Python types.
+
+        Args:
+            obj: Object to serialize.
+
+        Returns:
+            Native Python type (int, float, list) or calls parent.
+        """
         if isinstance(obj, np.integer):
             return int(obj)
         elif isinstance(obj, np.floating):
@@ -39,6 +53,17 @@ class NpEncoder(json.JSONEncoder):
 
 
 class ExpressionCompleter(Completer):
+    """Auto-complete handler for field name mapping expressions.
+
+    Provides tab-completion for field names and their aliases
+    when manually specifying column mapping relationships.
+
+    Args:
+        raw_fields: Original column names from the data table.
+        std_fields: Standard field names from the mapping library.
+        field_alias: Dictionary mapping standard fields to their aliases.
+    """
+
     def __init__(self, raw_fields, std_fields, field_alias):
         self._raw_fields = list(raw_fields)
         self._std_fields = list(std_fields)
@@ -46,9 +71,17 @@ class ExpressionCompleter(Completer):
         self._fields_num = [n for n, _ in enumerate(self._raw_fields)]
         self._fields_num.extend([m for m, _ in enumerate(self._std_fields)])
         self.terms = self._raw_fields + self._std_fields
-        # print(self.terms)
 
     def get_completions(self, document, complete_event):
+        """Generate completions based on the current cursor position.
+
+        Args:
+            document: Document object containing text before cursor.
+            complete_event: Event that triggered completion.
+
+        Yields:
+            Completion objects for matching field names.
+        """
         word = document.get_word_before_cursor()
         for i, field in enumerate(self.terms):
             try:
@@ -70,20 +103,44 @@ class ExpressionCompleter(Completer):
 
 
 class FormatDataset:
+    """Base class for biodiversity data format conversion and cleaning.
+
+    Provides methods for reading data from various sources (Excel, CSV,
+    JSON, SQL databases) and performing column operations like splitting,
+    merging, and renaming. Also provides name resolution via BioName APIs.
+
+    Attributes:
+        df: pandas DataFrame containing the loaded data.
+        std_field_alias: Dictionary mapping standard field names to aliases.
+
+    Args:
+        *args: File path (str), DataFrame, or SQL query result.
+        **kwargs: Additional arguments passed to data reading functions.
+    """
+
     with open(STD_TERMS_ALIAS_PATH, encoding="utf-8") as std_alias:
         std_field_alias = json.load(std_alias)
 
     def __init__(self, *args, **kwargs):
+        """Initialize FormatDataset by loading data.
+
+        Args:
+            *args: Data source (file path, DataFrame, or SQL connector).
+            **kwargs: Additional parameters for data reading.
+        """
         self.df = self.read_data(*args, **kwargs)
 
     def table_mapping(self, mapping: dict):
-        """按照给定的 dict 对 dataframe 各列进行列拆分、合并、修改列名
+        """Apply column mapping rules to restructure the DataFrame.
 
-            mapping: dataframe 需要重塑的各列映射关系，相应写法如下：
-                     改列名 raw_fied:new_field
-                     列拆分 (raw_field, (sp1, sp2, sp3)):(new1,new2,new3)
-                     列合并 (raw1, raw2, raw3, (sp1,sp2)):new_field
-                     其中 raw 为原列名，new 为新列名，sp 为列合并或分割的分隔符
+        Supports three types of mapping operations:
+        - Rename: raw_field -> new_field (string to string)
+        - Split: (raw_field, (sp1, sp2)) -> (new1, new2) (tuple with delimiters)
+        - Merge: (raw1, raw2, separator) -> new_field (tuple ending with delimiter)
+
+        Args:
+            mapping: Dictionary defining column transformations.
+                     Keys are original columns, values are new column definitions.
         """
         for org_field, new_field in mapping.items():
             # 只修改列名
@@ -99,21 +156,65 @@ class FormatDataset:
                 print("\n{0}:{1} 映射有误\n".format(org_field, new_field))
 
     def concat_and_rename_columns(self, new_columns):
-        """ 为 self.df 拼接新列
-            new_columns 为 Dataframe 或者 Series 对象
-            return: None
+        """Append new columns to the DataFrame, handling duplicate names.
+
+        If a new column collides with an existing column, the existing
+        column is dropped when both have identical content (e.g. when
+        printing again from a previously generated label table), otherwise
+        it is renamed with an underscore suffix to preserve the data.
+
+        Args:
+            new_columns: DataFrame or Series to append to self.df.
         """
         try:
             new_headers = new_columns.columns
+            is_series = False
         except AttributeError:
             new_headers = [new_columns.name]
+            is_series = True
         is_repeats = [header in self.df.columns for header in new_headers]
         for is_repeat, header in zip(is_repeats, new_headers):
-            if is_repeat: self.df.rename({header:''.join([header, '_'])}, axis=1, inplace=True)
+            if is_repeat:
+                new_col = new_columns if is_series else new_columns[header]
+                # 新旧两列内容完全一致：属重复清洗产生的冗余列，直接
+                # 丢弃旧列，避免出现内容相同而列名不同的重复列；
+                # 内容不一致则保留旧列并改名加 '_'，避免信息丢失
+                if self.__columns_content_equal(self.df[header], new_col):
+                    self.df.drop(header, axis=1, inplace=True)
+                else:
+                    self.df.rename(
+                        {header: ''.join([header, '_'])}, axis=1,
+                        inplace=True)
         new_columns.set_index(self.df.index, inplace=True)
         self.df = pd.concat([self.df, new_columns], axis=1)
 
+    @staticmethod
+    def __columns_content_equal(old_col, new_col):
+        """Judge whether two columns have identical content.
+
+        Values are compared as strings with NaN normalized to empty
+        string, so dtype differences (e.g. str '4' vs int 4) do not
+        cause false inequality.
+
+        Args:
+            old_col: Existing column in self.df.
+            new_col: New column about to be appended.
+
+        Returns:
+            True when the two columns contain identical values.
+        """
+        old = old_col.astype(str).where(old_col.notna(), "")
+        new = new_col.astype(str).where(new_col.notna(), "")
+        return old.reset_index(drop=True).equals(new.reset_index(drop=True))
+
     def reindex_columns(self, columns, cut=False):
+        """Reorder DataFrame columns to specified order.
+
+        Args:
+            columns: List of column names in desired order.
+            cut: If True, only keep columns in the specified list.
+                 If False, append remaining columns at the end.
+        """
         if not cut:
             other_columns = [
                 column for column in self.df.columns
@@ -123,6 +224,15 @@ class FormatDataset:
         self.df = self.df.reindex(columns=columns)
 
     def series2frame(self, series):
+        """Convert Series or list of Series to DataFrame.
+
+        Args:
+            series: A Series, list of Series, or list that can be
+                   converted to DataFrame.
+
+        Returns:
+            DataFrame constructed from the input.
+        """
         try:
             return pd.concat(series, axis=1)
         except TypeError:
@@ -131,15 +241,22 @@ class FormatDataset:
             raise e
 
     def split_column(self, column, splitters, new_headers=None, inplace=True):
-        """ 将一列分割成多列
+        """Split a column into multiple columns using delimiters.
 
-            column: 要分割的列名 str
-            splitters: 分割依据的分割符 tuple 或 str
-            new_heaers: 分割出的新列列名 list
-            return: 若 new_headers=None，返回list组成的拆分结果，
-                    如果有新列名，则返回由新列组成的 DataFrame,
-                    如果列值无法拆分出足够的列，则用 None 补齐空列
-                    如果数值类型不可拆分，则不作处理
+        Supports special delimiters:
+        - '$': Split Chinese and English text
+        - '%': Split numbers and text
+
+        Args:
+            column: Name of column to split.
+            splitters: Single delimiter (str) or tuple of delimiters.
+            new_headers: List of names for new columns. If None,
+                        returns list of split results.
+            inplace: If True, replace original column with new columns.
+
+        Returns:
+            If new_headers is None, returns list of split results.
+            Otherwise, modifies DataFrame in place and returns None.
         """
         if isinstance(splitters, str):
             splitters = (splitters,)
@@ -217,15 +334,18 @@ class FormatDataset:
         return result
 
     def merge_columns(self, columns, separators, new_header=None, inplace=True):
-        """ 按指定模式合并多列
+        """Merge multiple columns into one column.
 
-            columns：self.df 列名 list
-            separators: 合并后，各列值之间的分隔符，如果各列之间分隔符不同，可
-                        按序组成 元组传递
-                        如果传递的是字符 'd', 'r', 'o', 'l', 'a' 则分别表示将各
-                        列合 并成字典、行列，json object 对象、json array 对象。
-            new_header: 新列名, 若为 None 则不删除旧列、生成新列、返回 list 结果
-            inplace: 生成新的列后, 是否需要删除参与合并的列
+        Args:
+            columns: List of column names to merge.
+            separators: Delimiter(s) between column values. Can be:
+                       - str: Same delimiter for all
+                       - tuple: Different delimiter for each gap
+                       - Special chars: 'd'(dict), 'r'(row text),
+                         'o'(JSON object), 'l'(list), 'a'(JSON array)
+            new_header: Name for the merged column. If None,
+                       returns list instead of modifying DataFrame.
+            inplace: If True, delete original columns after merging.
         """
         if separators == 'r':
             mergers = self._merge2pairs(columns, typ='rowList')
@@ -338,8 +458,11 @@ class FormatDataset:
 
 
     def rename_duplicate_headers(self, tail_cols_num=None):
-        """ 为 self.df 中重复的列名添加一致多个 _ 后缀
-            new_cols_num: 设置可忽视 self.df 尾部列名的数量
+        """Rename duplicate column names by adding underscore suffixes.
+
+        Args:
+            tail_cols_num: Number of trailing columns to exclude
+                          from duplicate checking.
         """
         if tail_cols_num:
             headers = self.df.columns[:-tail_cols_num]
@@ -350,13 +473,26 @@ class FormatDataset:
             self.df.columns = [header + '_' if duplicates[j] else header for j, header in enumerate(self.df.columns)]
 
     def to_excel(self, path):
+        """Write DataFrame to an Excel file.
+
+        Args:
+            path: Output file path with .xlsx extension.
+        """
         with pd.ExcelWriter(path, engine='openpyxl') as writer:
-            # 下面原由的这段代码，应该是 xlsxwriter 的engine 参数，
-            # 使用 openpyxl报错具体原因待确实，先隐去处理
-            #engine_kwargs={"options":{'strngs_to_urls':False}})
             self.df.to_excel(writer, index=False)
 
     def save_data(self, path):
+        """Save DataFrame to file in specified format.
+
+        Args:
+            path: Output file path. Supported formats:
+                 - .xlsx, .xls: Excel format
+                 - .csv: CSV format with UTF-8-BOM encoding
+                 - .sql: SQL (not implemented)
+
+        Raises:
+            ValueError: If file extension is not supported.
+        """
         if path.endswith('.xlsx'):
             self.to_excel(path)
         elif path.endswith('.xls'):
@@ -369,6 +505,18 @@ class FormatDataset:
             raise ValueError("file type must be sql, csv, excel!")
 
     def read_data(self, *args, **kwargs):
+        """Read data from various sources.
+
+        Automatically determines the data source type and calls
+        the appropriate reading method.
+
+        Args:
+            *args: Can be a DataFrame, file path (str), or SQL connector.
+            **kwargs: Additional arguments passed to specific readers.
+
+        Returns:
+            DataFrame loaded from the source, or None on failure.
+        """
         if isinstance(args[0], pd.DataFrame):
             return args[0]
         if isinstance(args[0], str):
@@ -393,26 +541,79 @@ class FormatDataset:
         return None
 
     def _read_excel(self, *args, **kwargs):
+        """Read Excel file with openpyxl engine.
+
+        Args:
+            *args: Arguments passed to pd.read_excel.
+            **kwargs: Keyword arguments passed to pd.read_excel.
+
+        Returns:
+            DataFrame from Excel file.
+        """
         print(
             "\n开始载入数据表格...\n\n如果数据表格太大，此处可能会耗时很长...\n如果长时间无法载入，请将 Excel 表转换为 CSV 格式后重新尝试...\n")
         return pd.read_excel(*args, dtype=str, engine='openpyxl', **kwargs)
 
     def _read_txt(self, *args, **kwargs):
+        """Read tab-separated text file.
+
+        Args:
+            *args: Arguments passed to pd.read_table.
+            **kwargs: Keyword arguments passed to pd.read_table.
+
+        Returns:
+            DataFrame from text file.
+        """
         return pd.read_table(*args, dtype=str, **kwargs)
 
     def _read_json(self, *args, **kwargs):
+        """Read JSON file.
+
+        Args:
+            *args: Arguments passed to pd.read_json.
+            **kwargs: Keyword arguments passed to pd.read_json.
+
+        Returns:
+            DataFrame from JSON file.
+        """
         return pd.read_json(*args, **kwargs)
 
     def _read_sql(self, *args, **kwargs):
+        """Read data from SQL database.
+
+        Args:
+            *args: SQL query and connection.
+            **kwargs: Keyword arguments passed to pd.read_sql.
+
+        Returns:
+            DataFrame from SQL query result.
+        """
         return pd.read_sql(*args, **kwargs)
 
     def read_csv(self, *args, dtype=str, chunksize=20000, **kwargs):
-        reader = pd.read_csv(*args, dtype=str, chunksize=20000, **kwargs)
-        # 使用生成器表达式代替列表存储数据块
-        table = pd.concat((chunk for chunk in reader), axis=0)
+        """Read CSV file in chunks for large files.
+
+        Args:
+            *args: Arguments passed to pd.read_csv.
+            dtype: Data type for columns (default str).
+            chunksize: Number of rows per chunk. If None, read entire file at once.
+            **kwargs: Keyword arguments passed to pd.read_csv.
+
+        Returns:
+            DataFrame from concatenated chunks.
+        """
+        if chunksize:
+            reader = pd.read_csv(*args, dtype=dtype, chunksize=chunksize, **kwargs)
+            table = pd.concat((chunk for chunk in reader), axis=0)
+        else:
+            table = pd.read_csv(*args, dtype=dtype, **kwargs)
         return table
 
     def get_name(func):
+        """Decorator for BioName API methods.
+
+        Handles caching of BioName instances and result concatenation.
+        """
         def get_func(self, *args, **kwargs):
             get_action, headers, concat, new_headers = func(
                 self, *args, **kwargs)
@@ -437,7 +638,10 @@ class FormatDataset:
                 if isinstance(get_action, str) and get_action in ['simpleName', 'apiName', 'scientificName', 'plantSplitName', 'fullPlantSplitName', 'animalSplitName']:
                     results = self.bioname.format_latin_names(get_action)
                 else:
-                    results = self.bioname.get(get_action)
+                    try:
+                        results = self.bioname.get(get_action)
+                    except Exception:
+                        print('\n 字段名错误，请检查参数中字段名称\n')
             if results:
                 if concat:
                     new_columns = pd.DataFrame(results).set_index(self.df.index)
@@ -533,6 +737,15 @@ class FormatDataset:
 
     @drop_and_concat_columns
     def format_authorship(self, header, inplace=True):
+        """Format author names in standard format.
+
+        Args:
+            header: Column name containing author names.
+            inplace: Whether to replace the original column.
+
+        Returns:
+            DataFrame with formatted authorships.
+        """
         bioname = BioName([])
         authors = dict.fromkeys(self.df[header])
         for author in authors:
@@ -545,21 +758,41 @@ class FormatDataset:
         return pd.DataFrame(authorships), [header], inplace
 
     @drop_and_concat_columns
-    def format_latlon(self, *headers, inplace=True):
-        """ 格式化经纬度
+    def format_latlon(self, *headers, inplace=True, accuracy=10):
+        """Format and validate latitude/longitude coordinates.
 
-        headers: 经纬度列名，可以是多个字段名组成的序列，也可以是单个字段名
-        inplace: 是否替换 self.df 中相应的列
+        Converts various coordinate formats to decimal degrees.
+        Invalid coordinates are marked with '!' prefix.
+
+        Args:
+            *headers: Column name(s) containing coordinates.
+            inplace: Whether to replace original columns.
+            accuracy: Decimal places to keep in the output (default 10).
+
+        Returns:
+            DataFrame with decimalLatitude and decimalLongitude columns.
         """
         headers = list(headers)
         if len(headers) > 1:
             latlon = self.merge_columns(headers, ";")
         else:
             latlon = self.df[headers[0]]
-        return GeoCoordinate(latlon)(), headers, inplace
+        return GeoCoordinate(latlon, accuracy=accuracy)(), headers, inplace
 
     @drop_and_concat_columns
     def format_admindiv(self, *headers, inplace=True):
+        """Format Chinese administrative divisions.
+
+        Parses and standardizes Chinese address components
+        (country, province, city, county).
+
+        Args:
+            *headers: Column name(s) containing address info.
+            inplace: Whether to replace original columns.
+
+        Returns:
+            DataFrame with country, province, city, county columns.
+        """
         headers = list(headers)
         if len(headers) > 1:
             admindiv = self.merge_columns(headers, ',')
@@ -570,12 +803,38 @@ class FormatDataset:
     @drop_and_concat_columns
     def format_datetime(self, header, style='datetime',
                         timezone='+08:00', mark=False, inplace=True):
+        """Format date/time values.
+
+        Args:
+            header: Column name containing date/time values.
+            style: Output format - 'datetime', 'date', 'num', or 'utc'.
+            timezone: Timezone offset (default '+08:00').
+            mark: If True, mark invalid dates with '!'.
+            inplace: Whether to replace original column.
+
+        Returns:
+            DataFrame with formatted dates.
+        """
         return DateTime(self.df[header], style, timezone)(
             mark), [header], inplace
 
     @drop_and_concat_columns
     def format_number(self, header1, header2=None, typ=float, min_num=0,
                       max_num=8848, inplace=True, mark=False):
+        """Format numeric values or ranges.
+
+        Args:
+            header1: Column containing minimum/sole value.
+            header2: Column containing maximum value (optional).
+            typ: Output type - int or float (default float).
+            min_num: Minimum valid value.
+            max_num: Maximum valid value (default 8848 = Mt. Everest).
+            mark: If True, mark invalid values with '!'.
+            inplace: Whether to replace original columns.
+
+        Returns:
+            DataFrame with formatted numeric values.
+        """
         if header2:
             number = Number(self.df[header1], self.df[header2], typ, min_num,
                             max_num)
@@ -587,14 +846,43 @@ class FormatDataset:
 
     @drop_and_concat_columns
     def format_options(self, header, lib=None, inplace=True):
+        """Standardize values against a controlled vocabulary.
+
+        Args:
+            header: Column name to standardize.
+            lib: Dictionary mapping standard values to aliases,
+                or string name of built-in library.
+            inplace: Whether to replace original column.
+
+        Returns:
+            DataFrame with standardized values.
+        """
         return RadioInput(self.df[header], lib)(), [header], inplace
 
     @drop_and_concat_columns
     def format_human_name(self, header, inplace=True):
+        """Format person names (collector, identifier, etc.).
+
+        Args:
+            header: Column name containing names.
+            inplace: Whether to replace original column.
+
+        Returns:
+            DataFrame with formatted names.
+        """
         return HumanName(self.df[header])(), [header], inplace
 
     @drop_and_concat_columns
     def mark_repeat(self, *headers, inplace=True):
+        """Mark duplicate records based on specified columns.
+
+        Args:
+            *headers: Column names to check for duplicates.
+            inplace: Whether to modify original columns.
+
+        Returns:
+            DataFrame with duplicate values marked with '!'.
+        """
         columns = [self.df[header] for header in headers]
         return UniqueID(*columns)(), list(headers), inplace
 
@@ -608,14 +896,29 @@ class RestructureTableMeta(type):
 
 
 class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
+    """Data model for restructuring biodiversity data.
+
+    Uses a columns_model (Enum) to define field transformations.
+    Supports automatic field name mapping via DarwinCore standard terms.
+
+    Args:
+        *args: Data source (file path, DataFrame, etc.).
+        fields_mapping: If True, enable automatic field name mapping.
+        cut: If True, remove columns not defined in the model.
+        fcol: Default value for non-existent columns.
+        **kwargs: Additional arguments passed to parent.
+    """
+
     # self.__class__.columns_model from std_table_objects
     def __init__(self, *args, fields_mapping=False, cut=False, fcol=None, **kwargs):
+        """Initialize RestructureTable with data and field mapping options."""
         super(RestructureTable, self).__init__(*args, **kwargs)
         self.fcol = fcol  # 设置填充缺失列的默认值
         self.fields_mapping = fields_mapping
         self.cut = cut
 
     def _build_headers_lib(self):
+        """Build header mapping library based on field_mapping setting."""
         if self.fields_mapping is False:
             for key in self.__unmapped_columns:
                 self.__unmapped_columns[key] = key
@@ -624,6 +927,11 @@ class RestructureTable(FormatDataset, metaclass=RestructureTableMeta):
             self.__build_headers_lib()
 
     def rebuild_table(self):
+        """Rebuild DataFrame according to the model definition.
+
+        Applies all column transformations defined in columns_model,
+        handles unmapped columns, and reorders columns.
+        """
         self.raw_columns = tuple(self.df.columns)
         self.__unmapped_columns = dict.fromkeys(self.df.columns)
         self._build_headers_lib()

@@ -4,44 +4,84 @@ from ipybd.function.cleaner import *
 from ipybd.function.bioname import BioName
 
 
-
-
-
 class BioGridTerms(Enum):
-    datasetName = '$datasetName'
+    # 标识与数据集
+    spaceCSTR = '$spaceCSTR'
+    CSTR = UniqueID(['$objectCSTR', '$CSTR'])
+    collectionCode = RadioInput('$collectionCode', 'collectionCode')
+    relatedObjectCSTR = "$relatedObjectCSTR"
+    catalogNumber = UniqueID('$catalogNumber')
+    otherCatalogNumbers = '$otherCatalogNumbers'
+    batchNumber = '$batchNumber'
+    createdByID_ ='$createdByID'
+    # datasetName = '$datasetName'
+    # license_ = RadioInput('$license', 'license')
+    #事件信息
     recordedBy_ = HumanName('$recordedBy')
+    recordedByID = '$recordedByID'
     recordNumber = '$recordNumber'
     eventDate_ = DateTime('$eventDate', 'datetime')
-    scientificName__scientificNameAuthorship_ = BioName(['$scientificName', ('$genus', '$specificEpithet', '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='apiName')
-    chineseName = '$chineseName'
-    organismQuantity = Number('$organismQuantity', None, int)
-    organismQuantityType = RadioInput('$organismQuantityType', 'organismQuantityType')
     establishmentMeans_ = RadioInput('$establishmentMeans', 'establishmentMeans')
-    country__Province__prefecture__county = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
-    locality = ('$township', '$locality', '$mountain', '$waterBody', ',')
+    # country__province__prefecture__county = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
+    locality = ('$township', '$locality', '$mountain', '$waterBody', ', ')
     habitat = '$habitat'
     decimalLatitude__decimalLongitude_ = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
-    elevationInMeters_ = Number('$elevationInMeters')
-    verbatimIdentification = '$verbatimIdentification'
+    elevationInMeters_ = Number(['$elevationInMeters', '$minimumElevationInMeters'])
+    # 鉴定信息
+    verbatimIdentification_ = [('$scientificName', '$scientificNameAuthorship', ' '), ('$genus', '$specificEpithet', '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' '), '$scientificName', '$verbatimIdentification']
+    scientificNameID = '$scientificNameID'
     identifiedBy_ = HumanName('$identifiedBy')
+    identifiedByID = '$identifiedByID'
     dateIdentified_ = DateTime('$dateIdentified', 'datetime')
     identificationVerificationStatus_ = RadioInput('$identificationVerificationStatus', 'identificationVerificationStatus')
-    occurrenceRemarks = '$occurrenceRemarks'
-    license_ = RadioInput('$license', 'license')
-    associatedMedia = Url('$associatedMedia')
-    individualCount = Number('$individualCount', None, int)
+    # 基础数量信息
+    individualCount = Number('$individualCount', None, int, 0, 1000000)
+    specimensCount = Number('$specimensCount', None, int, 0, 1000000)
+    seedCount = Number('$seedCount', None, int, 0, 1000000)
+    plantCount = Number('$plantCount', None, int, 0, 1000000)
+    samplingArea = '$samplingArea'
+    organismQuantity = Number('$organismQuantity', None, int, 0, 1000000)
+    organismQuantityType = RadioInput('$organismQuantityType', 'organismQuantityType')
+    abundance = RadioInput('$abundance', 'abundance')
     threatenedFactors = RadioInput('$threatenedFactors', 'threatenedFactors')
-    molecularMaterialSample = RadioInput('$molecularMaterialSample', 'molecularMaterialSample')
+    occurrenceRemarks = '$occurrenceRemarks'
+    # 生物学信息
     lifeForm = RadioInput('$lifeForm', 'lifeForm')
-    frequency = RadioInput('$frequency', 'frequency')
-    DBH = Number('$DBH')
-    heightInMeters = Number('$heightInMeters')
-    reproductiveOrgans = '$reproductiveOrgans'
-    propagulum = '$propagulum'
+    DBH = Number('$DBH', None, float, 0, 1000)
+    heightInMeters = Number('$heightInMeters', None, float, 0, 200)
+    reproductiveOrgans = ['$reproductiveOrgans', '$flower']
+    propagulum = ('$propagulum', '$fruit', '$seed', ', ')
     leaf = '$leaf'
     stem = '$stem'
-    root = '$root'
+    root = ['$root', '$adventitiousRoot', '$rhizoids']
     host = '$host'
+    associatedMedia = Url('$associatedMedia')
+    # 样品信息
+    molecularMaterialSample = RadioInput('$molecularMaterialSample', 'molecularMaterialSample')
+    livingSpecimensCount = Number('$livingSpecimensCount', None, int, 0, 1000000)
+    # 结实与种子采收
+    bearingPlantRate = Number('$bearingPlantRate', None, float, 0, 100)
+    seedHarvestStage = '$seedHarvestStage'
+    bearingPlantCount = Number('$bearingPlantCount', None, int, 0, 1000000)
+    seedCollectionWay = '$seedCollectionWay'
+    seedHumidityLevel = '$seedHumidityLevel'
+    seedlingPlantCount = Number('$seedlingPlantCount', None, int, 0, 1000000)
+    # 土壤与立地信息
+    soilpH = Number('$soilpH', None, float, 0, 14)
+    landForm = '$landForm'
+    landUsage = '$landUsage'
+    soilColor = '$soilColor'
+    soilTexture = '$soilTexture'
+    aspectHeading = '$aspectHeading'
+    slopePosition = '$slopePosition'
+    slopeInDegrees = '$slopeInDegrees'
+    soilParentMaterial = '$soilParentMaterial'
+    # 群落与伴生
+    communityType = '$communityType'
+    associatedHerb = '$associatedHerb'
+    associatedTree = '$associatedTree'
+    associatedShrub = '$associatedShrub'
+    threatenedDegree = '$threatenedDegree'
 
 class CvhTerms(Enum):
     条形码_ = UniqueID('$catalogNumber')
@@ -53,7 +93,7 @@ class CvhTerms(Enum):
     采集人_ = HumanName('$recordedBy')
     采集号_ = '$recordNumber'
     采集日期_ = DateTime('$eventDate')
-    份数_ = Number('$individualCount', None, int)
+    份数_ = Number('$individualCount', None, int, 0, 1000000)
     国家_ = '$country'
     province = '$province'
     prefecture = '$prefecture'
@@ -107,7 +147,7 @@ class OccurrenceTerms(Enum):
     preservedLocation = RadioInput('$preservedLocation', 'preservedLocation')
     recordedBy = HumanName('$recordedBy')
     recordNumber = '$recordNumber'
-    individualCount = Number('$individualCount', None, int)
+    individualCount = Number('$individualCount', None, int, 0, 1000000)
     reproductiveCondition = RadioInput('$reproductiveCondition', 'reproductiveCondition')
     lifeStage = RadioInput('$lifeStage', 'lifeStage')
     sex = RadioInput('$sex', 'sex')
@@ -132,9 +172,9 @@ class OccurrenceTerms(Enum):
     maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     _minimumDepthInMeters__maximumDepthInMeters = {'$verbatimDepth': '-'}
-    minimumDepthInMeters = Number('$minimumDepthInMeters')
-    maximumDepthInMeters = Number('$maximumDepthInMeters')
-    minimumDepthInMeters__maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters')
+    minimumDepthInMeters = Number('$minimumDepthInMeters', None, float, 0, 12000)
+    maximumDepthInMeters = Number('$maximumDepthInMeters', None, float, 0, 12000)
+    minimumDepthInMeters__maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters', float, 0, 12000)
     associatedMedia = '$associatedMedia'
     associatedReferences = '$associatedReferences'
     associatedSequences = '$associatedSequences'
@@ -168,20 +208,20 @@ class OccurrenceTerms(Enum):
     rhizoids = '$rhizoids'
     host = "$host"
     # Organism of Aves
-    weightInGrams = Number('$weightInGrams')
-    bodyLengthInMillimeters = Number('$bodyLengthInMillimeters')
-    wingChordInMillimeters = Number('$wingLengthInMillimeters')
-    tailLengthInMillimeters = Number('$tailLengthInMillimeters')
-    tarsusInMillimeters = Number('$tarsusInMillimeters')
-    exposedCulmenInMillimeters = Number('$exposedCulmenInMillimeters')
+    weightInGrams = Number('$weightInGrams', None, float, 0, 1000000)
+    bodyLengthInMillimeters = Number('$bodyLengthInMillimeters', None, float, 0, 10000)
+    wingChordInMillimeters = Number('$wingLengthInMillimeters', None, float, 0, 10000)
+    tailLengthInMillimeters = Number('$tailLengthInMillimeters', None, float, 0, 10000)
+    tarsusInMillimeters = Number('$tarsusInMillimeters', None, float, 0, 10000)
+    exposedCulmenInMillimeters = Number('$exposedCulmenInMillimeters', None, float, 0, 10000)
     irisColor = '$irisColor'
     billColor = '$billColor'
     legsColor = '$legsColor'
     fat = RadioInput('$fat', 'fat')
-    heightOfNestInMeters = Number('$heightOfNestInMeters')
+    heightOfNestInMeters = Number('$heightOfNestInMeters', None, float, 0, 200)
     substrateOfNest = '$substrateOfNest'
     constructionOfNest = '$constructionOfNest'
-    numOfEggsTaken = Number('$numOfEggsTaken', None, int)
+    numOfEggsTaken = Number('$numOfEggsTaken', None, int, 0, 1000000)
     incubation = '$incubation'
     organismRemarks = '$organismRemarks'
 
@@ -193,7 +233,7 @@ class NoiOccurrenceTerms(Enum):
     otherCatalogNumbers = '$otherCatalogNumbers'
     recordedBy = HumanName('$recordedBy')
     recordNumber = '$recordNumber'
-    individualCount = Number('$individualCount', None, int)
+    individualCount = Number('$individualCount', None, int, 0, 1000000)
     sex = RadioInput('$sex', 'sex')
     # 需要增加 reproductiveCondition
     # NOI 后续更新后，需要将字段名改为 reproductiveCondition
@@ -235,12 +275,12 @@ class NoiOccurrenceTerms(Enum):
     geodeticDatum = RadioInput('$geodeticDatum', 'geodeticDatum')
     georeferenceProtocol = '$georeferenceProtocol'
     _minimumDepthInMeters__maximumDepthInMeters = {'$verbatimDepth': '-'}
-    minimumDepthInMeters = Number('$minimumDepthInMeters')
-    maximumDepthInMeters = Number('$maximumDepthInMeters')
-    minimumDepthInMeters__maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters')
-    minimumDistanceAboveSurfaceInMeters = Number('$minimumDistanceAboveSurfaceInMeters')
-    maximumDistanceAboveSurfaceInMeters = Number('$maximumDistanceAboveSurfaceInMeters')
-    minimumDistanceAboveSurfaceInMeters__maximumDistanceAboveSurfaceInMeters = Number('$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters')
+    minimumDepthInMeters = Number('$minimumDepthInMeters', None, float, 0, 12000)
+    maximumDepthInMeters = Number('$maximumDepthInMeters', None, float, 0, 12000)
+    minimumDepthInMeters__maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters', float, 0, 12000)
+    minimumDistanceAboveSurfaceInMeters = Number('$minimumDistanceAboveSurfaceInMeters', None, float, -12000, 8845)
+    maximumDistanceAboveSurfaceInMeters = Number('$maximumDistanceAboveSurfaceInMeters', None, float, -12000, 8845)
+    minimumDistanceAboveSurfaceInMeters__maximumDistanceAboveSurfaceInMeters = Number('$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters', float, -12000, 8845)
     Location = ('$countryCode', '$country', '$province', '$city', '$county', '$locality', '$decimalLatitude', '$decimalLongitude', '$minimumElevationInMeters', '$maximumElevationInMeters', '$verbatimElevation', '$minimumDepthInMeters', '$maximumDepthInMeters', '$geodeticDatum', '$georeferenceProtocol', '$minimumDistanceAboveSurfaceInMeters', '$maximumDistanceAboveSurfaceInMeters', 'd')
 
     # Idnetification Object
@@ -284,7 +324,7 @@ class KingdoniaPlantTerms(Enum):
     recordedBy_ = HumanName('$recordedBy', separator=',')
     recordNumber_ = '$recordNumber'
     eventDate_ = DateTime('$eventDate', 'datetime')
-    individualCount_ = Number('$individualCount', None, int)
+    individualCount_ = Number('$individualCount', None, int, 0, 1000000)
     individualCount = FillNa('$individualCount', value=0)
     # 等模型改过来后， city 后续需要改为 prefecture
     country__stateProvince__city__county_ = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
@@ -323,7 +363,7 @@ class KingdoniaPlantTerms(Enum):
     #孢子叶（球）= '$孢子叶（球）')
     # 后续需将其改为 abundance
     频度 = RadioInput('$frequence', 'frequence')
-    胸径 = Number('$DBH')
+    胸径 = Number('$DBH', None, float, 0, 1000)
     体高 = '$height'
     野外鉴定 = '$verbatimIdentification'
     当地名称 = '$dialectName'
@@ -332,9 +372,9 @@ class KingdoniaPlantTerms(Enum):
     associatedMedia_ = '$associatedMedia'
     molecularMaterialSample_ = RadioInput('$molecularMaterialSample', 'molecularMaterialSample')
     molecularMaterialSample = FillNa('$molecularMaterialSample', value='无')
-    seedMaterialSample_ = Number('$seedMaterialSample', None, int)
+    seedMaterialSample_ = Number('$seedMaterialSample', None, int, 0, 1000000)
     seedMaterialSample = FillNa('$seedMaterialSample', value=0)
-    livingMaterialSample_ = Number('$livingMaterialSample', None, int)
+    livingMaterialSample_ = Number('$livingMaterialSample', None, int, 0, 1000000)
     livingMaterialSample = FillNa('$livingMaterialSample', value=0)
     MaterialSample = ('$molecularMaterialSample', '$seedMaterialSample', '$livingMaterialSample', 'o')
 
@@ -345,20 +385,24 @@ class KingdoniaAvesTerms(Enum):
 
 class HerbLabelTerms(Enum):
     catalogNumber_ = UniqueID('$catalogNumber')
-    otherCatalogNumbers_ = '$otherCatalogNumbers'
-    duplicatesOfLabel_ = Number('$duplicatesOfLabel', None, int)
+    otherCatalogNumbers = '$otherCatalogNumbers'
+    batchNumber_ = '$batchNumber'
+    specimensCount = Number(['$specimensCount', '$individualCount'], None, int, 0, 1000000)
+    duplicatesOfLabel = Number('$duplicatesOfLabel', None, int, 0, 1000000)
     labelTitle_ = ['$labelTitle', '$institutionCode']
-    labelNote_ = ['$labelNote', '$collectionCode']
-    labelSubtitle_ = ['$labelSubtitle', '$fundedBy']
-    creator_ = '$creator'
+    collectionCode_ = RadioInput('$collectionCode', 'collectionCode')
+    labelNote_ = '$labelNote'
+    labelSubtitle_ = ['$labelSubtitle', '$fundedBy', '$datasetName']
+    createdBy_ = '$createdBy'
     dateCreated_ = '$dateCreated'
+    relatedObjectCSTR = ['$relatedObjectCSTR', '$CSTR']
     recordedBy_ = HumanName('$recordedBy')
     recordNumber_ = '$recordNumber'
     eventDate = ['$eventDate', '$eventTime']
     eventDate_ = DateTime('$eventDate', 'date')
-    decimalLatitude__decimalLongitude_ = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')])
+    decimalLatitude__decimalLongitude_ = GeoCoordinate(['$verbatimCoordinates', ('$decimalLatitude', '$decimalLongitude', ';')], accuracy=6)
     _minimumElevationInMeters__maximumElevationInMeters = {'$verbatimElevation': '-'}
-    minimumElevationInMeters_ = Number('$minimumElevationInMeters', typ=int)
+    minimumElevationInMeters_ = Number(['$minimumElevationInMeters','$elevationInMeters'], typ=int)
     maximumElevationInMeters = Number('$maximumElevationInMeters', typ=int)
     # minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     country__province__prefecture__county_ = AdminDiv([('$country', '$province', '$prefecture', '$county', '::'), '$higherGeography'])
@@ -366,26 +410,24 @@ class HerbLabelTerms(Enum):
     verbatimLocality = '$verbatimLocality'
     habitat_ = '$habitat'
     substrate_ = '$substrate'
-    individualCount_ = Number('$individualCount', None, int)
     lifeForm_ = RadioInput('$lifeForm', 'lifeForm')
     familyChineseName_ = '$familyChineseName'
     family_ = '$family'
     chineseName= '$chineseName'
-    genus__specificEpithet__taxonRank__infraspecificEpithet__scientificNameAuthorship_ = BioName(['$scientificName', ('$genus', '$specificEpithet',  '$specificAuthorship', '$taxonRank', '$infraspecificEpithet', '$scientificNameAuthorship', ' ')], style='plantSplitName')
+    scientificName_ = ['$scientificName', ('$genus', '$specificEpithet', '$taxonRank', '$infraspecificEpithet', ' ')]
+    genus__specificEpithet__taxonRank__infraspecificEpithet__scientificNameAuthorship___ = BioName([('$scientificName', '$scientificNameAuthorship', ' '), '$scientificName'], style='plantSplitName')
     identifiedBy_ = HumanName('$identifiedBy')
     dateIdentified_ = DateTime('$dateIdentified', 'date')
     reproductiveOrgans_ = '$reproductiveOrgans'
     leaf_ = '$leaf'
     stem_ = '$stem'
-    fruit_ = '$fruit'
-    propagulum_ = '$propagulum'
-    root_ = '$root'
-    adventitiousRoot_ = '$adventitiousRoot' 
-    rhizoids_ = '$rhizoids'
+    propagulum_ = ('$propagulum', '$fruit', '$seed', ', ')
+    root_ = ['$root', '$adventitiousRoot', '$rhizoids']
     host_ = '$host'
     abundance_ = RadioInput('$abundance', 'abundance')
-    DBH_ = Number('$DBH')
-    height_ = '$height'
+    DBH_ = Number('$DBH', None, float, 0, 1000)
+    height = '$height'
+    heightInMeters_ = '$heightInMeters'
     verbatimIdentification_ = '$verbatimIdentification'
     vernacularName_ = '$vernacularName'
     molecularMaterialSample_ = '$molecularMaterialSample'
@@ -406,7 +448,7 @@ class NsiiTerms(Enum):
     catalogNumber_ = UniqueID('$catalogNumber')
     recordedBy_ = HumanName('$recordedBy')
     recordNumber_ = '$recordNumber'
-    individualCount_ = Number('$individualCount', None, int)
+    individualCount_ = Number('$individualCount', None, int, 0, 1000000)
     # Event
     eventDate_ = DateTime('$eventDate')
     habitat_ = '$habitat'
@@ -420,9 +462,9 @@ class NsiiTerms(Enum):
     maximumElevationInMeters = Number('$maximumElevationInMeters')
     minimumElevationInMeters__maximumElevationInMeters = Number('$minimumElevationInMeters', '$maximumElevationInMeters')
     _minimumDepthInMeters__maximumDepthInMeters = {'$verbatimDepth': '-'}
-    minimumDepthInMeters = Number('$minimumDepthInMeters')
-    maximumDepthInMeters = Number('$maximumDepthInMeters')
-    minimumDepthInMeters__maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters')
+    minimumDepthInMeters = Number('$minimumDepthInMeters', None, float, 0, 12000)
+    maximumDepthInMeters = Number('$maximumDepthInMeters', None, float, 0, 12000)
+    minimumDepthInMeters__maximumDepthInMeters = Number('$minimumDepthInMeters', '$maximumDepthInMeters', float, 0, 12000)
     associatedMedia = '$associatedMedia'
     associatedReferences = '$associatedReferences'
     associatedSequences = '$associatedSequences'
