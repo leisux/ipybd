@@ -1,2 +1,3 @@
 *.pyc
 ipybd/lib/personal_table_map.json
+.DS_Store
